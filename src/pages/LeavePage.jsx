@@ -8,7 +8,7 @@ import {
 import { Calendar, Plus } from "lucide-react";
 
 // Leave management page
-export const LeavePage = ({ onLogout }) => {
+export const LeavePage = ({ onLogout, userName, userRole }) => {
   const leaveRecords = [
     {
       date: "2024-12-25 to 2024-12-26",
@@ -54,7 +54,11 @@ export const LeavePage = ({ onLogout }) => {
   ];
 
   return (
-    <DashboardLayout userRole="Administrator" onLogout={onLogout}>
+    <DashboardLayout
+      userRole={userRole}
+      userName={userName}
+      onLogout={onLogout}
+    >
       {/* Page Header */}
       <div className="mb-8 flex justify-between items-center">
         <div>

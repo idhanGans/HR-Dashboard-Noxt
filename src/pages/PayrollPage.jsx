@@ -1,15 +1,20 @@
 import { Card, DashboardLayout, Button } from "../components";
 import { salaryBreakdown } from "../utils/dummyData";
+import { formatIDR } from "../utils/format";
 import { Download } from "lucide-react";
 
 // Payroll and salary slip page
-export const PayrollPage = ({ onLogout }) => {
+export const PayrollPage = ({ onLogout, userName, userRole }) => {
   const handleDownloadPayslip = () => {
     alert("✓ Payslip downloaded successfully!");
   };
 
   return (
-    <DashboardLayout userRole="Administrator" onLogout={onLogout}>
+    <DashboardLayout
+      userRole={userRole}
+      userName={userName}
+      onLogout={onLogout}
+    >
       {/* Page Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-white mb-2">
@@ -55,31 +60,30 @@ export const PayrollPage = ({ onLogout }) => {
                 <div className="flex justify-between">
                   <span className="text-lightGrey">Basic Salary</span>
                   <span className="text-white font-semibold">
-                    ${salaryBreakdown.basicSalary.toLocaleString()}
+                    {formatIDR(salaryBreakdown.basicSalary)}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-lightGrey">Allowances</span>
                   <span className="text-white font-semibold">
-                    ${salaryBreakdown.allowances.toLocaleString()}
+                    {formatIDR(salaryBreakdown.allowances)}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-lightGrey">Bonus</span>
                   <span className="text-white font-semibold">
-                    ${salaryBreakdown.bonus.toLocaleString()}
+                    {formatIDR(salaryBreakdown.bonus)}
                   </span>
                 </div>
               </div>
               <div className="border-t border-white/10 mt-4 pt-4 flex justify-between">
                 <span className="text-white font-semibold">Total Earnings</span>
                 <span className="text-white font-bold text-lg">
-                  $
-                  {(
+                  {formatIDR(
                     salaryBreakdown.basicSalary +
-                    salaryBreakdown.allowances +
-                    salaryBreakdown.bonus
-                  ).toLocaleString()}
+                      salaryBreakdown.allowances +
+                      salaryBreakdown.bonus
+                  )}
                 </span>
               </div>
             </div>
@@ -93,13 +97,13 @@ export const PayrollPage = ({ onLogout }) => {
                 <div className="flex justify-between">
                   <span className="text-lightGrey">Tax</span>
                   <span className="text-white font-semibold">
-                    ${(salaryBreakdown.deductions * 0.6).toLocaleString()}
+                    {formatIDR(salaryBreakdown.deductions * 0.6)}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-lightGrey">Insurance</span>
                   <span className="text-white font-semibold">
-                    ${(salaryBreakdown.deductions * 0.4).toLocaleString()}
+                    {formatIDR(salaryBreakdown.deductions * 0.4)}
                   </span>
                 </div>
               </div>
@@ -108,7 +112,7 @@ export const PayrollPage = ({ onLogout }) => {
                   Total Deductions
                 </span>
                 <span className="text-red-400 font-bold text-lg">
-                  ${salaryBreakdown.deductions.toLocaleString()}
+                  {formatIDR(salaryBreakdown.deductions)}
                 </span>
               </div>
             </div>
@@ -119,7 +123,7 @@ export const PayrollPage = ({ onLogout }) => {
                 Net Salary (Take Home)
               </span>
               <span className="text-2xl font-bold text-green-400">
-                ${salaryBreakdown.totalSalary.toLocaleString()}
+                {formatIDR(salaryBreakdown.totalSalary)}
               </span>
             </div>
           </Card>
@@ -134,24 +138,23 @@ export const PayrollPage = ({ onLogout }) => {
               <div>
                 <p className="text-lightGrey text-sm mb-1">Total Earnings</p>
                 <p className="text-xl font-bold text-white">
-                  $
-                  {(
+                  {formatIDR(
                     salaryBreakdown.basicSalary +
-                    salaryBreakdown.allowances +
-                    salaryBreakdown.bonus
-                  ).toLocaleString()}
+                      salaryBreakdown.allowances +
+                      salaryBreakdown.bonus
+                  )}
                 </p>
               </div>
               <div className="border-t border-white/10 pt-4">
                 <p className="text-lightGrey text-sm mb-1">Total Deductions</p>
                 <p className="text-xl font-bold text-red-400">
-                  ${salaryBreakdown.deductions.toLocaleString()}
+                  {formatIDR(salaryBreakdown.deductions)}
                 </p>
               </div>
               <div className="border-t border-white/10 pt-4 bg-gradient-to-r from-green-900/20 to-green-800/20 rounded-lg p-3">
                 <p className="text-lightGrey text-sm mb-1">Net Salary</p>
                 <p className="text-2xl font-bold text-green-400">
-                  ${salaryBreakdown.totalSalary.toLocaleString()}
+                  {formatIDR(salaryBreakdown.totalSalary)}
                 </p>
               </div>
             </div>

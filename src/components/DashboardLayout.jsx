@@ -2,7 +2,7 @@ import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
 
 // Main layout wrapper for dashboard pages
-export const DashboardLayout = ({ children, userRole, onLogout }) => {
+export const DashboardLayout = ({ children, userRole, userName, onLogout }) => {
   return (
     <div className="flex h-screen bg-black">
       {/* Sidebar */}
@@ -11,7 +11,7 @@ export const DashboardLayout = ({ children, userRole, onLogout }) => {
       {/* Main Content */}
       <main className="flex-1 ml-64 flex flex-col">
         {/* Topbar */}
-        <Topbar />
+        <Topbar userName={userName} userRole={userRole} />
 
         {/* Page Content */}
         <div className="flex-1 overflow-auto mt-20 p-8">

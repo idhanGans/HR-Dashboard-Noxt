@@ -1,7 +1,10 @@
 import { Search, Bell, User } from "lucide-react";
 
 // Top navigation bar component
-export const Topbar = ({ userName = "John Doe" }) => {
+export const Topbar = ({
+  userName = "John Doe",
+  userRole = "Administrator",
+}) => {
   return (
     <div className="fixed top-0 left-64 right-0 bg-black/30 backdrop-blur-md border-b border-white/10 px-6 py-4 flex items-center justify-between z-40">
       {/* Search Bar */}
@@ -30,7 +33,7 @@ export const Topbar = ({ userName = "John Doe" }) => {
         <div className="flex items-center gap-3">
           <div className="text-right">
             <p className="text-sm font-medium text-white">{userName}</p>
-            <p className="text-xs text-lightGrey">Administrator</p>
+            <p className="text-xs text-lightGrey">{userRole}</p>
           </div>
           <div className="w-10 h-10 bg-gradient-to-br from-silver to-white rounded-full flex items-center justify-center">
             <User size={20} className="text-black" />

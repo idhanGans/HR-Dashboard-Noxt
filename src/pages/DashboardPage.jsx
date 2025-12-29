@@ -3,8 +3,6 @@ import {
   Bar,
   LineChart,
   Line,
-  DoughnutChart,
-  Doughnut,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -23,9 +21,12 @@ import {
   payrollByDepartment,
 } from "../utils/dummyData";
 import { TrendingUp, Users, Clock, DollarSign } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { formatIDR } from "../utils/format";
 
 // Admin Dashboard View
-const AdminDashboard = ({ onLogout }) => {
+const AdminDashboard = ({ onLogout, userName, userRole }) => {
+  const navigate = useNavigate();
   const stats = [
     {
       label: "Total Employees",
@@ -35,13 +36,13 @@ const AdminDashboard = ({ onLogout }) => {
     },
     {
       label: "Today's Attendance",
-      value: `${dashboardStats.todayAttendance}/245`,
+      value: `${dashboardStats.todayAttendance}/${dashboardStats.totalEmployees}`,
       icon: Clock,
       color: "from-green-600 to-green-400",
     },
     {
       label: "Current Month Payroll",
-      value: `$${dashboardStats.currentPayroll.toLocaleString()}`,
+      value: formatIDR(dashboardStats.currentPayroll),
       icon: DollarSign,
       color: "from-purple-600 to-purple-400",
     },
@@ -56,7 +57,11 @@ const AdminDashboard = ({ onLogout }) => {
   const colors = ["#06b6d4", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"];
 
   return (
-    <DashboardLayout userRole="Administrator" onLogout={onLogout}>
+    <DashboardLayout
+      userRole={userRole}
+      userName={userName}
+      onLogout={onLogout}
+    >
       {/* Page Title */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-white mb-2">Dashboard</h1>
@@ -175,16 +180,32 @@ const AdminDashboard = ({ onLogout }) => {
           <div>
             <h2 className="text-lg font-bold text-white mb-4">Quick Actions</h2>
             <div className="space-y-3">
-              <Button variant="secondary" className="w-full">
+              <Button
+                variant="secondary"
+                className="w-full"
+                onClick={() => navigate("/employees")}
+              >
                 View Employee Reports
               </Button>
-              <Button variant="secondary" className="w-full">
+              <Button
+                variant="secondary"
+                className="w-full"
+                onClick={() => navigate("/payroll")}
+              >
                 Manage Payroll
               </Button>
-              <Button variant="secondary" className="w-full">
+              <Button
+                variant="secondary"
+                className="w-full"
+                onClick={() => navigate("/attendance")}
+              >
                 Review Attendance
               </Button>
-              <Button variant="secondary" className="w-full">
+              <Button
+                variant="secondary"
+                className="w-full"
+                onClick={() => navigate("/kpi")}
+              >
                 Employee Analytics
               </Button>
             </div>

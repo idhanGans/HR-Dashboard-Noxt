@@ -12,7 +12,7 @@ export const LoginPage = ({ onLogin }) => {
   const handleLogin = (e) => {
     e.preventDefault();
     if (username && password) {
-      onLogin(userRole);
+      onLogin(userRole, username);
       navigate("/dashboard");
     }
   };

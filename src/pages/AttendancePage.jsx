@@ -11,7 +11,7 @@ import { attendanceRecords } from "../utils/dummyData";
 import { Clock, LogOut } from "lucide-react";
 
 // Attendance tracking page
-export const AttendancePage = ({ onLogout }) => {
+export const AttendancePage = ({ onLogout, userName, userRole }) => {
   const [isCheckInModalOpen, setIsCheckInModalOpen] = useState(false);
   const [isCheckOutModalOpen, setIsCheckOutModalOpen] = useState(false);
 
@@ -37,7 +37,11 @@ export const AttendancePage = ({ onLogout }) => {
   };
 
   return (
-    <DashboardLayout userRole="Administrator" onLogout={onLogout}>
+    <DashboardLayout
+      userRole={userRole}
+      userName={userName}
+      onLogout={onLogout}
+    >
       {/* Page Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-white mb-2">

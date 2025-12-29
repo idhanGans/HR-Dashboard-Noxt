@@ -15,7 +15,7 @@ import { kpiTrendData } from "../utils/dummyData";
 import { TrendingUp } from "lucide-react";
 
 // KPI tracking page
-export const KPIPage = ({ onLogout }) => {
+export const KPIPage = ({ onLogout, userName, userRole }) => {
   const departmentKPI = [
     { department: "Engineering", score: 8.7, target: 8.5, trend: "+5%" },
     { department: "Sales", score: 8.2, target: 8.0, trend: "+3%" },
@@ -31,7 +31,11 @@ export const KPIPage = ({ onLogout }) => {
   }));
 
   return (
-    <DashboardLayout userRole="Administrator" onLogout={onLogout}>
+    <DashboardLayout
+      userRole={userRole}
+      userName={userName}
+      onLogout={onLogout}
+    >
       {/* Page Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-white mb-2">KPI Tracker</h1>

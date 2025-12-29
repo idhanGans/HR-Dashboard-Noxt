@@ -3,7 +3,7 @@ import { Card, DashboardLayout, Button } from "../components";
 import { Save, User, Lock, Bell, Eye } from "lucide-react";
 
 // Settings page
-export const SettingsPage = ({ onLogout }) => {
+export const SettingsPage = ({ onLogout, userName, userRole }) => {
   const [settings, setSettings] = useState({
     fullName: "John Doe",
     email: "john.doe@company.com",
@@ -35,7 +35,11 @@ export const SettingsPage = ({ onLogout }) => {
   };
 
   return (
-    <DashboardLayout userRole="Administrator" onLogout={onLogout}>
+    <DashboardLayout
+      userRole={userRole}
+      userName={userName}
+      onLogout={onLogout}
+    >
       {/* Page Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-white mb-2">Settings</h1>
