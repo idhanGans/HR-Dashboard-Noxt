@@ -4,8 +4,9 @@ import { formatIDR } from "../../utils/format";
 /**
  * PayslipCard - Main payslip display card with earnings and deductions
  * @param {Object} salaryBreakdown - Salary breakdown object
+ * @param {Object} employee - Employee object
  */
-export const PayslipCard = ({ salaryBreakdown }) => {
+export const PayslipCard = ({ salaryBreakdown, employee }) => {
   const totalEarnings =
     salaryBreakdown.basicSalary +
     salaryBreakdown.allowances +
@@ -14,7 +15,7 @@ export const PayslipCard = ({ salaryBreakdown }) => {
   return (
     <Card className="p-8">
       {/* Header */}
-      <PayslipHeader />
+      <PayslipHeader employee={employee} />
 
       {/* Earnings Section */}
       <EarningsSection
@@ -36,17 +37,34 @@ export const PayslipCard = ({ salaryBreakdown }) => {
 /**
  * PayslipHeader - Header section of the payslip
  */
-const PayslipHeader = () => {
+const PayslipHeader = ({ employee }) => {
+  const currentDate = new Date();
+  const period = currentDate.toLocaleString("en-US", {
+    month: "long",
+    year: "numeric",
+  });
+  const issueDate = currentDate.toISOString().split("T")[0];
+
   return (
     <div className="mb-8 pb-6 border-b border-white/10">
       <h2 className="text-2xl font-bold text-white mb-2">Salary Slip</h2>
+      {employee && (
+        <div className="mb-4">
+          <p className="text-white font-semibold">{employee.name}</p>
+          <p className="text-lightGrey text-sm">
+            {employee.role} • {employee.department}
+          </p>
+        </div>
+      )}
       <div className="flex justify-between items-center">
         <div>
-          <p className="text-lightGrey text-sm">Period: December 2024</p>
-          <p className="text-lightGrey text-sm">Employee ID: EMP-001</p>
+          <p className="text-lightGrey text-sm">Period: {period}</p>
+          <p className="text-lightGrey text-sm">
+            Employee ID: {employee?.id || "N/A"}
+          </p>
         </div>
         <div className="text-right">
-          <p className="text-lightGrey text-sm">Issue Date: 2024-12-24</p>
+          <p className="text-lightGrey text-sm">Issue Date: {issueDate}</p>
           <p className="text-lightGrey text-sm">Status: Processed</p>
         </div>
       </div>

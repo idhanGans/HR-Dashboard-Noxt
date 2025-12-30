@@ -2,16 +2,24 @@ import { Card } from "../Card";
 
 /**
  * PaymentInfoCard - Displays payment/bank information
- * @param {Object} paymentInfo - Payment info object
+ * @param {Object} employee - Employee object with payroll data
  */
-export const PaymentInfoCard = ({ paymentInfo }) => {
+export const PaymentInfoCard = ({ employee }) => {
   const defaultInfo = {
-    bankName: "Global Finance Bank",
-    accountHolder: "John Doe",
-    accountNumber: "****1234",
+    bankName: "Not specified",
+    accountHolder: "Not specified",
+    accountNumber: "Not specified",
   };
 
-  const { bankName, accountHolder, accountNumber } = paymentInfo || defaultInfo;
+  const paymentInfo = employee?.payroll
+    ? {
+        bankName: employee.payroll.bankName || "Not specified",
+        accountHolder: employee.name || "Not specified",
+        accountNumber: employee.payroll.bankAccount
+          ? `****${employee.payroll.bankAccount.slice(-4)}`
+          : "Not specified",
+      }
+    : defaultInfo;
 
   return (
     <Card>
@@ -19,15 +27,15 @@ export const PaymentInfoCard = ({ paymentInfo }) => {
       <div className="space-y-3 text-sm">
         <div>
           <p className="text-lightGrey mb-1">Bank Name</p>
-          <p className="text-white font-medium">{bankName}</p>
+          <p className="text-white font-medium">{paymentInfo.bankName}</p>
         </div>
         <div>
           <p className="text-lightGrey mb-1">Account Holder</p>
-          <p className="text-white font-medium">{accountHolder}</p>
+          <p className="text-white font-medium">{paymentInfo.accountHolder}</p>
         </div>
         <div>
           <p className="text-lightGrey mb-1">Account Number</p>
-          <p className="text-white font-medium">{accountNumber}</p>
+          <p className="text-white font-medium">{paymentInfo.accountNumber}</p>
         </div>
       </div>
     </Card>

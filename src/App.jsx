@@ -11,6 +11,7 @@ import {
   LeavePage,
   SettingsPage,
 } from "./pages";
+import { EmployeeProvider } from "./contexts/EmployeeContext";
 
 const STORAGE_KEY = "hrdash-auth";
 
@@ -58,100 +59,102 @@ function App() {
   };
 
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route
-          path="/login"
-          element={
-            <PublicRoute isAuthenticated={auth.isAuthenticated}>
-              <LoginPage onLogin={handleLogin} />
-            </PublicRoute>
-          }
-        />
+    <EmployeeProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route
+            path="/login"
+            element={
+              <PublicRoute isAuthenticated={auth.isAuthenticated}>
+                <LoginPage onLogin={handleLogin} />
+              </PublicRoute>
+            }
+          />
 
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute isAuthenticated={auth.isAuthenticated}>
-              <DashboardPage {...layoutProps} />
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute isAuthenticated={auth.isAuthenticated}>
+                <DashboardPage {...layoutProps} />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/attendance"
-          element={
-            <ProtectedRoute isAuthenticated={auth.isAuthenticated}>
-              <AttendancePage {...layoutProps} />
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/attendance"
+            element={
+              <ProtectedRoute isAuthenticated={auth.isAuthenticated}>
+                <AttendancePage {...layoutProps} />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/payroll"
-          element={
-            <ProtectedRoute isAuthenticated={auth.isAuthenticated}>
-              <PayrollPage {...layoutProps} />
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/payroll"
+            element={
+              <ProtectedRoute isAuthenticated={auth.isAuthenticated}>
+                <PayrollPage {...layoutProps} />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/kpi"
-          element={
-            <ProtectedRoute isAuthenticated={auth.isAuthenticated}>
-              <KPIPage {...layoutProps} />
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/kpi"
+            element={
+              <ProtectedRoute isAuthenticated={auth.isAuthenticated}>
+                <KPIPage {...layoutProps} />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/employees"
-          element={
-            <ProtectedRoute isAuthenticated={auth.isAuthenticated}>
-              <EmployeesPage {...layoutProps} />
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/employees"
+            element={
+              <ProtectedRoute isAuthenticated={auth.isAuthenticated}>
+                <EmployeesPage {...layoutProps} />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/leave"
-          element={
-            <ProtectedRoute isAuthenticated={auth.isAuthenticated}>
-              <LeavePage {...layoutProps} />
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/leave"
+            element={
+              <ProtectedRoute isAuthenticated={auth.isAuthenticated}>
+                <LeavePage {...layoutProps} />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/settings"
-          element={
-            <ProtectedRoute isAuthenticated={auth.isAuthenticated}>
-              <SettingsPage {...layoutProps} />
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute isAuthenticated={auth.isAuthenticated}>
+                <SettingsPage {...layoutProps} />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/"
-          element={
-            <Navigate
-              to={auth.isAuthenticated ? "/dashboard" : "/login"}
-              replace
-            />
-          }
-        />
-        <Route
-          path="*"
-          element={
-            <Navigate
-              to={auth.isAuthenticated ? "/dashboard" : "/login"}
-              replace
-            />
-          }
-        />
-      </Routes>
-    </BrowserRouter>
+          <Route
+            path="/"
+            element={
+              <Navigate
+                to={auth.isAuthenticated ? "/dashboard" : "/login"}
+                replace
+              />
+            }
+          />
+          <Route
+            path="*"
+            element={
+              <Navigate
+                to={auth.isAuthenticated ? "/dashboard" : "/login"}
+                replace
+              />
+            }
+          />
+        </Routes>
+      </BrowserRouter>
+    </EmployeeProvider>
   );
 }
 

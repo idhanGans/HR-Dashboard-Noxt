@@ -7,48 +7,50 @@ import {
   PerformanceInsights,
   KPIHeader,
 } from "../components/kpi";
-import { kpiTrendData } from "../utils/dummyData";
-
-// Department KPI data
-const DEPARTMENT_KPI = [
-  { department: "Engineering", score: 8.7, target: 8.5, trend: "+5%" },
-  { department: "Sales", score: 8.2, target: 8.0, trend: "+3%" },
-  { department: "HR", score: 8.9, target: 9.0, trend: "-1%" },
-  { department: "Marketing", score: 8.0, target: 8.0, trend: "0%" },
-  { department: "Operations", score: 8.4, target: 8.5, trend: "+2%" },
-];
-
-// Format department data for chart
-const DEPARTMENT_CHART_DATA = DEPARTMENT_KPI.map((item) => ({
-  name: item.department,
-  score: item.score,
-  target: item.target,
-}));
-
-// Performance insights data
-const PERFORMANCE_INSIGHTS = {
-  topPerformer: { department: "HR Department", score: "8.9/10" },
-  mostImproved: {
-    department: "Engineering",
-    improvement: "+5% improvement this month",
-  },
-  needsAttention: { department: "Marketing", note: "Below target performance" },
-};
+import { useEmployees } from "../contexts/EmployeeContext";
 
 /**
  * ComparisonSection - Department KPI comparison grid
  */
-const ComparisonSection = () => (
+const ComparisonSection = ({ departmentData }) => (
   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-    <DepartmentKPIChart data={DEPARTMENT_CHART_DATA} />
-    <DepartmentPerformanceList departments={DEPARTMENT_KPI} />
+    <DepartmentKPIChart data={departmentData} />
+    <DepartmentPerformanceList departments={departmentData} />
   </div>
 );
 
 /**
- * KPIPage - KPI tracking page
+ * KPIPage - KPI tracking page with real employee data
  */
 export const KPIPage = ({ onLogout, userName, userRole }) => {
+  const {
+    getOverallKPI,
+    getKPITrendData,
+    getDepartmentKPIStats,
+    getPerformanceInsights,
+  } = useEmployees();
+
+  const overallScore = getOverallKPI();
+  const trendData = getKPITrendData();
+  const departmentStats = getDepartmentKPIStats();
+  const performanceInsights = getPerformanceInsights();
+
+  // Calculate trend from last period
+  const lastTwoMonths = trendData.slice(-2);
+  const trend =
+    lastTwoMonths.length === 2
+      ? `↑ ${(lastTwoMonths[1].value - lastTwoMonths[0].value).toFixed(
+          1
+        )} points from last month`
+      : "N/A";
+
+  // Format department data for charts
+  const departmentChartData = departmentStats.map((dept) => ({
+    name: dept.department,
+    score: dept.score,
+    target: dept.target,
+  }));
+
   return (
     <DashboardLayout
       userRole={userRole}
@@ -57,13 +59,13 @@ export const KPIPage = ({ onLogout, userName, userRole }) => {
     >
       <KPIHeader />
 
-      <OverallKPICard score={8.5} trend="↑ 0.3 points from last month" />
+      <OverallKPICard score={overallScore} trend={trend} />
 
-      <KPITrendChartFull data={kpiTrendData} />
+      <KPITrendChartFull data={trendData} />
 
-      <ComparisonSection />
+      <ComparisonSection departmentData={departmentChartData} />
 
-      <PerformanceInsights insights={PERFORMANCE_INSIGHTS} />
+      <PerformanceInsights insights={performanceInsights} />
     </DashboardLayout>
   );
 };

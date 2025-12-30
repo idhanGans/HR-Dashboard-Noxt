@@ -5,3 +5,5 @@ export { DepartmentBreakdown } from "./DepartmentBreakdown";
 export { HRContactCard } from "./HRContactCard";
 export { EmployeeFormModal } from "./EmployeeFormModal";
 export { EmployeeHeader } from "./EmployeeHeader";
+export { KPIFormModal } from "./KPIFormModal";
+export { PayrollFormModal } from "./PayrollFormModal";

@@ -5,15 +5,16 @@ import {
   KPITrendChart,
   PayrollPieChart,
   QuickActions,
+  TopPerformersCard,
 } from "../components/dashboard";
 import {
   dashboardStats,
   attendanceData,
-  kpiTrendData,
   payrollByDepartment,
 } from "../utils/dummyData";
 import { TrendingUp, Users, Clock, DollarSign } from "lucide-react";
 import { formatIDR } from "../utils/format";
+import { useEmployees } from "../contexts/EmployeeContext";
 
 // Dashboard stats configuration
 const STATS_CONFIG = [
@@ -90,27 +91,48 @@ const StatsGrid = ({ stats }) => {
 /**
  * ChartsSection - Section containing attendance and KPI charts
  */
-const ChartsSection = () => (
+const ChartsSection = ({ kpiData }) => (
   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
     <AttendanceChart data={attendanceData} />
-    <KPITrendChart data={kpiTrendData} />
+    <KPITrendChart data={kpiData} />
   </div>
 );
 
 /**
- * BottomSection - Payroll pie chart and quick actions
+ * BottomSection - Payroll pie chart, quick actions, and top performers
  */
-const BottomSection = () => (
-  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+const BottomSection = ({ topPerformers }) => (
+  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
     <PayrollPieChart payrollData={payrollByDepartment} />
     <QuickActions />
+    <TopPerformersCard performers={topPerformers} />
   </div>
 );
 
 /**
- * AdminDashboard - Main admin dashboard view
+ * AdminDashboard - Main admin dashboard view with real employee data
  */
 const AdminDashboard = ({ onLogout, userName, userRole }) => {
+  const { getOverallKPI, getKPITrendData, getTopPerformers, employees } =
+    useEmployees();
+
+  // Get real-time data from employees
+  const overallKPI = getOverallKPI();
+  const kpiTrend = getKPITrendData();
+  const topPerformers = getTopPerformers(3);
+
+  // Calculate total employees (excluding former)
+  const totalEmployees = employees.filter(
+    (emp) => emp.employmentType !== "former"
+  ).length;
+
+  // Update dashboard stats with real data
+  const updatedStats = {
+    ...dashboardStats,
+    totalEmployees,
+    averageKPI: overallKPI,
+  };
+
   return (
     <DashboardLayout
       userRole={userRole}
@@ -118,9 +140,9 @@ const AdminDashboard = ({ onLogout, userName, userRole }) => {
       onLogout={onLogout}
     >
       <DashboardHeader />
-      <StatsGrid stats={dashboardStats} />
-      <ChartsSection />
-      <BottomSection />
+      <StatsGrid stats={updatedStats} />
+      <ChartsSection kpiData={kpiTrend} />
+      <BottomSection topPerformers={topPerformers} />
     </DashboardLayout>
   );
 };
