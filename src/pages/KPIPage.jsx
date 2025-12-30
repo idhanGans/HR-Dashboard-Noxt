@@ -7,15 +7,15 @@ import {
   PerformanceInsights,
   KPIHeader,
 } from "../components/kpi";
-import { useEmployees } from "../contexts/EmployeeContext";
+import { useEmployees } from "../hooks/useEmployees";
 
 /**
  * ComparisonSection - Department KPI comparison grid
  */
-const ComparisonSection = ({ departmentData }) => (
+const ComparisonSection = ({ chartData, listData }) => (
   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-    <DepartmentKPIChart data={departmentData} />
-    <DepartmentPerformanceList departments={departmentData} />
+    <DepartmentKPIChart data={chartData} />
+    <DepartmentPerformanceList departments={listData} />
   </div>
 );
 
@@ -49,6 +49,7 @@ export const KPIPage = ({ onLogout, userName, userRole }) => {
     name: dept.department,
     score: dept.score,
     target: dept.target,
+    trend: dept.trend,
   }));
 
   return (
@@ -63,7 +64,10 @@ export const KPIPage = ({ onLogout, userName, userRole }) => {
 
       <KPITrendChartFull data={trendData} />
 
-      <ComparisonSection departmentData={departmentChartData} />
+      <ComparisonSection
+        chartData={departmentChartData}
+        listData={departmentStats}
+      />
 
       <PerformanceInsights insights={performanceInsights} />
     </DashboardLayout>

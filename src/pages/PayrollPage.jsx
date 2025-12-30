@@ -8,7 +8,7 @@ import {
   PayrollHeader,
 } from "../components/payroll";
 import { Card } from "../components";
-import { useEmployees } from "../contexts/EmployeeContext";
+import { useEmployees } from "../hooks/useEmployees";
 
 /**
  * EmployeeSelector - Dropdown to select employee

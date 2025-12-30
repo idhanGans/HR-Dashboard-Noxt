@@ -14,7 +14,7 @@ import {
 } from "../utils/dummyData";
 import { TrendingUp, Users, Clock, DollarSign } from "lucide-react";
 import { formatIDR } from "../utils/format";
-import { useEmployees } from "../contexts/EmployeeContext";
+import { useEmployees } from "../hooks/useEmployees";
 
 // Dashboard stats configuration
 const STATS_CONFIG = [

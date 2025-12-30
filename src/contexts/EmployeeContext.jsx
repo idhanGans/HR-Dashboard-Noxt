@@ -1,7 +1,6 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { employees as seedEmployees } from "../utils/dummyData";
-
-const EmployeeContext = createContext(null);
+import { EmployeeContext } from "../hooks/useEmployees";
 
 /**
  * EmployeeProvider - Provides employee data across the application
@@ -233,15 +232,4 @@ export const EmployeeProvider = ({ children }) => {
       {children}
     </EmployeeContext.Provider>
   );
-};
-
-/**
- * useEmployees - Hook to access employee context
- */
-export const useEmployees = () => {
-  const context = useContext(EmployeeContext);
-  if (!context) {
-    throw new Error("useEmployees must be used within EmployeeProvider");
-  }
-  return context;
 };

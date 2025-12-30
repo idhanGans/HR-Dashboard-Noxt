@@ -5,3 +5,6 @@ const idrFormatter = new Intl.NumberFormat("id-ID", {
 });
 
 export const formatIDR = (value) => idrFormatter.format(value || 0);
+
+// Alias for currency formatting (used by payroll components)
+export const formatCurrency = (value) => formatIDR(value);

@@ -11,7 +11,7 @@ import {
   KPIFormModal,
   PayrollFormModal,
 } from "../components/employees";
-import { useEmployees } from "../contexts/EmployeeContext";
+import { useEmployees } from "../hooks/useEmployees";
 
 // Default empty form state
 const EMPTY_FORM = {
