@@ -338,8 +338,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Your Name**
 
-- GitHub: [@yourusername](https://github.com/yourusername)
-- LinkedIn: [Your LinkedIn](https://linkedin.com/in/yourprofile)
+- GitHub: [@yourusername](https://github.com/idhanGans)
 
 ---
 
@@ -366,6 +365,6 @@ If you have any questions or need help, please:
 
 **[⬆ Back to Top](#-hr-dashboard---noxt)**
 
-Made with ❤️ by Your Name
+Made by IdhanZarkasyah
 
 </div>
