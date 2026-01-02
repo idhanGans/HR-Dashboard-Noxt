@@ -338,7 +338,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Your Name**
 
-- GitHub: [@yourusername](https://github.com/idhanGans)
+- GitHub: [@idhanGans](https://github.com/idhanGans)
 
 ---
 
@@ -357,7 +357,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 If you have any questions or need help, please:
 
 - Open an issue on GitHub
-- Contact via email: your.email@example.com
 
 ---
 
