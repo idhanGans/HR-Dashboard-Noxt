@@ -5,8 +5,9 @@ import { formatIDR } from "../../utils/format";
  * PayslipCard - Main payslip display card with earnings and deductions
  * @param {Object} salaryBreakdown - Salary breakdown object
  * @param {Object} employee - Employee object
+ * @param {Object} payrollData - Optional detailed payroll data with breakdown
  */
-export const PayslipCard = ({ salaryBreakdown, employee }) => {
+export const PayslipCard = ({ salaryBreakdown, employee, payrollData }) => {
   const totalEarnings =
     salaryBreakdown.basicSalary +
     salaryBreakdown.allowances +
@@ -26,7 +27,10 @@ export const PayslipCard = ({ salaryBreakdown, employee }) => {
       />
 
       {/* Deductions Section */}
-      <DeductionsSection deductions={salaryBreakdown.deductions} />
+      <DeductionsSection 
+        deductions={salaryBreakdown.deductions}
+        payrollData={payrollData}
+      />
 
       {/* Net Salary */}
       <NetSalaryDisplay netSalary={salaryBreakdown.totalSalary} />
@@ -108,7 +112,64 @@ const EarningsSection = ({ basicSalary, allowances, bonus, total }) => {
 /**
  * DeductionsSection - Displays deductions breakdown
  */
-const DeductionsSection = ({ deductions }) => {
+const DeductionsSection = ({ deductions, payrollData }) => {
+  // Check if we have detailed payroll data structure (not just checking values)
+  const hasDetailedBreakdown = payrollData && 
+    (payrollData.tax !== undefined || 
+     payrollData.insurance !== undefined || 
+     payrollData.pension !== undefined || 
+     payrollData.otherDeductions !== undefined);
+
+  // If we have detailed payroll data, show breakdown
+  if (hasDetailedBreakdown) {
+    return (
+      <div className="mb-8">
+        <h3 className="text-lg font-semibold text-white mb-4">Deductions</h3>
+        <div className="space-y-3">
+          {payrollData.tax !== undefined && (
+            <div className="flex justify-between">
+              <span className="text-lightGrey">Tax</span>
+              <span className="text-white font-semibold">
+                {formatIDR(payrollData.tax || 0)}
+              </span>
+            </div>
+          )}
+          {payrollData.insurance !== undefined && (
+            <div className="flex justify-between">
+              <span className="text-lightGrey">Insurance</span>
+              <span className="text-white font-semibold">
+                {formatIDR(payrollData.insurance || 0)}
+              </span>
+            </div>
+          )}
+          {payrollData.pension !== undefined && (
+            <div className="flex justify-between">
+              <span className="text-lightGrey">Pension Fund</span>
+              <span className="text-white font-semibold">
+                {formatIDR(payrollData.pension || 0)}
+              </span>
+            </div>
+          )}
+          {payrollData.otherDeductions !== undefined && (
+            <div className="flex justify-between">
+              <span className="text-lightGrey">Other Deductions</span>
+              <span className="text-white font-semibold">
+                {formatIDR(payrollData.otherDeductions || 0)}
+              </span>
+            </div>
+          )}
+        </div>
+        <div className="border-t border-white/10 mt-4 pt-4 flex justify-between">
+          <span className="text-white font-semibold">Total Deductions</span>
+          <span className="text-red-400 font-bold text-lg">
+            {formatIDR(deductions)}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  // Fallback to simple display
   return (
     <div className="mb-8">
       <h3 className="text-lg font-semibold text-white mb-4">Deductions</h3>

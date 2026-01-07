@@ -55,6 +55,52 @@ export const EmployeeProvider = ({ children }) => {
     );
   };
 
+  // Add or update payroll history for a specific month
+  const addPayrollHistory = (employeeId, historyRecord) => {
+    setEmployees((prev) =>
+      prev.map((emp) => {
+        if (emp.id !== employeeId) return emp;
+
+        const history = emp.payrollHistory || [];
+        const existingIndex = history.findIndex(
+          (h) => h.month === historyRecord.month && h.year === historyRecord.year
+        );
+
+        let newHistory;
+        if (existingIndex >= 0) {
+          // Update existing record
+          newHistory = [...history];
+          newHistory[existingIndex] = historyRecord;
+        } else {
+          // Add new record
+          newHistory = [...history, historyRecord];
+        }
+
+        // Sort by year and month (most recent first)
+        newHistory.sort((a, b) => {
+          if (a.year !== b.year) return b.year - a.year;
+          return b.month - a.month;
+        });
+
+        return { ...emp, payrollHistory: newHistory };
+      })
+    );
+  };
+
+  // Get payroll history for a specific employee and period
+  const getPayrollHistory = (employeeId, month = null, year = null) => {
+    const employee = employees.find((emp) => emp.id === employeeId);
+    if (!employee || !employee.payrollHistory) return null;
+
+    if (month && year) {
+      return employee.payrollHistory.find(
+        (h) => h.month === month && h.year === year
+      );
+    }
+
+    return employee.payrollHistory;
+  };
+
   // Get department KPI averages
   const getDepartmentKPIStats = () => {
     const deptMap = {};
@@ -220,6 +266,8 @@ export const EmployeeProvider = ({ children }) => {
     deleteEmployee,
     updateEmployeeKPI,
     updateEmployeePayroll,
+    addPayrollHistory,
+    getPayrollHistory,
     getDepartmentKPIStats,
     getOverallKPI,
     getKPITrendData,
