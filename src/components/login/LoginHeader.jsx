@@ -5,7 +5,7 @@ export const LoginHeader = () => {
   return (
     <div className="text-center mb-8">
       <h1
-        className="text-4xl font-bold mb-2"
+        className="text-3xl sm:text-4xl font-bold mb-2"
         style={{
           background: "linear-gradient(90deg, #c0c0c0, #ffffff)",
           WebkitBackgroundClip: "text",

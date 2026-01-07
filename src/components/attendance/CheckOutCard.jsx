@@ -9,7 +9,7 @@ import { LogOut } from "lucide-react";
  */
 export const CheckOutCard = ({ isCheckedIn, onClick }) => {
   return (
-    <Card className="flex items-center justify-between">
+    <Card className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
         <h3 className="text-lg font-semibold text-white mb-2">Check-out</h3>
         <p className="text-sm text-lightGrey">Record your departure time</p>
@@ -17,7 +17,7 @@ export const CheckOutCard = ({ isCheckedIn, onClick }) => {
       <Button
         onClick={onClick}
         disabled={!isCheckedIn}
-        className="flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="flex items-center gap-2 w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <LogOut size={18} />
         Check-out

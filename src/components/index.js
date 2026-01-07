@@ -26,6 +26,9 @@ export * from "./payroll";
 // KPI Components
 export * from "./kpi";
 
+// Hiring Components
+export * from "./hiring";
+
 // Settings Components
 export * from "./settings";
 

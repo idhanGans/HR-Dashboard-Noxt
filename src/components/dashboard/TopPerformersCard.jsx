@@ -35,7 +35,7 @@ export const TopPerformersCard = ({ performers = [] }) => {
         {performers.map((emp, index) => (
           <div
             key={emp.id}
-            className="flex items-center gap-4 p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-colors"
+            className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-colors"
           >
             {/* Rank Badge */}
             <div
@@ -59,7 +59,7 @@ export const TopPerformersCard = ({ performers = [] }) => {
             </div>
 
             {/* KPI Score */}
-            <div className="text-right">
+            <div className="text-left sm:text-right">
               <div className="text-2xl font-bold text-white">
                 {emp.kpi?.currentScore?.toFixed(1)}
               </div>

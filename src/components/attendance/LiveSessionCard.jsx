@@ -35,7 +35,7 @@ const formatTime = (ts) =>
  */
 export const LiveSessionCard = ({ isCheckedIn, checkInTime, elapsed }) => {
   return (
-    <Card className="flex items-center justify-between">
+    <Card className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
         <h3 className="text-lg font-semibold text-white mb-2">Live Session</h3>
         <p className="text-sm text-lightGrey">
@@ -44,7 +44,7 @@ export const LiveSessionCard = ({ isCheckedIn, checkInTime, elapsed }) => {
             : "Not checked in yet"}
         </p>
       </div>
-      <div className="text-right">
+      <div className="text-left sm:text-right">
         <p className="text-xs text-lightGrey mb-1">Elapsed</p>
         <p className="text-2xl font-bold text-white">
           {isCheckedIn ? formatHMS(elapsed) : "00:00:00"}

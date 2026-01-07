@@ -36,7 +36,7 @@ export const NotificationSettings = ({
         {notificationOptions.map(({ key, label, desc }) => (
           <div
             key={key}
-            className="flex items-center justify-between p-4 bg-white/5 rounded-lg border border-white/10"
+            className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 bg-white/5 rounded-lg border border-white/10"
           >
             <div>
               <p className="text-white font-medium">{label}</p>

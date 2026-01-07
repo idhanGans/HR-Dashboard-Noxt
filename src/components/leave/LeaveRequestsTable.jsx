@@ -19,9 +19,9 @@ export const LeaveRequestsTable = ({ records }) => {
   ];
 
   return (
-    <Card>
+    <Card className="overflow-hidden">
       <h2 className="text-lg font-bold text-white mb-4">Leave Requests</h2>
-      <Table columns={columns} data={records} />
+      <Table columns={columns} data={records} mobileVariant="table" />
     </Card>
   );
 };

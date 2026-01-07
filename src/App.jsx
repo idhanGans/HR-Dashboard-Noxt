@@ -8,6 +8,7 @@ import {
   PayrollPage,
   KPIPage,
   EmployeesPage,
+  HiringPage,
   LeavePage,
   SettingsPage,
 } from "./pages";
@@ -112,6 +113,15 @@ function App() {
             element={
               <ProtectedRoute isAuthenticated={auth.isAuthenticated}>
                 <EmployeesPage {...layoutProps} />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route 
+            path="/hiring"
+            element={
+              <ProtectedRoute isAuthenticated={auth.isAuthenticated}>
+                <HiringPage {...layoutProps} />
               </ProtectedRoute>
             }
           />

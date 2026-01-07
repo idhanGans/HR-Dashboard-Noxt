@@ -5,6 +5,7 @@ import {
   DollarSign,
   TrendingUp,
   Users,
+  UserPlus,
   LogOut,
   Calendar,
   Settings,
@@ -20,6 +21,7 @@ export const Sidebar = ({ userRole, onLogout, isOpen = false, onClose }) => {
     { label: "Payroll", path: "/payroll", icon: DollarSign },
     { label: "KPI Tracker", path: "/kpi", icon: TrendingUp },
     { label: "Employees", path: "/employees", icon: Users },
+    { label: "Hiring", path: "/hiring", icon: UserPlus }, 
     { label: "Leave", path: "/leave", icon: Calendar },
     { label: "Settings", path: "/settings", icon: Settings },
   ];
@@ -35,7 +37,7 @@ export const Sidebar = ({ userRole, onLogout, isOpen = false, onClose }) => {
       )}
 
       <aside
-        className={`fixed left-0 top-0 w-64 h-screen bg-gradient-sidebar border-r border-white/10 p-6 flex flex-col transform transition-transform duration-200 z-50 lg:z-auto lg:translate-x-0 ${
+        className={`fixed left-0 top-0 w-64 h-screen bg-gradient-sidebar border-r border-white/10 p-6 flex flex-col overflow-y-auto transform transition-transform duration-200 z-50 lg:z-auto lg:translate-x-0 ${
           isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >

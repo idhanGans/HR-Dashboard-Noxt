@@ -684,3 +684,137 @@ export const userProfile = {
   email: "john.doe@company.com",
   phone: "+1 (555) 123-4567",
 };
+
+export const departmentList = [
+  "Engineering",
+  "Sales",
+  "Marketing",
+  "HR",
+  "Product",
+  "Operations",
+  "Finance",
+  "Customer Success",
+];
+
+export const leaveRecords = [
+  {
+    date: "2024-12-25 to 2024-12-26",
+    type: "Paid Leave",
+    status: "approved",
+    days: 2,
+  },
+  {
+    date: "2024-11-20 to 2024-11-22",
+    type: "Sick Leave",
+    status: "approved",
+    days: 3,
+  },
+  {
+    date: "2024-10-15 to 2024-10-18",
+    type: "Vacation",
+    status: "approved",
+    days: 4,
+  },
+  {
+    date: "2025-01-15 to 2025-01-18",
+    type: "Vacation",
+    status: "pending",
+    days: 4,
+  },
+];
+
+export const leaveBalance = [
+  { type: "Paid Leave", balance: 8, used: 4, total: 12 },
+  { type: "Sick Leave", balance: 5, used: 3, total: 8 },
+  { type: "Vacation", balance: 6, used: 4, total: 10 },
+];
+
+export const hiringStats = [
+  { label: "Open Roles", value: 8, note: "+2 this month" },
+  { label: "Active Candidates", value: 42, note: "12 in final stage" },
+  { label: "Interviews This Week", value: 17, note: "3 today" },
+  { label: "Offers Sent", value: 5, note: "2 pending response" },
+];
+
+export const openPositions = [
+  {
+    role: "Senior Frontend Engineer",
+    department: "Engineering",
+    manager: "A. Johnson",
+    applicants: 18,
+    stage: "Technical Screen",
+    status: "Open",
+  },
+  {
+    role: "Product Designer",
+    department: "Product",
+    manager: "S. Patel",
+    applicants: 12,
+    stage: "Portfolio Review",
+    status: "Open",
+  },
+  {
+    role: "Account Executive",
+    department: "Sales",
+    manager: "M. Tan",
+    applicants: 9,
+    stage: "First Interview",
+    status: "Open",
+  },
+  {
+    role: "People Ops Specialist",
+    department: "HR",
+    manager: "R. Gomez",
+    applicants: 6,
+    stage: "Offer Prep",
+    status: "On Hold",
+  },
+];
+
+export const candidatePipeline = [
+  {
+    name: "Dana Kim",
+    role: "Senior Frontend Engineer",
+    stage: "Panel Interview",
+    score: "8.9/10",
+  },
+  {
+    name: "Arjun Mehta",
+    role: "Product Designer",
+    stage: "Design Challenge",
+    score: "8.4/10",
+  },
+  {
+    name: "Lina Alvarez",
+    role: "Account Executive",
+    stage: "Final Interview",
+    score: "8.7/10",
+  },
+  {
+    name: "Marcus Lee",
+    role: "People Ops Specialist",
+    stage: "Offer Review",
+    score: "8.1/10",
+  },
+];
+
+export const interviewSchedule = [
+  {
+    time: "09:30",
+    candidate: "Dana Kim",
+    role: "Senior Frontend Engineer",
+    interviewers: "A. Johnson, K. Reed",
+  },
+  {
+    time: "11:00",
+    candidate: "Arjun Mehta",
+    role: "Product Designer",
+    interviewers: "S. Patel, L. Wu",
+  },
+  {
+    time: "14:30",
+    candidate: "Lina Alvarez",
+    role: "Account Executive",
+    interviewers: "M. Tan, J. Ortiz",
+  },
+];

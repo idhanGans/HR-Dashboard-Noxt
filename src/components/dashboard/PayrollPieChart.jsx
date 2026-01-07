@@ -19,32 +19,34 @@ export const PayrollPieChart = ({ payrollData, colors = DEFAULT_COLORS }) => {
       <h2 className="text-lg font-bold text-white mb-4">
         Payroll by Department
       </h2>
-      <ResponsiveContainer width="100%" height={300}>
-        <PieChart>
-          <Pie
-            data={chartData}
-            cx="50%"
-            cy="50%"
-            labelLine={false}
-            label={({ name, percent }) =>
-              `${name} ${(percent * 100).toFixed(0)}%`
-            }
-            outerRadius={80}
-            fill="#8884d8"
-            dataKey="value"
-          >
-            {colors.map((color, idx) => (
-              <Cell key={`cell-${idx}`} fill={color} />
-            ))}
-          </Pie>
-          <Tooltip
-            contentStyle={{
-              backgroundColor: "#2a2a2a",
-              border: "1px solid #ffffff20",
-            }}
-          />
-        </PieChart>
-      </ResponsiveContainer>
+      <div className="h-64 sm:h-72">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={chartData}
+              cx="50%"
+              cy="50%"
+              labelLine={false}
+              label={({ name, percent }) =>
+                `${name} ${(percent * 100).toFixed(0)}%`
+              }
+              outerRadius={80}
+              fill="#8884d8"
+              dataKey="value"
+            >
+              {colors.map((color, idx) => (
+                <Cell key={`cell-${idx}`} fill={color} />
+              ))}
+            </Pie>
+            <Tooltip
+              contentStyle={{
+                backgroundColor: "#2a2a2a",
+                border: "1px solid #ffffff20",
+              }}
+            />
+          </PieChart>
+        </ResponsiveContainer>
+      </div>
     </Card>
   );
 };
