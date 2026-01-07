@@ -14,7 +14,7 @@ export const PayslipCard = ({ salaryBreakdown, employee, payrollData }) => {
     salaryBreakdown.bonus;
 
   return (
-    <Card className="p-8">
+    <Card className="p-4 sm:p-8">
       {/* Header */}
       <PayslipHeader employee={employee} />
 
@@ -60,14 +60,14 @@ const PayslipHeader = ({ employee }) => {
           </p>
         </div>
       )}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <p className="text-lightGrey text-sm">Period: {period}</p>
           <p className="text-lightGrey text-sm">
             Employee ID: {employee?.id || "N/A"}
           </p>
         </div>
-        <div className="text-right">
+        <div className="text-left sm:text-right">
           <p className="text-lightGrey text-sm">Issue Date: {issueDate}</p>
           <p className="text-lightGrey text-sm">Status: Processed</p>
         </div>
@@ -203,8 +203,8 @@ const DeductionsSection = ({ deductions, payrollData }) => {
  */
 const NetSalaryDisplay = ({ netSalary }) => {
   return (
-    <div className="bg-gradient-to-r from-green-900/30 to-green-800/30 border border-green-400/30 rounded-lg p-4 flex justify-between items-center">
-      <span className="text-lg font-semibold text-white">
+    <div className="bg-gradient-to-r from-green-900/30 to-green-800/30 border border-green-400/30 rounded-lg p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+      <span className="text-base sm:text-lg font-semibold text-white">
         Net Salary (Take Home)
       </span>
       <span className="text-2xl font-bold text-green-400">

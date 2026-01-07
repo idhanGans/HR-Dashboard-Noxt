@@ -121,7 +121,7 @@ export const EmployeeTable = ({
 
   return (
     <Card className="mb-8">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
         <h2 className="text-lg font-bold text-white">All Employees</h2>
         <p className="text-xs text-lightGrey">
           Manage employee details, KPI, and payroll

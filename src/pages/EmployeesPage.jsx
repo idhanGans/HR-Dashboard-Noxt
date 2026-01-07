@@ -11,18 +11,7 @@ import {
   PayrollFormModal,
 } from "../components/employees";
 import { useEmployeeManagement } from "../hooks/useEmployeeManagement";
-
-// Department list for breakdown
-const DEPARTMENTS = [
-  "Engineering",
-  "Sales",
-  "Marketing",
-  "HR",
-  "Product",
-  "Operations",
-  "Finance",
-  "Customer Success",
-];
+import { departmentList } from "../utils/dummyData";
 
 /**
  * EmployeesPage - Employee management page with add/edit and employment type controls
@@ -89,7 +78,7 @@ export const EmployeesPage = ({ onLogout, userName, userRole }) => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <DepartmentBreakdown
           employees={employeeList}
-          departments={DEPARTMENTS}
+          departments={departmentList}
         />
         <HRContactCard />
       </div>

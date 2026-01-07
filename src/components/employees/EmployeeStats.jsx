@@ -33,7 +33,7 @@ export const EmployeeStats = ({ counts }) => {
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
       {stats.map(({ label, value, description, color }) => (
         <Card key={label}>
           <p className="text-lightGrey text-sm mb-2">{label}</p>

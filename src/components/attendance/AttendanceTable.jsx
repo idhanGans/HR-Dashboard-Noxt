@@ -19,9 +19,9 @@ export const AttendanceTable = ({ records }) => {
   ];
 
   return (
-    <Card>
+    <Card className="overflow-hidden">
       <h2 className="text-lg font-bold text-white mb-4">Attendance Records</h2>
-      <Table columns={columns} data={records} />
+      <Table columns={columns} data={records} mobileVariant="table" />
     </Card>
   );
 };

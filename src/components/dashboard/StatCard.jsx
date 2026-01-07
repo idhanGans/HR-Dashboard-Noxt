@@ -14,10 +14,10 @@ export const StatCard = ({ label, value, icon: Icon, color, trend }) => {
       <div className="flex items-start justify-between mb-4">
         <div>
           <p className="text-lightGrey text-sm mb-2">{label}</p>
-          <p className="text-2xl font-bold text-white">{value}</p>
+          <p className="text-xl sm:text-2xl font-bold text-white">{value}</p>
         </div>
-        <div className={`bg-gradient-to-br ${color} p-3 rounded-lg`}>
-          <Icon size={24} className="text-white" />
+        <div className={`bg-gradient-to-br ${color} p-2 sm:p-3 rounded-lg`}>
+          <Icon size={22} className="text-white" />
         </div>
       </div>
       {trend && <div className="text-xs text-green-400">{trend}</div>}

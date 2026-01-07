@@ -20,7 +20,7 @@ export const DashboardLayout = ({ children, userRole, userName, onLogout }) => {
       />
 
       {/* Main Content */}
-      <main className="flex-1 lg:ml-64 flex flex-col">
+      <main className="flex-1 min-w-0 lg:ml-64 flex flex-col">
         {/* Topbar */}
         <Topbar
           userName={userName}
@@ -29,7 +29,7 @@ export const DashboardLayout = ({ children, userRole, userName, onLogout }) => {
         />
 
         {/* Page Content */}
-        <div className="flex-1 overflow-auto mt-20 p-4 sm:p-6 lg:p-8">
+        <div className="flex-1 min-w-0 overflow-auto mt-16 sm:mt-20 p-4 sm:p-6 lg:p-8">
           <div className="max-w-7xl mx-auto">{children}</div>
         </div>
       </main>

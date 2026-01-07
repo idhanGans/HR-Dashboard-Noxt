@@ -18,26 +18,28 @@ export const KPITrendChart = ({ data, title = "KPI Trend" }) => {
   return (
     <Card className="flex flex-col">
       <h2 className="text-lg font-bold text-white mb-4">{title}</h2>
-      <ResponsiveContainer width="100%" height={300}>
-        <LineChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#ffffff20" />
-          <XAxis dataKey="month" stroke="#9ca3af" />
-          <YAxis stroke="#9ca3af" />
-          <Tooltip
-            contentStyle={{
-              backgroundColor: "#2a2a2a",
-              border: "1px solid #ffffff20",
-            }}
-          />
-          <Line
-            type="monotone"
-            dataKey="value"
-            stroke="#c0c0c0"
-            strokeWidth={3}
-            dot={{ fill: "#c0c0c0", r: 5 }}
-          />
-        </LineChart>
-      </ResponsiveContainer>
+      <div className="h-64 sm:h-72">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={data}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#ffffff20" />
+            <XAxis dataKey="month" stroke="#9ca3af" />
+            <YAxis stroke="#9ca3af" />
+            <Tooltip
+              contentStyle={{
+                backgroundColor: "#2a2a2a",
+                border: "1px solid #ffffff20",
+              }}
+            />
+            <Line
+              type="monotone"
+              dataKey="value"
+              stroke="#c0c0c0"
+              strokeWidth={3}
+              dot={{ fill: "#c0c0c0", r: 5 }}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
     </Card>
   );
 };

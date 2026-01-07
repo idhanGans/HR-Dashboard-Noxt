@@ -5,7 +5,7 @@
 export const LoginCard = ({ children }) => {
   return (
     <div
-      className="glass-card w-full max-w-md p-8 border shadow-glass"
+      className="glass-card w-full max-w-md p-6 sm:p-8 border shadow-glass"
       style={{
         backgroundColor: "rgba(0, 0, 0, 0.3)",
         backdropFilter: "blur(10px)",

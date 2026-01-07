@@ -17,11 +17,13 @@ export const CheckInModal = ({ isOpen, onClose, onConfirm }) => {
         <p className="text-lightGrey text-sm">
           Confirm your check-in for today?
         </p>
-        <div className="flex gap-3">
-          <Button variant="secondary" onClick={onClose}>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <Button variant="secondary" onClick={onClose} className="w-full">
             Cancel
           </Button>
-          <Button onClick={onConfirm}>Confirm Check-in</Button>
+          <Button onClick={onConfirm} className="w-full">
+            Confirm Check-in
+          </Button>
         </div>
       </div>
     </Modal>

@@ -9,9 +9,9 @@ import { Button } from "../Button";
  */
 export const EmployeeHeader = ({ search, onSearchChange, onAddClick }) => {
   return (
-    <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div className="mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
       <div>
-        <h1 className="text-3xl font-bold text-white mb-2">
+        <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">
           Employee Directory
         </h1>
         <p className="text-lightGrey">
@@ -19,14 +19,17 @@ export const EmployeeHeader = ({ search, onSearchChange, onAddClick }) => {
           type.
         </p>
       </div>
-      <div className="flex gap-3">
+      <div className="flex flex-col sm:flex-row gap-3">
         <input
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder="Search by name"
-          className="glass-input w-60"
+          className="glass-input w-full sm:w-60"
         />
-        <Button onClick={onAddClick} className="flex items-center gap-2">
+        <Button
+          onClick={onAddClick}
+          className="flex items-center gap-2 w-full sm:w-auto"
+        >
           <Plus size={18} />
           Add Employee
         </Button>

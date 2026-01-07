@@ -7,7 +7,7 @@ export const Topbar = ({
   onToggleSidebar,
 }) => {
   return (
-    <div className="fixed top-0 left-0 lg:left-64 right-0 bg-black/30 backdrop-blur-md border-b border-white/10 px-4 sm:px-6 py-4 flex items-center justify-between gap-3 z-40">
+    <div className="fixed top-0 left-0 lg:left-64 right-0 bg-black/30 backdrop-blur-md border-b border-white/10 px-4 sm:px-6 py-2 sm:py-4 flex items-center gap-3 z-40">
       {/* Mobile menu button */}
       <button
         className="lg:hidden text-white hover:text-silver"
@@ -17,8 +17,8 @@ export const Topbar = ({
         <Menu size={22} />
       </button>
       {/* Search Bar */}
-      <div className="flex-1 max-w-md">
-        <div className="glass-input flex items-center gap-2 bg-white/5 border border-white/20 text-white rounded-lg px-4 py-2">
+      <div className="flex-1 min-w-0 max-w-[200px] sm:max-w-md">
+        <div className="glass-input flex items-center gap-2 bg-white/5 border border-white/20 text-white rounded-lg px-3 sm:px-4 py-2">
           <Search size={18} className="text-lightGrey" />
           <input
             type="text"
@@ -29,7 +29,7 @@ export const Topbar = ({
       </div>
 
       {/* Right Icons */}
-      <div className="flex items-center gap-3 sm:gap-4">
+      <div className="flex items-center gap-3 sm:gap-4 ml-auto">
         {/* Notification */}
         <button className="relative text-lightGrey hover:text-white transition-all">
           <Bell size={20} />
@@ -40,7 +40,7 @@ export const Topbar = ({
 
         {/* User Avatar */}
         <div className="flex items-center gap-3">
-          <div className="text-right">
+          <div className="text-right hidden sm:block">
             <p className="text-sm font-medium text-white">{userName}</p>
             <p className="text-xs text-lightGrey">{userRole}</p>
           </div>

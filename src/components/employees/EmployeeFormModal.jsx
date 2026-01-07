@@ -123,11 +123,11 @@ export const EmployeeFormModal = ({
           </div>
         </div>
 
-        <div className="flex justify-end gap-3 pt-2">
-          <Button variant="secondary" onClick={onClose}>
+        <div className="flex flex-col sm:flex-row justify-end gap-3 pt-2">
+          <Button variant="secondary" onClick={onClose} className="w-full sm:w-auto">
             Cancel
           </Button>
-          <Button onClick={onSave}>
+          <Button onClick={onSave} className="w-full sm:w-auto">
             {mode === "add" ? "Add" : "Save"} Employee
           </Button>
         </div>

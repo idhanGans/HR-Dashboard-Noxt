@@ -10,11 +10,17 @@ import {
 import { PayrollFormModal } from "../components/employees";
 import { Card } from "../components";
 import { useEmployees } from "../hooks/useEmployees";
+import { useMediaQuery } from "../hooks/useMediaQuery";
 
 /**
  * EmployeeSelector - Dropdown to select employee
  */
-const EmployeeSelector = ({ employees, selectedId, onChange }) => (
+const EmployeeSelector = ({
+  employees,
+  selectedId,
+  onChange,
+  isCompactLabel,
+}) => (
   <Card className="mb-6">
     <label className="block text-sm font-medium text-gray-300 mb-2">
       Select Employee
@@ -29,7 +35,9 @@ const EmployeeSelector = ({ employees, selectedId, onChange }) => (
         .filter((emp) => emp.employmentType !== "former")
         .map((emp) => (
           <option key={emp.id} value={emp.id}>
-            {emp.name} - {emp.department} ({emp.role})
+            {isCompactLabel
+              ? `${emp.name} - ${emp.department}`
+              : `${emp.name} - ${emp.department} (${emp.role})`}
           </option>
         ))}
     </select>
@@ -178,6 +186,7 @@ export const PayrollPage = ({ onLogout, userName, userRole }) => {
     month: new Date().getMonth() + 1,
     year: new Date().getFullYear(),
   });
+  const isCompactLabel = useMediaQuery("(max-width: 639px)");
 
   const selectedEmployee = employees.find(
     (emp) => emp.id === selectedEmployeeId
@@ -342,6 +351,7 @@ export const PayrollPage = ({ onLogout, userName, userRole }) => {
         employees={employees}
         selectedId={selectedEmployeeId}
         onChange={setSelectedEmployeeId}
+        isCompactLabel={isCompactLabel}
       />
 
       {selectedEmployee && (

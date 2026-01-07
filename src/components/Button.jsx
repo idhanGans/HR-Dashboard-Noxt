@@ -8,7 +8,7 @@ export const Button = ({
   const variants = {
     primary: "glass-button",
     secondary:
-      "bg-white/10 border border-white/20 text-white hover:bg-white/20 px-6 py-2 rounded-lg transition-all",
+      "bg-white/10 border border-white/20 text-white hover:bg-white/20 px-4 py-2 sm:px-6 rounded-lg transition-all",
     ghost: "text-white hover:text-silver transition-all",
   };
 
