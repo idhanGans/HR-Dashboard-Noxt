@@ -26,9 +26,15 @@ export const PayrollFormModal = ({
 
     // Recalculate deductions and net salary
     const totalDeductions =
-      (field === 'tax' || field === 'insurance' || field === 'pension' || field === 'otherDeductions'
-        ? (updated.tax || 0) + (updated.insurance || 0) + (updated.pension || 0) + (updated.otherDeductions || 0)
-        : updated.deductions || 0);
+      field === "tax" ||
+      field === "insurance" ||
+      field === "pension" ||
+      field === "otherDeductions"
+        ? (updated.tax || 0) +
+          (updated.insurance || 0) +
+          (updated.pension || 0) +
+          (updated.otherDeductions || 0)
+        : updated.deductions || 0;
 
     const netSalary =
       (updated.basicSalary || 0) +
@@ -131,7 +137,10 @@ export const PayrollFormModal = ({
               <select
                 value={payrollData.month || new Date().getMonth() + 1}
                 onChange={(e) =>
-                  onPayrollChange({ ...payrollData, month: parseInt(e.target.value) })
+                  onPayrollChange({
+                    ...payrollData,
+                    month: parseInt(e.target.value),
+                  })
                 }
                 className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors"
               >
@@ -157,7 +166,10 @@ export const PayrollFormModal = ({
                 type="number"
                 value={payrollData.year || new Date().getFullYear()}
                 onChange={(e) =>
-                  onPayrollChange({ ...payrollData, year: parseInt(e.target.value) })
+                  onPayrollChange({
+                    ...payrollData,
+                    year: parseInt(e.target.value),
+                  })
                 }
                 className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors"
                 placeholder="2026"
@@ -215,14 +227,18 @@ export const PayrollFormModal = ({
               <input
                 type="number"
                 value={payrollData.otherDeductions || 0}
-                onChange={(e) => handleFieldChange("otherDeductions", e.target.value)}
+                onChange={(e) =>
+                  handleFieldChange("otherDeductions", e.target.value)
+                }
                 className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-red-500 focus:outline-none transition-colors"
                 placeholder="0"
               />
             </div>
             <div className="border-t border-white/10 pt-4">
               <div className="flex justify-between">
-                <span className="text-gray-300 font-medium">Total Deductions</span>
+                <span className="text-gray-300 font-medium">
+                  Total Deductions
+                </span>
                 <span className="text-red-400 font-semibold">
                   {formatCurrency(totalDeductions)}
                 </span>

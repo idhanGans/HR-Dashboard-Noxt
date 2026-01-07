@@ -39,15 +39,30 @@ const EmployeeSelector = ({ employees, selectedId, onChange }) => (
 /**
  * MonthYearFilter - Dropdown to filter by month and year
  */
-const MonthYearFilter = ({ selectedMonth, selectedYear, onChange, employee }) => {
+const MonthYearFilter = ({
+  selectedMonth,
+  selectedYear,
+  onChange,
+  employee,
+}) => {
   const months = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
   ];
-  
+
   // Generate available periods from payroll history
   const availablePeriods = employee?.payrollHistory || [];
-  
+
   return (
     <Card className="mb-6">
       <div className="flex items-center justify-between">
@@ -93,8 +108,8 @@ const MonthYearFilter = ({ selectedMonth, selectedYear, onChange, employee }) =>
  */
 const MainPayslipSection = ({ salaryBreakdown, employee, payrollData }) => (
   <div className="lg:col-span-2">
-    <PayslipCard 
-      salaryBreakdown={salaryBreakdown} 
+    <PayslipCard
+      salaryBreakdown={salaryBreakdown}
       employee={employee}
       payrollData={payrollData}
     />
@@ -107,7 +122,7 @@ const MainPayslipSection = ({ salaryBreakdown, employee, payrollData }) => (
 const SidebarSection = ({ salaryBreakdown, employee, onDownload, onEdit }) => (
   <div className="space-y-6">
     <PayrollSummary salaryBreakdown={salaryBreakdown} />
-    
+
     {/* Edit Payroll Button */}
     <button
       onClick={onEdit}
@@ -128,7 +143,7 @@ const SidebarSection = ({ salaryBreakdown, employee, onDownload, onEdit }) => (
       </svg>
       Edit Payroll
     </button>
-    
+
     <DownloadPayslipButton onDownload={onDownload} />
     <PaymentInfoCard employee={employee} />
   </div>
@@ -138,7 +153,12 @@ const SidebarSection = ({ salaryBreakdown, employee, onDownload, onEdit }) => (
  * PayrollPage - Payroll and salary slip page with employee selection
  */
 export const PayrollPage = ({ onLogout, userName, userRole }) => {
-  const { employees, addPayrollHistory, getPayrollHistory, updateEmployeePayroll } = useEmployees();
+  const {
+    employees,
+    addPayrollHistory,
+    getPayrollHistory,
+    updateEmployeePayroll,
+  } = useEmployees();
   const [selectedEmployeeId, setSelectedEmployeeId] = useState(null);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
@@ -198,11 +218,23 @@ export const PayrollPage = ({ onLogout, userName, userRole }) => {
       return;
     }
     const monthNames = [
-      "January", "February", "March", "April", "May", "June",
-      "July", "August", "September", "October", "November", "December"
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
     ];
     alert(
-      `✓ Payslip for ${selectedEmployee.name} (${monthNames[selectedMonth - 1]} ${selectedYear}) downloaded successfully!`
+      `✓ Payslip for ${selectedEmployee.name} (${
+        monthNames[selectedMonth - 1]
+      } ${selectedYear}) downloaded successfully!`
     );
   };
 
@@ -211,15 +243,23 @@ export const PayrollPage = ({ onLogout, userName, userRole }) => {
 
     // Populate form with current payroll data or defaults
     setPayrollFormData({
-      basicSalary: payrollData?.basicSalary || selectedEmployee.payroll?.basicSalary || 0,
-      allowances: payrollData?.allowances || selectedEmployee.payroll?.allowances || 0,
+      basicSalary:
+        payrollData?.basicSalary || selectedEmployee.payroll?.basicSalary || 0,
+      allowances:
+        payrollData?.allowances || selectedEmployee.payroll?.allowances || 0,
       bonus: payrollData?.bonus || selectedEmployee.payroll?.bonus || 0,
       tax: payrollData?.tax || selectedEmployee.payroll?.tax || 0,
-      insurance: payrollData?.insurance || selectedEmployee.payroll?.insurance || 0,
+      insurance:
+        payrollData?.insurance || selectedEmployee.payroll?.insurance || 0,
       pension: payrollData?.pension || selectedEmployee.payroll?.pension || 0,
-      otherDeductions: payrollData?.otherDeductions || selectedEmployee.payroll?.otherDeductions || 0,
-      deductions: payrollData?.deductions || selectedEmployee.payroll?.deductions || 0,
-      netSalary: payrollData?.netSalary || selectedEmployee.payroll?.netSalary || 0,
+      otherDeductions:
+        payrollData?.otherDeductions ||
+        selectedEmployee.payroll?.otherDeductions ||
+        0,
+      deductions:
+        payrollData?.deductions || selectedEmployee.payroll?.deductions || 0,
+      netSalary:
+        payrollData?.netSalary || selectedEmployee.payroll?.netSalary || 0,
       bankName: selectedEmployee.payroll?.bankName || "",
       bankAccount: selectedEmployee.payroll?.bankAccount || "",
       month: selectedMonth,

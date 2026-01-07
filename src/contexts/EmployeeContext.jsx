@@ -63,7 +63,8 @@ export const EmployeeProvider = ({ children }) => {
 
         const history = emp.payrollHistory || [];
         const existingIndex = history.findIndex(
-          (h) => h.month === historyRecord.month && h.year === historyRecord.year
+          (h) =>
+            h.month === historyRecord.month && h.year === historyRecord.year
         );
 
         let newHistory;

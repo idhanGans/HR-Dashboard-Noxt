@@ -27,7 +27,7 @@ export const PayslipCard = ({ salaryBreakdown, employee, payrollData }) => {
       />
 
       {/* Deductions Section */}
-      <DeductionsSection 
+      <DeductionsSection
         deductions={salaryBreakdown.deductions}
         payrollData={payrollData}
       />
@@ -114,11 +114,12 @@ const EarningsSection = ({ basicSalary, allowances, bonus, total }) => {
  */
 const DeductionsSection = ({ deductions, payrollData }) => {
   // Check if we have detailed payroll data structure (not just checking values)
-  const hasDetailedBreakdown = payrollData && 
-    (payrollData.tax !== undefined || 
-     payrollData.insurance !== undefined || 
-     payrollData.pension !== undefined || 
-     payrollData.otherDeductions !== undefined);
+  const hasDetailedBreakdown =
+    payrollData &&
+    (payrollData.tax !== undefined ||
+      payrollData.insurance !== undefined ||
+      payrollData.pension !== undefined ||
+      payrollData.otherDeductions !== undefined);
 
   // If we have detailed payroll data, show breakdown
   if (hasDetailedBreakdown) {
