@@ -25,6 +25,10 @@ enum EmploymentType {
   FORMER
 }
 
+enum PayrollStatus {
+  PROCESSED // TODO: Add other statuses when workflow is defined
+}
+
 model User {
   id                      Int            @id @default(autoincrement())
   fullName                String
@@ -48,6 +52,7 @@ model User {
   supervisedOrganizations Organization[] @relation("OrganizationSupervisor")
   createdAt               DateTime       @default(now())
   updatedAt               DateTime       @updatedAt
+  payrolls                Payroll[]
 
   @@index([organizationId])
   @@index([email])
@@ -63,4 +68,25 @@ model Organization {
   updatedAt    DateTime @updatedAt
 
   @@index([supervisorId])
+}
+
+model Payroll {
+  id              Int           @id @default(autoincrement())
+  userId          Int
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  month           Int
+  year            Int
+  baseSalary      Decimal
+  allowance       Decimal?      @default(0)
+  bonuses         Decimal?      @default(0)
+  tax             Decimal?      @default(0)
+  insurance       Decimal?      @default(0)
+  pensionFund     Decimal?      @default(0)
+  otherDeductions Decimal?      @default(0)
+  status          PayrollStatus @default(PROCESSED)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@unique([userId, month, year])
+  @@index([userId])
 }
