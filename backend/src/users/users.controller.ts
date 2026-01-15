@@ -3,10 +3,13 @@ import {
   Get,
   Post,
   Put,
+  Delete,
   Body,
   Param,
+  Query,
   HttpCode,
   HttpStatus,
+  ParseIntPipe,
 } from "@nestjs/common";
 import {
   ApiTags,
@@ -14,9 +17,16 @@ import {
   ApiResponse,
   ApiParam,
   ApiBody,
+  ApiQuery,
 } from "@nestjs/swagger";
 import { UsersService } from "@/users/users.service";
-import { CreateUserDto, UpdateUserDto, UserResponseDto } from "@/users/dto";
+import {
+  CreateUserDto,
+  UpdateUserDto,
+  UserResponseDto,
+  PaginatedUsersResponseDto,
+} from "@/users/dto";
+import { PaginationQueryDto } from "@/common/dto";
 
 @ApiTags("users")
 @Controller("users")
@@ -33,37 +43,43 @@ export class UsersController {
     type: UserResponseDto,
   })
   @ApiResponse({ status: 400, description: "Validation failed" })
-  createUser(@Body() createUserDto: CreateUserDto): UserResponseDto {
-    return this.usersService.createUser(createUserDto);
+  async create(@Body() createUserDto: CreateUserDto): Promise<UserResponseDto> {
+    return this.usersService.create(createUserDto);
   }
 
   @Get()
-  @ApiOperation({ summary: "Get all users" })
+  @ApiOperation({ summary: "Get all users (paginated)" })
+  @ApiQuery({ name: "page", required: false, type: Number, example: 1 })
+  @ApiQuery({ name: "limit", required: false, type: Number, example: 10 })
   @ApiResponse({
     status: 200,
-    description: "Returns all users",
-    type: [UserResponseDto],
+    description: "Returns paginated list of users",
+    type: PaginatedUsersResponseDto,
   })
-  getAllUsers(): UserResponseDto[] {
-    return this.usersService.getAllUsers();
+  async findAll(
+    @Query() paginationQuery: PaginationQueryDto,
+  ): Promise<PaginatedUsersResponseDto> {
+    return this.usersService.findAll(paginationQuery);
   }
 
   @Get(":id")
   @ApiOperation({ summary: "Get a user by ID" })
-  @ApiParam({ name: "id", description: "User ID", example: "1" })
+  @ApiParam({ name: "id", description: "User ID", example: 1, type: Number })
   @ApiResponse({
     status: 200,
     description: "Returns the user",
     type: UserResponseDto,
   })
   @ApiResponse({ status: 404, description: "User not found" })
-  getUserById(@Param("id") id: string): UserResponseDto {
-    return this.usersService.getUserById(id);
+  async findOne(
+    @Param("id", ParseIntPipe) id: number,
+  ): Promise<UserResponseDto> {
+    return this.usersService.findOne(id);
   }
 
   @Put(":id")
   @ApiOperation({ summary: "Update a user" })
-  @ApiParam({ name: "id", description: "User ID", example: "1" })
+  @ApiParam({ name: "id", description: "User ID", example: 1, type: Number })
   @ApiBody({ type: UpdateUserDto })
   @ApiResponse({
     status: 200,
@@ -72,10 +88,27 @@ export class UsersController {
   })
   @ApiResponse({ status: 400, description: "Validation failed" })
   @ApiResponse({ status: 404, description: "User not found" })
-  updateUser(
-    @Param("id") id: string,
+  async update(
+    @Param("id", ParseIntPipe) id: number,
     @Body() updateUserDto: UpdateUserDto,
-  ): UserResponseDto {
-    return this.usersService.updateUser(id, updateUserDto);
+  ): Promise<UserResponseDto> {
+    return this.usersService.update(id, updateUserDto);
+  }
+
+  @Delete(":id")
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: "Delete a user" })
+  @ApiParam({ name: "id", description: "User ID", example: 1, type: Number })
+  @ApiResponse({
+    status: 204,
+    description: "User deleted successfully",
+  })
+  @ApiResponse({
+    status: 400,
+    description: "Cannot delete user (supervises organizations)",
+  })
+  @ApiResponse({ status: 404, description: "User not found" })
+  async remove(@Param("id", ParseIntPipe) id: number): Promise<void> {
+    return this.usersService.remove(id);
   }
 }
