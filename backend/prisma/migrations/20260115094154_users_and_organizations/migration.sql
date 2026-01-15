@@ -42,6 +42,9 @@ CREATE TABLE "Organization" (
 );
 
 -- CreateIndex
+CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
+
+-- CreateIndex
 CREATE INDEX "User_organizationId_idx" ON "User"("organizationId");
 
 -- CreateIndex
