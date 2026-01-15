@@ -12,6 +12,7 @@ import {
 } from "@/users/dto";
 import { PaginationQueryDto } from "@/common/dto";
 import { Prisma } from "@prisma/client";
+import * as bcrypt from "bcrypt";
 
 @Injectable()
 export class UsersService {
@@ -30,11 +31,13 @@ export class UsersService {
       }
     }
 
+    const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
+
     const user = await this.prisma.user.create({
       data: {
         fullName: createUserDto.fullName,
         email: createUserDto.email,
-        password: createUserDto.password,
+        password: hashedPassword,
         phoneNumber: createUserDto.phoneNumber,
         roleName: createUserDto.roleName,
         role: createUserDto.role,
@@ -221,31 +224,48 @@ export class UsersService {
       }
     }
 
+    // Prepare update data
+    const updateData: Prisma.UserUpdateInput = {
+      fullName: updateUserDto.fullName,
+      email: updateUserDto.email,
+      phoneNumber: updateUserDto.phoneNumber,
+      roleName: updateUserDto.roleName,
+      role: updateUserDto.role,
+      employmentType: updateUserDto.employmentType,
+      taxNumber: updateUserDto.taxNumber,
+      identityNumber: updateUserDto.identityNumber,
+      startDate: updateUserDto.startDate
+        ? new Date(updateUserDto.startDate)
+        : undefined,
+      leaveDate: updateUserDto.leaveDate
+        ? new Date(updateUserDto.leaveDate)
+        : undefined,
+      location: updateUserDto.location,
+      bankNumber: updateUserDto.bankNumber,
+      bankName: updateUserDto.bankName,
+      bankAccountHolderName: updateUserDto.bankAccountHolderName,
+      photoUrl: updateUserDto.photoUrl,
+    };
+
+    // Handle organization relation
+    if (updateUserDto.organizationId !== undefined) {
+      if (updateUserDto.organizationId === null) {
+        updateData.organization = { disconnect: true };
+      } else {
+        updateData.organization = {
+          connect: { id: updateUserDto.organizationId },
+        };
+      }
+    }
+
+    // Hash password if provided
+    if (updateUserDto.password) {
+      updateData.password = await bcrypt.hash(updateUserDto.password, 10);
+    }
+
     const user = await this.prisma.user.update({
       where: { id },
-      data: {
-        fullName: updateUserDto.fullName,
-        email: updateUserDto.email,
-        password: updateUserDto.password,
-        phoneNumber: updateUserDto.phoneNumber,
-        roleName: updateUserDto.roleName,
-        role: updateUserDto.role,
-        employmentType: updateUserDto.employmentType,
-        taxNumber: updateUserDto.taxNumber,
-        identityNumber: updateUserDto.identityNumber,
-        startDate: updateUserDto.startDate
-          ? new Date(updateUserDto.startDate)
-          : undefined,
-        leaveDate: updateUserDto.leaveDate
-          ? new Date(updateUserDto.leaveDate)
-          : undefined,
-        location: updateUserDto.location,
-        bankNumber: updateUserDto.bankNumber,
-        bankName: updateUserDto.bankName,
-        bankAccountHolderName: updateUserDto.bankAccountHolderName,
-        photoUrl: updateUserDto.photoUrl,
-        organizationId: updateUserDto.organizationId,
-      },
+      data: updateData,
       select: {
         id: true,
         fullName: true,

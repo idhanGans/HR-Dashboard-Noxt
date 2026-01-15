@@ -30,6 +30,7 @@ async function bootstrap() {
     .setDescription("API documentation for HR Dashboard")
     .setVersion("1.0")
     .addTag("hr")
+    .addBearerAuth()
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup("api/docs", app, document);

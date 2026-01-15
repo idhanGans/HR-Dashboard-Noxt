@@ -10,6 +10,7 @@ import {
   HttpCode,
   HttpStatus,
   ParseIntPipe,
+  UseGuards,
 } from "@nestjs/common";
 import {
   ApiTags,
@@ -18,6 +19,7 @@ import {
   ApiParam,
   ApiBody,
   ApiQuery,
+  ApiBearerAuth,
 } from "@nestjs/swagger";
 import { OrganizationsService } from "@/organizations/organizations.service";
 import {
@@ -27,14 +29,21 @@ import {
   PaginatedOrganizationsResponseDto,
 } from "@/organizations/dto";
 import { PaginationQueryDto } from "@/common/dto";
+import { Role } from "@/users/dto";
+import { JwtAuthGuard } from "@/auth/guards/jwt-auth.guard";
+import { RolesGuard } from "@/auth/guards/roles.guard";
+import { Roles } from "@/auth/decorators/roles.decorator";
 
 @ApiTags("organizations")
 @Controller("organizations")
+@UseGuards(JwtAuthGuard, RolesGuard)
+@ApiBearerAuth()
 export class OrganizationsController {
   constructor(private readonly organizationsService: OrganizationsService) {}
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
+  @Roles(Role.SUPERADMIN)
   @ApiOperation({ summary: "Create a new organization" })
   @ApiBody({ type: CreateOrganizationDto })
   @ApiResponse({
@@ -43,6 +52,11 @@ export class OrganizationsController {
     type: OrganizationResponseDto,
   })
   @ApiResponse({ status: 400, description: "Validation failed" })
+  @ApiResponse({ status: 401, description: "Unauthorized" })
+  @ApiResponse({
+    status: 403,
+    description: "Forbidden - Insufficient permissions",
+  })
   @ApiResponse({ status: 404, description: "Supervisor not found" })
   async create(
     @Body() createOrganizationDto: CreateOrganizationDto,
@@ -51,6 +65,7 @@ export class OrganizationsController {
   }
 
   @Get()
+  @Roles(Role.SUPERADMIN)
   @ApiOperation({ summary: "Get all organizations (paginated and searchable)" })
   @ApiQuery({ name: "page", required: false, type: Number, example: 1 })
   @ApiQuery({ name: "limit", required: false, type: Number, example: 10 })
@@ -73,6 +88,7 @@ export class OrganizationsController {
   }
 
   @Get(":id")
+  @Roles(Role.SUPERVISOR)
   @ApiOperation({ summary: "Get an organization by ID" })
   @ApiParam({
     name: "id",
@@ -85,6 +101,11 @@ export class OrganizationsController {
     description: "Returns the organization",
     type: OrganizationResponseDto,
   })
+  @ApiResponse({ status: 401, description: "Unauthorized" })
+  @ApiResponse({
+    status: 403,
+    description: "Forbidden - Insufficient permissions",
+  })
   @ApiResponse({ status: 404, description: "Organization not found" })
   async findOne(
     @Param("id", ParseIntPipe) id: number,
@@ -93,6 +114,7 @@ export class OrganizationsController {
   }
 
   @Put(":id")
+  @Roles(Role.SUPERVISOR)
   @ApiOperation({ summary: "Update an organization" })
   @ApiParam({
     name: "id",
@@ -107,6 +129,11 @@ export class OrganizationsController {
     type: OrganizationResponseDto,
   })
   @ApiResponse({ status: 400, description: "Validation failed" })
+  @ApiResponse({ status: 401, description: "Unauthorized" })
+  @ApiResponse({
+    status: 403,
+    description: "Forbidden - Insufficient permissions",
+  })
   @ApiResponse({ status: 404, description: "Organization not found" })
   async update(
     @Param("id", ParseIntPipe) id: number,
@@ -117,6 +144,7 @@ export class OrganizationsController {
 
   @Delete(":id")
   @HttpCode(HttpStatus.NO_CONTENT)
+  @Roles(Role.SUPERADMIN)
   @ApiOperation({ summary: "Delete an organization" })
   @ApiParam({
     name: "id",
@@ -131,6 +159,11 @@ export class OrganizationsController {
   @ApiResponse({
     status: 400,
     description: "Cannot delete organization (has members)",
+  })
+  @ApiResponse({ status: 401, description: "Unauthorized" })
+  @ApiResponse({
+    status: 403,
+    description: "Forbidden - Insufficient permissions",
   })
   @ApiResponse({ status: 404, description: "Organization not found" })
   async remove(@Param("id", ParseIntPipe) id: number): Promise<void> {
