@@ -12,3 +12,55 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+enum Role {
+  SUPERADMIN
+  SUPERVISOR
+  EMPLOYEE
+}
+
+enum EmploymentType {
+  PERMANENT
+  TEMPORARY
+  FORMER
+}
+
+model User {
+  id                      Int            @id @default(autoincrement())
+  fullName                String
+  email                   String         @unique
+  password                String
+  phoneNumber             String?
+  roleName                String?
+  role                    Role
+  employmentType          EmploymentType
+  taxNumber               String?
+  identityNumber          String?
+  startDate               DateTime?
+  leaveDate               DateTime?
+  location                String?
+  bankNumber              String?
+  bankName                String?
+  bankAccountHolderName   String?
+  photoUrl                String?
+  organizationId          Int?
+  organization            Organization?  @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  supervisedOrganizations Organization[] @relation("OrganizationSupervisor")
+  createdAt               DateTime       @default(now())
+  updatedAt               DateTime       @updatedAt
+
+  @@index([organizationId])
+  @@index([email])
+}
+
+model Organization {
+  id           Int      @id @default(autoincrement())
+  name         String
+  supervisorId Int
+  supervisor   User     @relation("OrganizationSupervisor", fields: [supervisorId], references: [id], onDelete: Restrict)
+  members      User[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([supervisorId])
+}
