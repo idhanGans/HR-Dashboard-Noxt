@@ -11,7 +11,7 @@ import {
   PaginatedOrganizationsResponseDto,
 } from "@/organizations/dto";
 import { PaginationQueryDto } from "@/common/dto";
-import { Role as PrismaRole } from "@prisma/client";
+import { Role as PrismaRole, Prisma } from "@prisma/client";
 
 @Injectable()
 export class OrganizationsService {
@@ -111,8 +111,18 @@ export class OrganizationsService {
     const limit = paginationQuery.limit ?? 10;
     const skip = (page - 1) * limit;
 
+    const where: Prisma.OrganizationWhereInput = paginationQuery.search
+      ? {
+          name: {
+            contains: paginationQuery.search,
+            mode: "insensitive",
+          },
+        }
+      : {};
+
     const [organizations, total] = await Promise.all([
       this.prisma.organization.findMany({
+        where,
         skip,
         take: limit,
         select: {
@@ -169,7 +179,7 @@ export class OrganizationsService {
           updatedAt: true,
         },
       }),
-      this.prisma.organization.count(),
+      this.prisma.organization.count({ where }),
     ]);
 
     const totalPages = Math.ceil(total / limit);

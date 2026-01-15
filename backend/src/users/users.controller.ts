@@ -48,9 +48,16 @@ export class UsersController {
   }
 
   @Get()
-  @ApiOperation({ summary: "Get all users (paginated)" })
+  @ApiOperation({ summary: "Get all users (paginated and searchable)" })
   @ApiQuery({ name: "page", required: false, type: Number, example: 1 })
   @ApiQuery({ name: "limit", required: false, type: Number, example: 10 })
+  @ApiQuery({
+    name: "search",
+    required: false,
+    type: String,
+    description: "Search by user full name (case-insensitive)",
+    example: "john",
+  })
   @ApiResponse({
     status: 200,
     description: "Returns paginated list of users",

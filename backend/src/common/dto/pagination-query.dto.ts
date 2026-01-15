@@ -1,4 +1,4 @@
-import { IsOptional, IsInt, Min } from "class-validator";
+import { IsOptional, IsInt, Min, IsString } from "class-validator";
 import { ApiPropertyOptional } from "@nestjs/swagger";
 import { Type } from "class-transformer";
 
@@ -26,4 +26,12 @@ export class PaginationQueryDto {
   @IsInt()
   @Min(1)
   limit?: number;
+
+  @ApiPropertyOptional({
+    description: "Search query (case-insensitive search by name)",
+    example: "john",
+  })
+  @IsOptional()
+  @IsString()
+  search?: string;
 }

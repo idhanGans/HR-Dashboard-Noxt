@@ -11,6 +11,7 @@ import {
   PaginatedUsersResponseDto,
 } from "@/users/dto";
 import { PaginationQueryDto } from "@/common/dto";
+import { Prisma } from "@prisma/client";
 
 @Injectable()
 export class UsersService {
@@ -94,8 +95,18 @@ export class UsersService {
     const limit = paginationQuery.limit ?? 10;
     const skip = (page - 1) * limit;
 
+    const where: Prisma.UserWhereInput = paginationQuery.search
+      ? {
+          fullName: {
+            contains: paginationQuery.search,
+            mode: "insensitive",
+          },
+        }
+      : {};
+
     const [users, total] = await Promise.all([
       this.prisma.user.findMany({
+        where,
         skip,
         take: limit,
         select: {
@@ -128,7 +139,7 @@ export class UsersService {
           updatedAt: true,
         },
       }),
-      this.prisma.user.count(),
+      this.prisma.user.count({ where }),
     ]);
 
     const totalPages = Math.ceil(total / limit);

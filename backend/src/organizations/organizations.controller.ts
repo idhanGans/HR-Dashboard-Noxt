@@ -51,9 +51,16 @@ export class OrganizationsController {
   }
 
   @Get()
-  @ApiOperation({ summary: "Get all organizations (paginated)" })
+  @ApiOperation({ summary: "Get all organizations (paginated and searchable)" })
   @ApiQuery({ name: "page", required: false, type: Number, example: 1 })
   @ApiQuery({ name: "limit", required: false, type: Number, example: 10 })
+  @ApiQuery({
+    name: "search",
+    required: false,
+    type: String,
+    description: "Search by organization name (case-insensitive)",
+    example: "engineering",
+  })
   @ApiResponse({
     status: 200,
     description: "Returns paginated list of organizations",
