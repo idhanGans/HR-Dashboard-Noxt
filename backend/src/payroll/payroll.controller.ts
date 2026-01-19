@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Param,
@@ -8,11 +9,15 @@ import {
   Post,
   Put,
   Query,
+  StreamableFile,
+  UseGuards,
 } from "@nestjs/common";
 import {
   ApiBody,
   ApiOperation,
   ApiParam,
+  ApiBearerAuth,
+  ApiProduces,
   ApiQuery,
   ApiResponse,
   ApiTags,
@@ -24,14 +29,56 @@ import {
   PayrollResponseDto,
   UpdatePayrollDto,
 } from "@/payroll/dto";
+import { JwtAuthGuard } from "@/auth/guards/jwt-auth.guard";
+import { RolesGuard } from "@/auth/guards/roles.guard";
+import { SelfOrRoles, Roles } from "@/auth/decorators/roles.decorator";
+import { Role } from "@/users/dto";
+import { SelfOrRolesGuard } from "@/auth/guards/self-or-roles.guard";
 
 @ApiTags("payroll")
 @Controller("payroll")
+@UseGuards(JwtAuthGuard, SelfOrRolesGuard, RolesGuard)
+@ApiBearerAuth()
 export class PayrollController {
   constructor(private readonly payrollService: PayrollService) {}
 
+  @Get(":userId")
+  @ApiOperation({ summary: "Get payroll for a user by period" })
+  @SelfOrRoles("userId", Role.SUPERADMIN)
+  @ApiParam({
+    name: "userId",
+    description: "User ID",
+    example: 1,
+    type: Number,
+  })
+  @ApiQuery({
+    name: "month",
+    description: "Payroll Month",
+    example: 1,
+    type: Number,
+  })
+  @ApiQuery({
+    name: "year",
+    description: "Payroll Year",
+    example: 2024,
+    type: Number,
+  })
+  @ApiResponse({
+    status: 200,
+    description: "Payroll retrieved successfully",
+    type: PayrollResponseDto,
+  })
+  @ApiResponse({ status: 404, description: "Payroll not found" })
+  async findByPeriod(
+    @Param("userId", ParseIntPipe) userId: number,
+    @Query() period: PayrollPeriodDto,
+  ): Promise<PayrollResponseDto> {
+    return this.payrollService.findByPeriod(userId, period.month, period.year);
+  }
+
   @Post(":userId")
   @HttpCode(HttpStatus.CREATED)
+  @Roles(Role.SUPERADMIN)
   @ApiOperation({ summary: "Create payroll for a user" })
   @ApiParam({
     name: "userId",
@@ -59,6 +106,7 @@ export class PayrollController {
 
   @Put(":userId")
   @ApiOperation({ summary: "Update payroll for a user by period" })
+  @Roles(Role.SUPERADMIN)
   @ApiParam({
     name: "userId",
     description: "User ID",
@@ -95,5 +143,49 @@ export class PayrollController {
       period.year,
       updatePayrollDto,
     );
+  }
+
+  @Get(":userId/payslip")
+  @ApiOperation({ summary: "Download payslip PDF for a user by period" })
+  @SelfOrRoles("userId", Role.SUPERADMIN)
+  @ApiParam({
+    name: "userId",
+    description: "User ID",
+    example: 1,
+    type: Number,
+  })
+  @ApiQuery({
+    name: "month",
+    description: "Payroll Month",
+    example: 1,
+    type: Number,
+  })
+  @ApiQuery({
+    name: "year",
+    description: "Payroll Year",
+    example: 2024,
+    type: Number,
+  })
+  @ApiProduces("application/pdf")
+  @ApiResponse({
+    status: 200,
+    description: "Payslip PDF generated successfully",
+  })
+  @ApiResponse({ status: 404, description: "Payroll not found" })
+  async downloadPayslip(
+    @Param("userId", ParseIntPipe) userId: number,
+    @Query() period: PayrollPeriodDto,
+  ): Promise<StreamableFile> {
+    const pdfBuffer = await this.payrollService.generatePayslipPdf(
+      userId,
+      period.month,
+      period.year,
+    );
+    const filename = `payslip_${userId}_${period.year}_${period.month}.pdf`;
+
+    return new StreamableFile(pdfBuffer, {
+      type: "application/pdf",
+      disposition: `attachment; filename="${filename}"`,
+    });
   }
 }
