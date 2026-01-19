@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { Role, EmploymentType } from "./create-user.dto";
+import { Role, EmploymentType } from "@/users/dto/create-user.dto";
 
 export class OrganizationBasicDto {
   @ApiProperty({ description: "Organization ID", example: 1 })

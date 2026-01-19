@@ -18,6 +18,9 @@ export class AuthService {
   async login(loginDto: LoginDto): Promise<AuthResponseDto> {
     const user = await this.prisma.user.findUnique({
       where: { email: loginDto.email },
+      omit: {
+        password: false, // Override global omit to include password for login
+      },
     });
 
     if (!user) {
