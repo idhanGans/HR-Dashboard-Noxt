@@ -57,34 +57,8 @@ export class UsersService {
         photoUrl: createUserDto.photoUrl,
         organizationId: createUserDto.organizationId,
       },
-      select: {
-        id: true,
-        fullName: true,
-        email: true,
-        phoneNumber: true,
-        roleName: true,
-        role: true,
-        employmentType: true,
-        taxNumber: true,
-        identityNumber: true,
-        startDate: true,
-        leaveDate: true,
-        location: true,
-        bankNumber: true,
-        bankName: true,
-        bankAccountHolderName: true,
-        photoUrl: true,
-        organizationId: true,
-        organization: {
-          select: {
-            id: true,
-            name: true,
-            createdAt: true,
-            updatedAt: true,
-          },
-        },
-        createdAt: true,
-        updatedAt: true,
+      include: {
+        organization: true,
       },
     });
 
@@ -159,34 +133,8 @@ export class UsersService {
   async findOne(id: number): Promise<UserResponseDto> {
     const user = await this.prisma.user.findUnique({
       where: { id },
-      select: {
-        id: true,
-        fullName: true,
-        email: true,
-        phoneNumber: true,
-        roleName: true,
-        role: true,
-        employmentType: true,
-        taxNumber: true,
-        identityNumber: true,
-        startDate: true,
-        leaveDate: true,
-        location: true,
-        bankNumber: true,
-        bankName: true,
-        bankAccountHolderName: true,
-        photoUrl: true,
-        organizationId: true,
-        organization: {
-          select: {
-            id: true,
-            name: true,
-            createdAt: true,
-            updatedAt: true,
-          },
-        },
-        createdAt: true,
-        updatedAt: true,
+      include: {
+        organization: true,
       },
     });
 
@@ -266,34 +214,8 @@ export class UsersService {
     const user = await this.prisma.user.update({
       where: { id },
       data: updateData,
-      select: {
-        id: true,
-        fullName: true,
-        email: true,
-        phoneNumber: true,
-        roleName: true,
-        role: true,
-        employmentType: true,
-        taxNumber: true,
-        identityNumber: true,
-        startDate: true,
-        leaveDate: true,
-        location: true,
-        bankNumber: true,
-        bankName: true,
-        bankAccountHolderName: true,
-        photoUrl: true,
-        organizationId: true,
-        organization: {
-          select: {
-            id: true,
-            name: true,
-            createdAt: true,
-            updatedAt: true,
-          },
-        },
-        createdAt: true,
-        updatedAt: true,
+      include: {
+        organization: true,
       },
     });
 

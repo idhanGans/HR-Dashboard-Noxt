@@ -46,6 +46,8 @@ model User {
   organizationId          Int?
   organization            Organization?  @relation(fields: [organizationId], references: [id], onDelete: SetNull)
   supervisedOrganizations Organization[] @relation("OrganizationSupervisor")
+  scoredKpis              KpiScore[]     @relation("ScoredUser")
+  scoredKpisAsScorer      KpiScore[]     @relation("Scorer")
   createdAt               DateTime       @default(now())
   updatedAt               DateTime       @updatedAt
 
@@ -63,4 +65,69 @@ model Organization {
   updatedAt    DateTime @updatedAt
 
   @@index([supervisorId])
+}
+
+model KpiMetric {
+  id          Int       @id @default(autoincrement())
+  name        String
+  description String?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  targets     KpiTarget[]
+  scores      KpiScore[]
+
+  @@index([isActive])
+}
+
+model KpiPeriod {
+  id        Int        @id @default(autoincrement())
+  name      String
+  startDate DateTime
+  endDate   DateTime
+  isActive  Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  targets   KpiTarget[]
+  scores    KpiScore[]
+
+  @@unique([startDate, endDate])
+  @@index([isActive])
+  @@index([startDate, endDate])
+}
+
+model KpiTarget {
+  id        Int      @id @default(autoincrement())
+  metricId  Int
+  periodId  Int
+  target    Decimal  @db.Decimal(3, 1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  metric    KpiMetric @relation(fields: [metricId], references: [id], onDelete: Restrict)
+  period    KpiPeriod @relation(fields: [periodId], references: [id], onDelete: Restrict)
+
+  @@unique([metricId, periodId])
+  @@index([periodId])
+  @@index([metricId])
+}
+
+model KpiScore {
+  id          Int      @id @default(autoincrement())
+  periodId    Int
+  metricId    Int
+  scoredUserId Int
+  scorerId    Int
+  score       Decimal  @db.Decimal(3, 1)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  period      KpiPeriod @relation(fields: [periodId], references: [id], onDelete: Restrict)
+  metric      KpiMetric @relation(fields: [metricId], references: [id], onDelete: Restrict)
+  scoredUser  User     @relation("ScoredUser", fields: [scoredUserId], references: [id], onDelete: Restrict)
+  scorer      User     @relation("Scorer", fields: [scorerId], references: [id], onDelete: Restrict)
+
+  @@unique([periodId, metricId, scoredUserId, scorerId])
+  @@index([periodId])
+  @@index([scoredUserId])
+  @@index([scorerId])
+  @@index([metricId])
 }
