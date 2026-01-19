@@ -25,8 +25,10 @@ import {
 import { PayrollService } from "./payroll.service";
 import {
   CreatePayrollDto,
+  DepartmentPayrollTotalDto,
   PayrollPeriodDto,
   PayrollResponseDto,
+  PayrollTotalDto,
   UpdatePayrollDto,
 } from "@/payroll/dto";
 import { JwtAuthGuard } from "@/auth/guards/jwt-auth.guard";
@@ -41,6 +43,8 @@ import { SelfOrRolesGuard } from "@/auth/guards/self-or-roles.guard";
 @ApiBearerAuth()
 export class PayrollController {
   constructor(private readonly payrollService: PayrollService) {}
+
+
 
   @Get(":userId")
   @ApiOperation({ summary: "Get payroll for a user by period" })
@@ -187,5 +191,53 @@ export class PayrollController {
       type: "application/pdf",
       disposition: `attachment; filename="${filename}"`,
     });
+  }
+  
+  @Get("stats/department")
+  @Roles(Role.SUPERADMIN)
+  @ApiOperation({
+    summary: "Get total payroll by department for a given period",
+  })
+  @ApiQuery({
+    name: "month",
+    description: "Payroll Month",
+    example: 1,
+    type: Number,
+  })
+  @ApiQuery({
+    name: "year",
+    description: "Payroll Year",
+    example: 2024,
+    type: Number,
+  })
+  @ApiResponse({
+    status: 200,
+    description: "Totals by department",
+    type: DepartmentPayrollTotalDto,
+    isArray: true,
+  })
+  async getDepartmentTotals(
+    @Query() period: PayrollPeriodDto,
+  ): Promise<DepartmentPayrollTotalDto[]> {
+    return this.payrollService.getDepartmentTotals(
+      period.month,
+      period.year,
+    );
+  }
+
+  @Get("stats/total-current-month")
+  @Roles(Role.SUPERADMIN)
+  @ApiOperation({ summary: "Get total payroll for the current month" })
+  @ApiResponse({
+    status: 200,
+    description: "Total payroll for current month",
+    type: PayrollTotalDto,
+  })
+  async getTotalForCurrentMonth(): Promise<PayrollTotalDto> {
+    const now = new Date();
+    const month = now.getMonth() + 1;
+    const year = now.getFullYear();
+
+    return this.payrollService.getTotalForMonth(month, year);
   }
 }
