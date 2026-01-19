@@ -20,12 +20,12 @@ import {
   ApiQuery,
   ApiBearerAuth,
 } from "@nestjs/swagger";
-import { PeriodsService } from "./periods.service";
+import { PeriodsService } from "@/kpi/periods/periods.service";
 import {
   CreatePeriodDto,
   PeriodResponseDto,
   PaginatedPeriodsResponseDto,
-} from "../dto";
+} from "@/kpi/dto";
 import { PaginationQueryDto } from "@/common/dto";
 import { JwtAuthGuard } from "@/auth/guards/jwt-auth.guard";
 import { RolesGuard } from "@/auth/guards/roles.guard";

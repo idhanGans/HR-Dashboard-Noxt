@@ -6,7 +6,7 @@ import {
   ApiQuery,
   ApiBearerAuth,
 } from "@nestjs/swagger";
-import { StatisticsService } from "./statistics.service";
+import { StatisticsService } from "@/kpi/statistics/statistics.service";
 import {
   CompanyOverallResponseDto,
   TrendsResponseDto,
@@ -18,7 +18,7 @@ import {
   DepartmentsQueryDto,
   TopPerformersQueryDto,
   InsightsQueryDto,
-} from "../dto";
+} from "@/kpi/dto";
 import { JwtAuthGuard } from "@/auth/guards/jwt-auth.guard";
 import { RolesGuard } from "@/auth/guards/roles.guard";
 import { Roles } from "@/auth/decorators/roles.decorator";

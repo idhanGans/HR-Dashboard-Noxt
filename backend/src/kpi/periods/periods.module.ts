@@ -1,6 +1,6 @@
 import { Module } from "@nestjs/common";
-import { PeriodsController } from "./periods.controller";
-import { PeriodsService } from "./periods.service";
+import { PeriodsController } from "@/kpi/periods/periods.controller";
+import { PeriodsService } from "@/kpi/periods/periods.service";
 import { PrismaModule } from "@/prisma/prisma.module";
 
 @Module({

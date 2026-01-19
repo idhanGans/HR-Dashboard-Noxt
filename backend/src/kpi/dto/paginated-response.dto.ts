@@ -1,9 +1,9 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { PaginatedResponseDto } from "@/common/dto";
-import { MetricResponseDto } from "./metric-response.dto";
-import { PeriodResponseDto } from "./period-response.dto";
-import { TargetResponseDto } from "./target-response.dto";
-import { ScoreResponseDto } from "./score-response.dto";
+import { MetricResponseDto } from "@/kpi/dto/metric-response.dto";
+import { PeriodResponseDto } from "@/kpi/dto/period-response.dto";
+import { TargetResponseDto } from "@/kpi/dto/target-response.dto";
+import { ScoreResponseDto } from "@/kpi/dto/score-response.dto";
 
 export class PaginatedMetricsResponseDto extends PaginatedResponseDto<MetricResponseDto> {
   @ApiProperty({ description: "List of metrics", type: [MetricResponseDto] })

@@ -1,6 +1,6 @@
 import { Module } from "@nestjs/common";
-import { MetricsController } from "./metrics.controller";
-import { MetricsService } from "./metrics.service";
+import { MetricsController } from "@/kpi/metrics/metrics.controller";
+import { MetricsService } from "@/kpi/metrics/metrics.service";
 import { PrismaModule } from "@/prisma/prisma.module";
 
 @Module({

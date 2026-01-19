@@ -1,9 +1,9 @@
 import { Module } from "@nestjs/common";
-import { MetricsModule } from "./metrics/metrics.module";
-import { PeriodsModule } from "./periods/periods.module";
-import { TargetsModule } from "./targets/targets.module";
-import { ScoresModule } from "./scores/scores.module";
-import { StatisticsModule } from "./statistics/statistics.module";
+import { MetricsModule } from "@/kpi/metrics/metrics.module";
+import { PeriodsModule } from "@/kpi/periods/periods.module";
+import { TargetsModule } from "@/kpi/targets/targets.module";
+import { ScoresModule } from "@/kpi/scores/scores.module";
+import { StatisticsModule } from "@/kpi/statistics/statistics.module";
 
 @Module({
   imports: [

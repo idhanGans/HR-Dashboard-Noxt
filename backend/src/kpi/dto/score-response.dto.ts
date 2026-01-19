@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { MetricResponseDto } from "./metric-response.dto";
-import { PeriodResponseDto } from "./period-response.dto";
+import { MetricResponseDto } from "@/kpi/dto/metric-response.dto";
+import { PeriodResponseDto } from "@/kpi/dto/period-response.dto";
 import { UserResponseDto } from "@/users/dto";
 
 export class ScoreResponseDto {

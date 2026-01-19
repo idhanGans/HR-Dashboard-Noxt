@@ -8,7 +8,7 @@ import {
   CreatePeriodDto,
   PeriodResponseDto,
   PaginatedPeriodsResponseDto,
-} from "../dto";
+} from "@/kpi/dto";
 import { PaginationQueryDto } from "@/common/dto";
 import { Prisma } from "@prisma/client";
 

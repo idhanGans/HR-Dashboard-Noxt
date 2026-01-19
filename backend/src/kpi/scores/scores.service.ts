@@ -14,12 +14,12 @@ import {
   PaginatedScoresResponseDto,
   PeriodResponseDto,
   MetricResponseDto,
-} from "../dto";
+} from "@/kpi/dto";
 import { PaginationQueryDto } from "@/common/dto";
 import { Prisma, Role as PrismaRole } from "@prisma/client";
 import { Decimal } from "@prisma/client/runtime/library";
-import { MetricsService } from "../metrics/metrics.service";
-import { PeriodsService } from "../periods/periods.service";
+import { MetricsService } from "@/kpi/metrics/metrics.service";
+import { PeriodsService } from "@/kpi/periods/periods.service";
 
 @Injectable()
 export class ScoresService {

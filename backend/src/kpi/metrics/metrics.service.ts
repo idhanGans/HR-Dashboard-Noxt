@@ -5,7 +5,7 @@ import {
   UpdateMetricDto,
   MetricResponseDto,
   PaginatedMetricsResponseDto,
-} from "../dto";
+} from "@/kpi/dto";
 import { PaginationQueryDto } from "@/common/dto";
 import { Prisma } from "@prisma/client";
 

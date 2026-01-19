@@ -20,7 +20,7 @@ import {
   ApiQuery,
   ApiBearerAuth,
 } from "@nestjs/swagger";
-import { ScoresService } from "./scores.service";
+import { ScoresService } from "@/kpi/scores/scores.service";
 import {
   CreateScoreDto,
   UpdateScoreDto,
@@ -28,7 +28,7 @@ import {
   BulkScoreResponseDto,
   ScoreResponseDto,
   PaginatedScoresResponseDto,
-} from "../dto";
+} from "@/kpi/dto";
 import { PaginationQueryDto } from "@/common/dto";
 import { JwtAuthGuard } from "@/auth/guards/jwt-auth.guard";
 import { RolesGuard } from "@/auth/guards/roles.guard";

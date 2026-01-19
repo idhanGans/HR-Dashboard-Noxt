@@ -21,13 +21,13 @@ import {
   ApiQuery,
   ApiBearerAuth,
 } from "@nestjs/swagger";
-import { MetricsService } from "./metrics.service";
+import { MetricsService } from "@/kpi/metrics/metrics.service";
 import {
   CreateMetricDto,
   UpdateMetricDto,
   MetricResponseDto,
   PaginatedMetricsResponseDto,
-} from "../dto";
+} from "@/kpi/dto";
 import { PaginationQueryDto } from "@/common/dto";
 import { JwtAuthGuard } from "@/auth/guards/jwt-auth.guard";
 import { RolesGuard } from "@/auth/guards/roles.guard";

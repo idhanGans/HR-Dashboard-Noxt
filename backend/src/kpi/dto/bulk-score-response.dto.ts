@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { ScoreResponseDto } from "./score-response.dto";
+import { ScoreResponseDto } from "@/kpi/dto/score-response.dto";
 
 export class BulkScoreResponseDto {
   @ApiProperty({

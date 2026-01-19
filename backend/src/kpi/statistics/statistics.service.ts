@@ -4,7 +4,7 @@ import {
   BadRequestException,
 } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
-import { PeriodsService } from "../periods/periods.service";
+import { PeriodsService } from "@/kpi/periods/periods.service";
 import {
   CompanyOverallResponseDto,
   TrendsResponseDto,
@@ -16,7 +16,7 @@ import {
   PerformanceInsightsResponseDto,
   PerformanceInsightDto,
   TrendsQueryDto,
-} from "../dto";
+} from "@/kpi/dto";
 import { EmploymentType, Prisma } from "@prisma/client";
 
 @Injectable()

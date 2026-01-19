@@ -20,13 +20,13 @@ import {
   ApiQuery,
   ApiBearerAuth,
 } from "@nestjs/swagger";
-import { TargetsService } from "./targets.service";
+import { TargetsService } from "@/kpi/targets/targets.service";
 import {
   CreateTargetDto,
   UpdateTargetDto,
   TargetResponseDto,
   PaginatedTargetsResponseDto,
-} from "../dto";
+} from "@/kpi/dto";
 import { PaginationQueryDto } from "@/common/dto";
 import { JwtAuthGuard } from "@/auth/guards/jwt-auth.guard";
 import { RolesGuard } from "@/auth/guards/roles.guard";
