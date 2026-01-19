@@ -12,3 +12,4 @@ export * from "./period-response.dto";
 export * from "./target-response.dto";
 export * from "./score-response.dto";
 export * from "./paginated-response.dto";
+export * from "./kpi-statistics.dto";
