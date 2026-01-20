@@ -1,6 +1,3 @@
--- CreateEnum
-CREATE TYPE "PayrollStatus" AS ENUM ('PROCESSED');
-
 -- CreateTable
 CREATE TABLE "Payroll" (
     "id" SERIAL NOT NULL,
@@ -14,7 +11,6 @@ CREATE TABLE "Payroll" (
     "insurance" DECIMAL(65,30) DEFAULT 0,
     "pensionFund" DECIMAL(65,30) DEFAULT 0,
     "otherDeductions" DECIMAL(65,30) DEFAULT 0,
-    "status" "PayrollStatus" NOT NULL DEFAULT 'PROCESSED',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 

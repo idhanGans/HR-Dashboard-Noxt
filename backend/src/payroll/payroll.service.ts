@@ -316,7 +316,6 @@ export class PayrollService {
       totalEarnings,
       totalDeductions,
       netPay,
-      status: payroll.status,
       createdAt: payroll.createdAt,
       updatedAt: payroll.updatedAt,
     };

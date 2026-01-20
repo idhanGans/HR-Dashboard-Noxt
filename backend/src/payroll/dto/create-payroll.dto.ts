@@ -2,10 +2,6 @@ import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { Type } from "class-transformer";
 import { Min, Max, IsInt, IsOptional } from "class-validator";
 
-export enum PayrollStatus {
-  PROCESSED
-}
-
 export class CreatePayrollDto {
     @ApiProperty({
         description: "Base Salary",

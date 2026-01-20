@@ -1,5 +1,4 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { PayrollStatus } from "@prisma/client";
 
 export class PayrollResponseDto {
   @ApiProperty({
@@ -85,13 +84,6 @@ export class PayrollResponseDto {
     example: 99850,
   })
   netPay: number;
-
-  @ApiProperty({
-    description: "Payroll Status",
-    enum: PayrollStatus,
-    example: PayrollStatus.PROCESSED,
-  })
-  status: PayrollStatus;
 
   @ApiProperty({
     description: "Created at",
