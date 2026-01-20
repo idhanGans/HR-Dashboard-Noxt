@@ -1,15 +1,13 @@
-import { Controller, Get, Query, UseGuards } from "@nestjs/common";
+import { Controller, Get, UseGuards } from "@nestjs/common";
 import {
   ApiBearerAuth,
   ApiOperation,
-  ApiQuery,
   ApiResponse,
   ApiTags,
 } from "@nestjs/swagger";
 import { PayrollStatsService } from "@/payroll/stats/payroll-stats.service";
 import {
   DepartmentPayrollTotalDto,
-  PayrollPeriodDto,
   PayrollTotalDto,
 } from "@/payroll/dto";
 import { JwtAuthGuard } from "@/auth/guards/jwt-auth.guard";
@@ -26,37 +24,21 @@ export class PayrollStatsController {
 
   @Get("department")
   @Roles(Role.SUPERADMIN)
-  @ApiOperation({
-    summary: "Get total payroll by department for a given period",
-  })
-  @ApiQuery({
-    name: "month",
-    description: "Payroll Month",
-    example: 1,
-    type: Number,
-  })
-  @ApiQuery({
-    name: "year",
-    description: "Payroll Year",
-    example: 2024,
-    type: Number,
-  })
+  @ApiOperation({ summary: "Get total payroll by department for the current month" })
   @ApiResponse({
     status: 200,
     description: "Totals by department",
     type: DepartmentPayrollTotalDto,
     isArray: true,
   })
-  @ApiResponse({ status: 400, description: "Invalid month/year parameters" })
   @ApiResponse({ status: 401, description: "Unauthorized" })
   @ApiResponse({ status: 403, description: "Forbidden" })
-  async getDepartmentTotals(
-    @Query() period: PayrollPeriodDto,
-  ): Promise<DepartmentPayrollTotalDto[]> {
-    return this.payrollStatsService.getDepartmentTotals(
-      period.month,
-      period.year,
-    );
+  async getDepartmentTotals(): Promise<DepartmentPayrollTotalDto[]> {
+    const now = new Date();
+    const month = now.getMonth() + 1;
+    const year = now.getFullYear();
+
+    return this.payrollStatsService.getDepartmentTotals(month, year);
   }
 
   @Get("total-current-month")
