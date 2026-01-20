@@ -9,7 +9,6 @@ import {
   Post,
   Put,
   Query,
-  StreamableFile,
   UseGuards,
 } from "@nestjs/common";
 import {
@@ -17,18 +16,15 @@ import {
   ApiOperation,
   ApiParam,
   ApiBearerAuth,
-  ApiProduces,
   ApiQuery,
   ApiResponse,
   ApiTags,
 } from "@nestjs/swagger";
-import { PayrollService } from "./payroll.service";
+import { PayrollsService } from "@/payroll/payrolls/payrolls.service";
 import {
   CreatePayrollDto,
-  DepartmentPayrollTotalDto,
   PayrollPeriodDto,
   PayrollResponseDto,
-  PayrollTotalDto,
   UpdatePayrollDto,
 } from "@/payroll/dto";
 import { JwtAuthGuard } from "@/auth/guards/jwt-auth.guard";
@@ -41,10 +37,8 @@ import { SelfOrRolesGuard } from "@/auth/guards/self-or-roles.guard";
 @Controller("payroll")
 @UseGuards(JwtAuthGuard, SelfOrRolesGuard, RolesGuard)
 @ApiBearerAuth()
-export class PayrollController {
-  constructor(private readonly payrollService: PayrollService) {}
-
-
+export class PayrollsController {
+  constructor(private readonly payrollsService: PayrollsService) {}
 
   @Get(":userId")
   @ApiOperation({ summary: "Get payroll for a user by period" })
@@ -72,12 +66,19 @@ export class PayrollController {
     description: "Payroll retrieved successfully",
     type: PayrollResponseDto,
   })
+  @ApiResponse({ status: 400, description: "Invalid month/year parameters" })
+  @ApiResponse({ status: 401, description: "Unauthorized" })
+  @ApiResponse({ status: 403, description: "Forbidden" })
   @ApiResponse({ status: 404, description: "Payroll not found" })
   async findByPeriod(
     @Param("userId", ParseIntPipe) userId: number,
     @Query() period: PayrollPeriodDto,
   ): Promise<PayrollResponseDto> {
-    return this.payrollService.findByPeriod(userId, period.month, period.year);
+    return this.payrollsService.findByPeriod(
+      userId,
+      period.month,
+      period.year,
+    );
   }
 
   @Post(":userId")
@@ -96,6 +97,9 @@ export class PayrollController {
     description: "Payroll created successfully",
     type: PayrollResponseDto,
   })
+  @ApiResponse({ status: 400, description: "Validation failed" })
+  @ApiResponse({ status: 401, description: "Unauthorized" })
+  @ApiResponse({ status: 403, description: "Forbidden" })
   @ApiResponse({ status: 404, description: "User not found" })
   @ApiResponse({
     status: 409,
@@ -105,7 +109,7 @@ export class PayrollController {
     @Param("userId", ParseIntPipe) userId: number,
     @Body() createPayrollDto: CreatePayrollDto,
   ): Promise<PayrollResponseDto> {
-    return this.payrollService.create(userId, createPayrollDto);
+    return this.payrollsService.create(userId, createPayrollDto);
   }
 
   @Put(":userId")
@@ -135,109 +139,20 @@ export class PayrollController {
     description: "Payroll updated successfully",
     type: PayrollResponseDto,
   })
+  @ApiResponse({ status: 400, description: "Invalid update payload" })
+  @ApiResponse({ status: 401, description: "Unauthorized" })
+  @ApiResponse({ status: 403, description: "Forbidden" })
   @ApiResponse({ status: 404, description: "User or payroll not found" })
   async updateByPeriod(
     @Param("userId", ParseIntPipe) userId: number,
     @Query() period: PayrollPeriodDto,
     @Body() updatePayrollDto: UpdatePayrollDto,
   ): Promise<PayrollResponseDto> {
-    return this.payrollService.updateByPeriod(
+    return this.payrollsService.updateByPeriod(
       userId,
       period.month,
       period.year,
       updatePayrollDto,
     );
-  }
-
-  @Get(":userId/payslip")
-  @ApiOperation({ summary: "Download payslip PDF for a user by period" })
-  @SelfOrRoles("userId", Role.SUPERADMIN)
-  @ApiParam({
-    name: "userId",
-    description: "User ID",
-    example: 1,
-    type: Number,
-  })
-  @ApiQuery({
-    name: "month",
-    description: "Payroll Month",
-    example: 1,
-    type: Number,
-  })
-  @ApiQuery({
-    name: "year",
-    description: "Payroll Year",
-    example: 2024,
-    type: Number,
-  })
-  @ApiProduces("application/pdf")
-  @ApiResponse({
-    status: 200,
-    description: "Payslip PDF generated successfully",
-  })
-  @ApiResponse({ status: 404, description: "Payroll not found" })
-  async downloadPayslip(
-    @Param("userId", ParseIntPipe) userId: number,
-    @Query() period: PayrollPeriodDto,
-  ): Promise<StreamableFile> {
-    const pdfBuffer = await this.payrollService.generatePayslipPdf(
-      userId,
-      period.month,
-      period.year,
-    );
-    const filename = `payslip_${userId}_${period.year}_${period.month}.pdf`;
-
-    return new StreamableFile(pdfBuffer, {
-      type: "application/pdf",
-      disposition: `attachment; filename="${filename}"`,
-    });
-  }
-  
-  @Get("stats/department")
-  @Roles(Role.SUPERADMIN)
-  @ApiOperation({
-    summary: "Get total payroll by department for a given period",
-  })
-  @ApiQuery({
-    name: "month",
-    description: "Payroll Month",
-    example: 1,
-    type: Number,
-  })
-  @ApiQuery({
-    name: "year",
-    description: "Payroll Year",
-    example: 2024,
-    type: Number,
-  })
-  @ApiResponse({
-    status: 200,
-    description: "Totals by department",
-    type: DepartmentPayrollTotalDto,
-    isArray: true,
-  })
-  async getDepartmentTotals(
-    @Query() period: PayrollPeriodDto,
-  ): Promise<DepartmentPayrollTotalDto[]> {
-    return this.payrollService.getDepartmentTotals(
-      period.month,
-      period.year,
-    );
-  }
-
-  @Get("stats/total-current-month")
-  @Roles(Role.SUPERADMIN)
-  @ApiOperation({ summary: "Get total payroll for the current month" })
-  @ApiResponse({
-    status: 200,
-    description: "Total payroll for current month",
-    type: PayrollTotalDto,
-  })
-  async getTotalForCurrentMonth(): Promise<PayrollTotalDto> {
-    const now = new Date();
-    const month = now.getMonth() + 1;
-    const year = now.getFullYear();
-
-    return this.payrollService.getTotalForMonth(month, year);
   }
 }
