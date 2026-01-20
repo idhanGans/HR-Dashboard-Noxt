@@ -1,13 +1,30 @@
+import type {
+  DashboardStats,
+  AttendanceData,
+  KPITrendData,
+  PayrollByDepartment,
+  AttendanceRecord,
+  SalaryBreakdown,
+  Employee,
+  UserProfile,
+  LeaveRecord,
+  LeaveBalance,
+  HiringStats,
+  OpenPosition,
+  CandidatePipeline,
+  InterviewSchedule,
+} from "../types";
+
 // Refreshed dummy data for dashboard mockup
 
-export const dashboardStats = {
+export const dashboardStats: DashboardStats = {
   totalEmployees: 312,
   todayAttendance: 301,
   currentPayroll: 966000000,
   averageKPI: 8.7,
 };
 
-export const attendanceData = [
+export const attendanceData: AttendanceData[] = [
   { month: "Jan", present: 287, absent: 10, late: 15 },
   { month: "Feb", present: 292, absent: 8, late: 12 },
   { month: "Mar", present: 295, absent: 7, late: 10 },

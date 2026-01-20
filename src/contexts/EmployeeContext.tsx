@@ -1,12 +1,22 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, ReactNode } from "react";
 import { employees as seedEmployees } from "../utils/dummyData";
 import { EmployeeContext } from "../hooks/useEmployees";
+import { Employee } from "../types";
+import {
+  PayrollHistoryRecord,
+  DepartmentKPIStats,
+  PerformanceInsights,
+} from "../types/employee";
+
+interface EmployeeProviderProps {
+  children: ReactNode;
+}
 
 /**
  * EmployeeProvider - Provides employee data across the application
  */
-export const EmployeeProvider = ({ children }) => {
-  const [employees, setEmployees] = useState(() => {
+export const EmployeeProvider = ({ children }: EmployeeProviderProps) => {
+  const [employees, setEmployees] = useState<Employee[]>(() => {
     // Try to load from localStorage, fall back safely if corrupted
     try {
       const stored = localStorage.getItem("hr_employees");
@@ -23,21 +33,21 @@ export const EmployeeProvider = ({ children }) => {
     localStorage.setItem("hr_employees", JSON.stringify(employees));
   }, [employees]);
 
-  const updateEmployee = (id, updates) => {
+  const updateEmployee = (id: number, updates: Partial<Employee>) => {
     setEmployees((prev) =>
       prev.map((emp) => (emp.id === id ? { ...emp, ...updates } : emp))
     );
   };
 
-  const addEmployee = (employee) => {
+  const addEmployee = (employee: Employee) => {
     setEmployees((prev) => [employee, ...prev]);
   };
 
-  const deleteEmployee = (id) => {
+  const deleteEmployee = (id: number) => {
     setEmployees((prev) => prev.filter((emp) => emp.id !== id));
   };
 
-  const updateEmployeeKPI = (id, kpiData) => {
+  const updateEmployeeKPI = (id: number, kpiData: any) => {
     setEmployees((prev) =>
       prev.map((emp) =>
         emp.id === id ? { ...emp, kpi: { ...emp.kpi, ...kpiData } } : emp
@@ -45,7 +55,7 @@ export const EmployeeProvider = ({ children }) => {
     );
   };
 
-  const updateEmployeePayroll = (id, payrollData) => {
+  const updateEmployeePayroll = (id: number, payrollData: any) => {
     setEmployees((prev) =>
       prev.map((emp) =>
         emp.id === id
@@ -56,14 +66,17 @@ export const EmployeeProvider = ({ children }) => {
   };
 
   // Add or update payroll history for a specific month
-  const addPayrollHistory = (employeeId, historyRecord) => {
+  const addPayrollHistory = (
+    employeeId: number,
+    historyRecord: PayrollHistoryRecord
+  ) => {
     setEmployees((prev) =>
       prev.map((emp) => {
         if (emp.id !== employeeId) return emp;
 
-        const history = emp.payrollHistory || [];
+        const history = (emp as any).payrollHistory || [];
         const existingIndex = history.findIndex(
-          (h) =>
+          (h: PayrollHistoryRecord) =>
             h.month === historyRecord.month && h.year === historyRecord.year
         );
 
@@ -78,7 +91,7 @@ export const EmployeeProvider = ({ children }) => {
         }
 
         // Sort by year and month (most recent first)
-        newHistory.sort((a, b) => {
+        newHistory.sort((a: PayrollHistoryRecord, b: PayrollHistoryRecord) => {
           if (a.year !== b.year) return b.year - a.year;
           return b.month - a.month;
         });
@@ -89,25 +102,32 @@ export const EmployeeProvider = ({ children }) => {
   };
 
   // Get payroll history for a specific employee and period
-  const getPayrollHistory = (employeeId, month = null, year = null) => {
+  const getPayrollHistory = (
+    employeeId: number,
+    month: number | null = null,
+    year: number | null = null
+  ): PayrollHistoryRecord | PayrollHistoryRecord[] | null => {
     const employee = employees.find((emp) => emp.id === employeeId);
-    if (!employee || !employee.payrollHistory) return null;
+    if (!employee || !(employee as any).payrollHistory) return null;
 
     if (month && year) {
-      return employee.payrollHistory.find(
-        (h) => h.month === month && h.year === year
+      return (employee as any).payrollHistory.find(
+        (h: PayrollHistoryRecord) => h.month === month && h.year === year
       );
     }
 
-    return employee.payrollHistory;
+    return (employee as any).payrollHistory;
   };
 
   // Get department KPI averages
-  const getDepartmentKPIStats = () => {
-    const deptMap = {};
+  const getDepartmentKPIStats = (): DepartmentKPIStats[] => {
+    const deptMap: Record<
+      string,
+      { department: string; scores: number[]; targets: number[] }
+    > = {};
 
     employees.forEach((emp) => {
-      if (emp.employmentType === "former") return;
+      if ((emp as any).employmentType === "former") return;
 
       const dept = emp.department;
       if (!deptMap[dept]) {
@@ -118,11 +138,11 @@ export const EmployeeProvider = ({ children }) => {
         };
       }
 
-      if (emp.kpi?.currentScore) {
-        deptMap[dept].scores.push(emp.kpi.currentScore);
+      if ((emp as any).kpi?.currentScore) {
+        deptMap[dept].scores.push((emp as any).kpi.currentScore);
       }
-      if (emp.kpi?.target) {
-        deptMap[dept].targets.push(emp.kpi.target);
+      if ((emp as any).kpi?.target) {
+        deptMap[dept].targets.push((emp as any).kpi.target);
       }
     });
 
@@ -148,15 +168,17 @@ export const EmployeeProvider = ({ children }) => {
   };
 
   // Get overall company KPI average
-  const getOverallKPI = () => {
+  const getOverallKPI = (): number => {
     const activeEmployees = employees.filter(
-      (emp) => emp.employmentType !== "former" && emp.kpi?.currentScore
+      (emp) =>
+        (emp as any).employmentType !== "former" &&
+        (emp as any).kpi?.currentScore
     );
 
     if (activeEmployees.length === 0) return 0;
 
     const total = activeEmployees.reduce(
-      (sum, emp) => sum + emp.kpi.currentScore,
+      (sum, emp) => sum + (emp as any).kpi.currentScore,
       0
     );
 
@@ -181,14 +203,17 @@ export const EmployeeProvider = ({ children }) => {
     ];
     const trendData = months.map((month) => {
       const activeEmployees = employees.filter(
-        (emp) => emp.employmentType !== "former" && emp.kpi?.history
+        (emp) =>
+          (emp as any).employmentType !== "former" && (emp as any).kpi?.history
       );
 
       let totalScore = 0;
       let count = 0;
 
       activeEmployees.forEach((emp) => {
-        const monthData = emp.kpi.history.find((h) => h.month === month);
+        const monthData = (emp as any).kpi.history.find(
+          (h: any) => h.month === month
+        );
         if (monthData) {
           totalScore += monthData.score;
           count++;
@@ -205,15 +230,19 @@ export const EmployeeProvider = ({ children }) => {
   };
 
   // Get top performers
-  const getTopPerformers = (limit = 3) => {
+  const getTopPerformers = (limit: number = 3): Employee[] => {
     return [...employees]
-      .filter((emp) => emp.employmentType !== "former" && emp.kpi?.currentScore)
-      .sort((a, b) => b.kpi.currentScore - a.kpi.currentScore)
+      .filter(
+        (emp) =>
+          (emp as any).employmentType !== "former" &&
+          (emp as any).kpi?.currentScore
+      )
+      .sort((a, b) => (b as any).kpi.currentScore - (a as any).kpi.currentScore)
       .slice(0, limit);
   };
 
   // Get performance insights
-  const getPerformanceInsights = () => {
+  const getPerformanceInsights = (): PerformanceInsights => {
     const deptStats = getDepartmentKPIStats();
 
     // Top performing department
