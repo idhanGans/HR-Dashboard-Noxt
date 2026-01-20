@@ -3,6 +3,7 @@ import { Reflector } from "@nestjs/core";
 import { ROLES_KEY } from "@/auth/decorators/roles.decorator";
 import { Role } from "@/users/dto";
 import { UserPayload } from "@/auth/interfaces/user-payload.interface";
+import { hasRequiredRole } from "@/auth/utils/role-utils";
 
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -24,21 +25,6 @@ export class RolesGuard implements CanActivate {
       return false;
     }
 
-    return this.hasRequiredRole(user.role, requiredRoles);
-  }
-
-  private hasRequiredRole(userRole: Role, requiredRoles: Role[]): boolean {
-    const roleHierarchy: Record<Role, number> = {
-      [Role.SUPERADMIN]: 3,
-      [Role.SUPERVISOR]: 2,
-      [Role.EMPLOYEE]: 1,
-    };
-
-    const userRoleLevel = roleHierarchy[userRole] || 0;
-
-    return requiredRoles.some((requiredRole) => {
-      const requiredRoleLevel = roleHierarchy[requiredRole] || 0;
-      return userRoleLevel >= requiredRoleLevel;
-    });
+    return hasRequiredRole(user.role, requiredRoles);
   }
 }

@@ -7,6 +7,7 @@ import { UsersModule } from "@/users/users.module";
 import { OrganizationsModule } from "@/organizations/organizations.module";
 import { AuthModule } from "@/auth/auth.module";
 import { KpiModule } from "@/kpi/kpi.module";
+import { PayrollModule } from './payroll/payroll.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { KpiModule } from "@/kpi/kpi.module";
     OrganizationsModule,
     UsersModule,
     KpiModule,
+    PayrollModule,
   ],
   controllers: [AppController],
   providers: [AppService],
