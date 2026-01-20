@@ -1,4 +1,4 @@
-# HR Dashboard - Complete File Inventory
+![1768913837277](image/FILE_INVENTORY/1768913837277.png)# HR Dashboard - Complete File Inventory
 
 ## 📋 Project Files Created
 

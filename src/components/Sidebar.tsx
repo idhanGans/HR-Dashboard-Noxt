@@ -21,8 +21,7 @@ export const Sidebar = ({ userRole, onLogout, isOpen = false, onClose }) => {
     { label: "Payroll", path: "/payroll", icon: DollarSign },
     { label: "KPI Tracker", path: "/kpi", icon: TrendingUp },
     { label: "Employees", path: "/employees", icon: Users },
-    { label: "Hiring", path: "/hiring", icon: UserPlus }, 
-    { label: "Leave", path: "/leave", icon: Calendar },
+    { label: "Hiring", path: "/hiring", icon: UserPlus },
     { label: "Settings", path: "/settings", icon: Settings },
   ];
 

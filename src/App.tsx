@@ -9,7 +9,6 @@ import {
   KPIPage,
   EmployeesPage,
   HiringPage,
-  LeavePage,
   SettingsPage,
 } from "./pages";
 import { EmployeeProvider } from "./contexts/EmployeeContext";
@@ -44,7 +43,7 @@ function App() {
 
   const handleLogin = (
     role: string = "admin",
-    userName: string = "John Doe"
+    userName: string = "John Doe",
   ) => {
     setAuth({
       isAuthenticated: true,
@@ -126,15 +125,6 @@ function App() {
             element={
               <ProtectedRoute isAuthenticated={auth.isAuthenticated}>
                 <HiringPage {...layoutProps} />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/leave"
-            element={
-              <ProtectedRoute isAuthenticated={auth.isAuthenticated}>
-                <LeavePage {...layoutProps} />
               </ProtectedRoute>
             }
           />
