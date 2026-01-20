@@ -13,26 +13,27 @@ import {
   SettingsPage,
 } from "./pages";
 import { EmployeeProvider } from "./contexts/EmployeeContext";
+import { AuthState, ProtectedRouteProps, PublicRouteProps } from "./types/auth";
 
 const STORAGE_KEY = "hrdash-auth";
 
-const ProtectedRoute = ({ isAuthenticated, children }) => {
+const ProtectedRoute = ({ isAuthenticated, children }: ProtectedRouteProps) => {
   if (!isAuthenticated) return <Navigate to="/login" replace />;
-  return children;
+  return <>{children}</>;
 };
 
-const PublicRoute = ({ isAuthenticated, children }) => {
+const PublicRoute = ({ isAuthenticated, children }: PublicRouteProps) => {
   if (isAuthenticated) return <Navigate to="/dashboard" replace />;
-  return children;
+  return <>{children}</>;
 };
 
 function App() {
-  const [auth, setAuth] = useState(() => {
+  const [auth, setAuth] = useState<AuthState>(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) return JSON.parse(saved);
     return {
       isAuthenticated: false,
-      userRole: "Administrator",
+      userRole: "Administrator" as const,
       userName: "John Doe",
     };
   });
@@ -41,7 +42,10 @@ function App() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(auth));
   }, [auth]);
 
-  const handleLogin = (role = "admin", userName = "John Doe") => {
+  const handleLogin = (
+    role: string = "admin",
+    userName: string = "John Doe"
+  ) => {
     setAuth({
       isAuthenticated: true,
       userRole: role === "employee" ? "Employee" : "Administrator",
@@ -117,7 +121,7 @@ function App() {
             }
           />
 
-          <Route 
+          <Route
             path="/hiring"
             element={
               <ProtectedRoute isAuthenticated={auth.isAuthenticated}>
