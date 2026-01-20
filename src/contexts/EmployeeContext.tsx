@@ -35,7 +35,14 @@ export const EmployeeProvider = ({ children }: EmployeeProviderProps) => {
 
   const updateEmployee = (id: number, updates: Partial<Employee>) => {
     setEmployees((prev) =>
-      prev.map((emp) => (emp.id === id ? { ...emp, ...updates } : emp))
+      prev.map((emp) => (emp.id === id ? { ...emp, ...updates } : emp)),
+    );
+  };
+
+  // Update employee status (for attendance tracking)
+  const updateEmployeeStatus = (id: number, status: string) => {
+    setEmployees((prev) =>
+      prev.map((emp) => (emp.id === id ? { ...emp, status } : emp)),
     );
   };
 
@@ -49,9 +56,43 @@ export const EmployeeProvider = ({ children }: EmployeeProviderProps) => {
 
   const updateEmployeeKPI = (id: number, kpiData: any) => {
     setEmployees((prev) =>
-      prev.map((emp) =>
-        emp.id === id ? { ...emp, kpi: { ...emp.kpi, ...kpiData } } : emp
-      )
+      prev.map((emp) => {
+        if (emp.id !== id) return emp;
+
+        const currentKPI = { ...emp.kpi, ...kpiData };
+
+        // Track KPI history with month/year
+        if (kpiData.month && kpiData.year && kpiData.currentScore) {
+          const history = [...(currentKPI.history || [])];
+          const existingIndex = history.findIndex(
+            (h: any) => h.month === kpiData.month && h.year === kpiData.year,
+          );
+
+          if (existingIndex >= 0) {
+            history[existingIndex] = {
+              month: kpiData.month,
+              year: kpiData.year,
+              score: kpiData.currentScore,
+            };
+          } else {
+            history.push({
+              month: kpiData.month,
+              year: kpiData.year,
+              score: kpiData.currentScore,
+            });
+          }
+
+          // Sort by year and month (most recent first)
+          history.sort((a: any, b: any) => {
+            if (a.year !== b.year) return b.year - a.year;
+            return b.month - a.month;
+          });
+
+          currentKPI.history = history;
+        }
+
+        return { ...emp, kpi: currentKPI };
+      }),
     );
   };
 
@@ -60,15 +101,15 @@ export const EmployeeProvider = ({ children }: EmployeeProviderProps) => {
       prev.map((emp) =>
         emp.id === id
           ? { ...emp, payroll: { ...emp.payroll, ...payrollData } }
-          : emp
-      )
+          : emp,
+      ),
     );
   };
 
   // Add or update payroll history for a specific month
   const addPayrollHistory = (
     employeeId: number,
-    historyRecord: PayrollHistoryRecord
+    historyRecord: PayrollHistoryRecord,
   ) => {
     setEmployees((prev) =>
       prev.map((emp) => {
@@ -77,7 +118,7 @@ export const EmployeeProvider = ({ children }: EmployeeProviderProps) => {
         const history = (emp as any).payrollHistory || [];
         const existingIndex = history.findIndex(
           (h: PayrollHistoryRecord) =>
-            h.month === historyRecord.month && h.year === historyRecord.year
+            h.month === historyRecord.month && h.year === historyRecord.year,
         );
 
         let newHistory;
@@ -97,7 +138,7 @@ export const EmployeeProvider = ({ children }: EmployeeProviderProps) => {
         });
 
         return { ...emp, payrollHistory: newHistory };
-      })
+      }),
     );
   };
 
@@ -105,14 +146,14 @@ export const EmployeeProvider = ({ children }: EmployeeProviderProps) => {
   const getPayrollHistory = (
     employeeId: number,
     month: number | null = null,
-    year: number | null = null
+    year: number | null = null,
   ): PayrollHistoryRecord | PayrollHistoryRecord[] | null => {
     const employee = employees.find((emp) => emp.id === employeeId);
     if (!employee || !(employee as any).payrollHistory) return null;
 
     if (month && year) {
       return (employee as any).payrollHistory.find(
-        (h: PayrollHistoryRecord) => h.month === month && h.year === year
+        (h: PayrollHistoryRecord) => h.month === month && h.year === year,
       );
     }
 
@@ -172,14 +213,14 @@ export const EmployeeProvider = ({ children }: EmployeeProviderProps) => {
     const activeEmployees = employees.filter(
       (emp) =>
         (emp as any).employmentType !== "former" &&
-        (emp as any).kpi?.currentScore
+        (emp as any).kpi?.currentScore,
     );
 
     if (activeEmployees.length === 0) return 0;
 
     const total = activeEmployees.reduce(
       (sum, emp) => sum + (emp as any).kpi.currentScore,
-      0
+      0,
     );
 
     return parseFloat((total / activeEmployees.length).toFixed(1));
@@ -204,7 +245,7 @@ export const EmployeeProvider = ({ children }: EmployeeProviderProps) => {
     const trendData = months.map((month) => {
       const activeEmployees = employees.filter(
         (emp) =>
-          (emp as any).employmentType !== "former" && (emp as any).kpi?.history
+          (emp as any).employmentType !== "former" && (emp as any).kpi?.history,
       );
 
       let totalScore = 0;
@@ -212,7 +253,7 @@ export const EmployeeProvider = ({ children }: EmployeeProviderProps) => {
 
       activeEmployees.forEach((emp) => {
         const monthData = (emp as any).kpi.history.find(
-          (h: any) => h.month === month
+          (h: any) => h.month === month,
         );
         if (monthData) {
           totalScore += monthData.score;
@@ -235,7 +276,7 @@ export const EmployeeProvider = ({ children }: EmployeeProviderProps) => {
       .filter(
         (emp) =>
           (emp as any).employmentType !== "former" &&
-          (emp as any).kpi?.currentScore
+          (emp as any).kpi?.currentScore,
       )
       .sort((a, b) => (b as any).kpi.currentScore - (a as any).kpi.currentScore)
       .slice(0, limit);
@@ -248,7 +289,7 @@ export const EmployeeProvider = ({ children }: EmployeeProviderProps) => {
     // Top performing department
     const topDept = deptStats.reduce(
       (max, dept) => (dept.score > max.score ? dept : max),
-      { department: "N/A", score: 0 }
+      { department: "N/A", score: 0 },
     );
 
     // Most improved department
@@ -258,12 +299,12 @@ export const EmployeeProvider = ({ children }: EmployeeProviderProps) => {
         const maxImprovement = parseFloat(max.trend || "0");
         return improvement > maxImprovement ? dept : max;
       },
-      { department: "N/A", trend: "0%" }
+      { department: "N/A", trend: "0%" },
     );
 
     // Department needing attention
     const needsAttention = deptStats.find(
-      (dept) => dept.score < dept.target
+      (dept) => dept.score < dept.target,
     ) || {
       department: "All on track",
       score: 0,
@@ -292,6 +333,7 @@ export const EmployeeProvider = ({ children }: EmployeeProviderProps) => {
     employees,
     setEmployees,
     updateEmployee,
+    updateEmployeeStatus,
     addEmployee,
     deleteEmployee,
     updateEmployeeKPI,

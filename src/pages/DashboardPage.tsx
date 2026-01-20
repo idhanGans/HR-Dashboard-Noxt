@@ -13,7 +13,7 @@ import {
   payrollByDepartment,
 } from "../utils/dummyData";
 import { TrendingUp, Users, Clock } from "lucide-react";
-import { useEmployees } from "../hooks/useEmployees";
+import { useDashboardStats } from "../hooks/useDashboardStats";
 
 // Dashboard stats configuration
 const STATS_CONFIG = [
@@ -106,25 +106,10 @@ const BottomSection = ({ topPerformers }) => (
  * AdminDashboard - Main admin dashboard view with real employee data
  */
 const AdminDashboard = ({ onLogout, userName, userRole }) => {
-  const { getOverallKPI, getKPITrendData, getTopPerformers, employees } =
-    useEmployees();
+  const { totalEmployees, presentToday, overallKPI, kpiTrend, topPerformers } =
+    useDashboardStats();
 
-  // Get real-time data from employees
-  const overallKPI = getOverallKPI();
-  const kpiTrend = getKPITrendData();
-  const topPerformers = getTopPerformers(3);
-
-  // Calculate total employees (excluding former)
-  const totalEmployees = employees.filter(
-    (emp) => emp.employmentType !== "former",
-  ).length;
-
-  // Calculate today's attendance: present or late (not absent)
-  const presentToday = employees.filter(
-    (emp) => emp.employmentType !== "former" && emp.status !== "absent",
-  ).length;
-
-  // Update dashboard stats with real data
+  // Update dashboard stats with real-time data
   const updatedStats = {
     ...dashboardStats,
     totalEmployees,

@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Modal } from "../Modal";
 
 /**
@@ -17,16 +18,60 @@ export const KPIFormModal = ({
   onKpiChange,
   onSave,
 }) => {
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+
   if (!employee) return null;
+
+  const months = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
+
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: 5 }, (_, i) => currentYear - 2 + i);
+
+  const handleSave = () => {
+    // Save KPI with month/year reference
+    const updatedKpiData = {
+      ...kpiForm,
+      month: selectedMonth,
+      year: selectedYear,
+    };
+
+    onKpiChange(updatedKpiData);
+    onSave();
+  };
 
   const handleMetricChange = (metric, value) => {
     const numValue = parseFloat(value) || 0;
+    const updatedMetrics = {
+      ...kpiData.metrics,
+      [metric]: numValue,
+    };
+
+    // Calculate average of all metrics
+    const average =
+      (updatedMetrics.productivity +
+        updatedMetrics.quality +
+        updatedMetrics.teamwork +
+        updatedMetrics.punctuality) /
+      4;
+
     onKpiChange({
       ...kpiData,
-      metrics: {
-        ...kpiData.metrics,
-        [metric]: numValue,
-      },
+      metrics: updatedMetrics,
+      currentScore: parseFloat(average.toFixed(1)),
     });
   };
 
@@ -52,11 +97,50 @@ export const KPIFormModal = ({
           </div>
         </div>
 
+        {/* Month & Year Filter */}
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Month
+            </label>
+            <select
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(Number(e.target.value))}
+              className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors"
+            >
+              {months.map((month, index) => (
+                <option key={index} value={index + 1} className="bg-gray-800">
+                  {month}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Year
+            </label>
+            <select
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(Number(e.target.value))}
+              className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors"
+            >
+              {years.map((year) => (
+                <option key={year} value={year} className="bg-gray-800">
+                  {year}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
         {/* Current Score & Target */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
-              Current Score
+              Current Score{" "}
+              <span className="text-gray-500">
+                ({months[selectedMonth - 1]} {selectedYear})
+              </span>
             </label>
             <input
               type="number"
@@ -64,14 +148,12 @@ export const KPIFormModal = ({
               min="0"
               max="10"
               value={kpiData.currentScore || 0}
-              onChange={(e) =>
-                onKpiChange({
-                  ...kpiData,
-                  currentScore: parseFloat(e.target.value) || 0,
-                })
-              }
-              className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors"
+              disabled
+              className="w-full px-4 py-2.5 bg-white/10 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors cursor-not-allowed opacity-70"
             />
+            <p className="text-xs text-gray-500 mt-2">
+              Auto-calculated from performance metrics
+            </p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -203,7 +285,7 @@ export const KPIFormModal = ({
             Cancel
           </button>
           <button
-            onClick={onSave}
+            onClick={handleSave}
             className="w-full sm:flex-1 px-4 py-2.5 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 rounded-xl text-white font-semibold transition-all"
           >
             Save KPI

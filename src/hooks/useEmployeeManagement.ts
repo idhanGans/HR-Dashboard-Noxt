@@ -110,7 +110,7 @@ export const useEmployeeManagement = () => {
       setEmployeeList((prev) => [newEmployee, ...prev]);
     } else {
       setEmployeeList((prev) =>
-        prev.map((emp) => (emp.id === form.id ? { ...form } : emp))
+        prev.map((emp) => (emp.id === form.id ? { ...form } : emp)),
       );
     }
 
@@ -122,8 +122,8 @@ export const useEmployeeManagement = () => {
       prev.map((item) =>
         item.id === emp.id
           ? { ...item, employmentType: "former", status: "absent" }
-          : item
-      )
+          : item,
+      ),
     );
   };
 
@@ -153,18 +153,27 @@ export const useEmployeeManagement = () => {
       oldScore > 0 ? (((newScore - oldScore) / oldScore) * 100).toFixed(0) : 0;
     const trend = diff > 0 ? `+${diff}%` : `${diff}%`;
 
-    // Update history
-    const currentMonth = new Date().toLocaleString("en-US", { month: "short" });
-    const history = [...(selectedEmployee.kpi?.history || [])];
-    const lastEntry = history[history.length - 1];
+    // Update history with month and year
+    const now = new Date();
+    const currentMonth = now.toLocaleString("en-US", { month: "short" });
+    const currentYear = now.getFullYear();
 
-    if (lastEntry && lastEntry.month === currentMonth) {
-      // Update current month
-      history[history.length - 1] = { month: currentMonth, score: newScore };
+    const history = [...(selectedEmployee.kpi?.history || [])];
+    const lastEntryIndex = history.findIndex(
+      (h: any) => h.month === currentMonth && h.year === currentYear,
+    );
+
+    if (lastEntryIndex >= 0) {
+      // Update current month/year
+      history[lastEntryIndex] = {
+        month: currentMonth,
+        year: currentYear,
+        score: newScore,
+      };
     } else {
-      // Add new month
-      if (history.length >= 12) history.shift();
-      history.push({ month: currentMonth, score: newScore });
+      // Add new month/year entry (keep last 12 entries)
+      history.push({ month: currentMonth, year: currentYear, score: newScore });
+      if (history.length > 12) history.shift();
     }
 
     updateEmployeeKPI(selectedEmployee.id, {
@@ -216,13 +225,13 @@ export const useEmployeeManagement = () => {
   const counts = useMemo(() => {
     const total = employeeList.length;
     const permanent = employeeList.filter(
-      (e) => e.employmentType === "permanent"
+      (e) => e.employmentType === "permanent",
     ).length;
     const temporary = employeeList.filter(
-      (e) => e.employmentType === "temporary"
+      (e) => e.employmentType === "temporary",
     ).length;
     const former = employeeList.filter(
-      (e) => e.employmentType === "former"
+      (e) => e.employmentType === "former",
     ).length;
     return { total, permanent, temporary, former };
   }, [employeeList]);

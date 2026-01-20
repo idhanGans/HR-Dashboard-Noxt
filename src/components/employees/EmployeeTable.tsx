@@ -1,10 +1,17 @@
 import { Card } from "../Card";
 import { Table } from "../Table";
 import { StatusBadge } from "../StatusBadge";
-import { Edit, LogOut, TrendingUp, DollarSign } from "lucide-react";
+import {
+  Edit,
+  LogOut,
+  TrendingUp,
+  DollarSign,
+  MoreVertical,
+} from "lucide-react";
+import { useState } from "react";
 
 /**
- * EmployeeTable - Displays employee data in a table
+ * EmployeeTable - Displays employee data in a table with detailed directory view
  * @param {Array} employees - Array of employee objects
  * @param {Function} onEdit - Callback when edit button is clicked
  * @param {Function} onMarkFormer - Callback when mark former button is clicked
@@ -18,101 +25,170 @@ export const EmployeeTable = ({
   onManageKPI,
   onManagePayroll,
 }) => {
+  const [openMenuId, setOpenMenuId] = useState<number | null>(null);
+  const [closeTimeout, setCloseTimeout] = useState<NodeJS.Timeout | null>(null);
+
+  const handleMouseLeave = () => {
+    const timeout = setTimeout(() => {
+      setOpenMenuId(null);
+    }, 100);
+    setCloseTimeout(timeout);
+  };
+
+  const handleMouseEnter = () => {
+    if (closeTimeout) {
+      clearTimeout(closeTimeout);
+      setCloseTimeout(null);
+    }
+  };
+
+  // Helper function to extract first and last name
+  const getNameParts = (fullName: string) => {
+    const parts = fullName.trim().split(" ");
+    const lastName = parts.length > 1 ? parts[parts.length - 1] : "";
+    const firstName = parts.slice(0, -1).join(" ") || parts[0];
+    return { firstName, lastName };
+  };
+
+  // Helper function to get email ID (first part before @)
+  const getEmailId = (email: string) => {
+    return email.split("@")[0];
+  };
+
   const columns = [
     {
-      key: "avatar",
-      label: "Employee",
+      key: "no",
+      label: "No",
       render: (row) => (
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-gradient-to-br from-silver to-white rounded-full flex items-center justify-center text-black text-xs font-bold">
-            {row.avatar || row.name.slice(0, 2).toUpperCase()}
-          </div>
-          <div>
-            <p className="text-white font-medium">{row.name}</p>
-            <p className="text-xs text-lightGrey">{row.role}</p>
-          </div>
-        </div>
-      ),
-    },
-    { key: "department", label: "Department" },
-    {
-      key: "kpi",
-      label: "KPI Score",
-      render: (row) => (
-        <div className="flex items-center gap-2">
-          <span className="text-white font-semibold">
-            {row.kpi?.currentScore?.toFixed(1) || "N/A"}
-          </span>
-          {row.kpi?.trend && (
-            <span
-              className={`text-xs ${
-                row.kpi.trend.startsWith("+")
-                  ? "text-green-400"
-                  : "text-red-400"
-              }`}
-            >
-              {row.kpi.trend}
-            </span>
-          )}
-        </div>
+        <span className="text-white font-semibold">{row.id}</span>
       ),
     },
     {
-      key: "employmentType",
-      label: "Employment Type",
+      key: "employeeId",
+      label: "Employee ID",
       render: (row) => (
-        <span className="text-sm text-white capitalize">
-          {row.employmentType}
+        <span className="text-lightGrey font-mono text-sm">
+          EMP-{String(row.id).padStart(4, "0")}
         </span>
       ),
     },
     {
-      key: "status",
-      label: "Status",
-      render: (row) => <StatusBadge status={row.status} />,
+      key: "name",
+      label: "Name",
+      render: (row) => (
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
+            {row.avatar || row.name.slice(0, 2).toUpperCase()}
+          </div>
+          <span className="text-white font-medium">{row.name}</span>
+        </div>
+      ),
+    },
+    {
+      key: "email",
+      label: "Email",
+      render: (row) => (
+        <span className="text-lightGrey text-sm truncate" title={row.email}>
+          {row.email}
+        </span>
+      ),
+    },
+    {
+      key: "phone",
+      label: "Phone",
+      render: (row) => (
+        <span className="text-lightGrey text-sm">{row.phone}</span>
+      ),
+    },
+    {
+      key: "department",
+      label: "Department",
+      render: (row) => (
+        <span className="text-white bg-white/5 px-3 py-1 rounded text-sm">
+          {row.department}
+        </span>
+      ),
+    },
+    {
+      key: "position",
+      label: "Position",
+      render: (row) => <span className="text-white text-sm">{row.role}</span>,
     },
     {
       key: "actions",
       label: "Actions",
       render: (row) => (
-        <div className="flex gap-2 flex-wrap">
+        <div
+          className="relative"
+          onMouseLeave={handleMouseLeave}
+          onMouseEnter={handleMouseEnter}
+        >
           <button
-            className="text-xs px-3 py-1 rounded bg-white/10 text-white border border-white/20 hover:bg-white/20 transition-colors"
-            onClick={() => onEdit(row)}
+            onClick={() => setOpenMenuId(openMenuId === row.id ? null : row.id)}
+            className="p-2 hover:bg-white/10 rounded transition-colors text-lightGrey hover:text-white"
+            title="More options"
           >
-            <div className="flex items-center gap-1">
-              <Edit size={14} />
-              Edit
-            </div>
+            <MoreVertical size={18} />
           </button>
-          <button
-            className="text-xs px-3 py-1 rounded bg-blue-900/30 text-blue-200 border border-blue-500/30 hover:bg-blue-900/50 transition-colors"
-            onClick={() => onManageKPI(row)}
-          >
-            <div className="flex items-center gap-1">
-              <TrendingUp size={14} />
-              KPI
+
+          {/* Dropdown Menu */}
+          {openMenuId === row.id && (
+            <div className="absolute right-0 top-full mt-1 w-56 bg-gradient-to-b from-slate-900/90 to-slate-800/90 backdrop-blur-xl border border-white/40 rounded-lg shadow-2xl z-10 py-2">
+              {/* Edit Option */}
+              <button
+                onClick={() => {
+                  onEdit(row);
+                  setOpenMenuId(null);
+                }}
+                className="w-full px-5 py-3 text-left text-sm text-white font-medium hover:bg-white/35 flex items-center gap-3 transition-all duration-200"
+              >
+                <Edit size={18} className="text-blue-300" />
+                <span>Edit Employee</span>
+              </button>
+
+              {/* KPI Option */}
+              <button
+                onClick={() => {
+                  onManageKPI(row);
+                  setOpenMenuId(null);
+                }}
+                className="w-full px-5 py-3 text-left text-sm text-white font-medium hover:bg-white/35 flex items-center gap-3 transition-all duration-200"
+              >
+                <TrendingUp size={18} className="text-blue-400" />
+                <span>Manage KPI</span>
+              </button>
+
+              {/* Payroll Option */}
+              <button
+                onClick={() => {
+                  onManagePayroll(row);
+                  setOpenMenuId(null);
+                }}
+                className="w-full px-5 py-3 text-left text-sm text-white font-medium hover:bg-white/35 flex items-center gap-3 transition-all duration-200"
+              >
+                <DollarSign size={18} className="text-green-400" />
+                <span>Manage Payroll</span>
+              </button>
+
+              {/* Divider */}
+              {row.employmentType !== "former" && (
+                <>
+                  <div className="border-t border-white/25 my-2"></div>
+
+                  {/* Mark Former Option */}
+                  <button
+                    onClick={() => {
+                      onMarkFormer(row);
+                      setOpenMenuId(null);
+                    }}
+                    className="w-full px-5 py-3 text-left text-sm text-red-300 font-medium hover:bg-red-900/40 flex items-center gap-3 transition-all duration-200"
+                  >
+                    <LogOut size={18} className="text-red-400" />
+                    <span>Mark as Former</span>
+                  </button>
+                </>
+              )}
             </div>
-          </button>
-          <button
-            className="text-xs px-3 py-1 rounded bg-green-900/30 text-green-200 border border-green-500/30 hover:bg-green-900/50 transition-colors"
-            onClick={() => onManagePayroll(row)}
-          >
-            <div className="flex items-center gap-1">
-              <DollarSign size={14} />
-              Payroll
-            </div>
-          </button>
-          {row.employmentType !== "former" && (
-            <button
-              className="text-xs px-3 py-1 rounded bg-red-900/30 text-red-200 border border-red-500/30 hover:bg-red-900/50 transition-colors"
-              onClick={() => onMarkFormer(row)}
-            >
-              <div className="flex items-center gap-1">
-                <LogOut size={14} />
-                Former
-              </div>
-            </button>
           )}
         </div>
       ),
@@ -120,14 +196,60 @@ export const EmployeeTable = ({
   ];
 
   return (
-    <Card className="mb-8">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
-        <h2 className="text-lg font-bold text-white">All Employees</h2>
-        <p className="text-xs text-lightGrey">
-          Manage employee details, KPI, and payroll
-        </p>
+    <Card className="mb-8 overflow-hidden">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-6">
+        <div>
+          <h2 className="text-lg font-bold text-white">Employee Directory</h2>
+          <p className="text-xs text-lightGrey mt-1">
+            {employees.length} total employees
+          </p>
+        </div>
       </div>
-      <Table columns={columns} data={employees} />
+
+      {/* Table Header */}
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse">
+          <thead>
+            <tr className="border-b border-white/10 bg-white/5">
+              {columns.map((col) => (
+                <th
+                  key={col.key}
+                  className="px-6 py-4 text-left text-xs font-semibold text-lightGrey uppercase tracking-wider"
+                >
+                  {col.label}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {employees.map((row, index) => (
+              <tr
+                key={`row-${row.id}`}
+                className="border-b border-white/10 hover:bg-white/5 transition-colors"
+              >
+                {columns.map((col) => (
+                  <td
+                    key={`${row.id}-${col.key}`}
+                    className="px-6 py-4 text-sm"
+                  >
+                    {col.key === "no"
+                      ? index + 1
+                      : col.render
+                        ? col.render(row)
+                        : row[col.key]}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {employees.length === 0 && (
+        <div className="text-center py-8">
+          <p className="text-lightGrey">No employees found</p>
+        </div>
+      )}
     </Card>
   );
 };

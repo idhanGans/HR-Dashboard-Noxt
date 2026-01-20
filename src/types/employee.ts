@@ -36,18 +36,19 @@ export interface EmployeeContextValue {
   employees: Employee[];
   setEmployees: React.Dispatch<React.SetStateAction<Employee[]>>;
   updateEmployee: (id: number, updates: Partial<Employee>) => void;
+  updateEmployeeStatus: (id: number, status: string) => void;
   addEmployee: (employee: Employee) => void;
   deleteEmployee: (id: number) => void;
   updateEmployeeKPI: (id: number, kpiData: any) => void;
   updateEmployeePayroll: (id: number, payrollData: any) => void;
   addPayrollHistory: (
     employeeId: number,
-    historyRecord: PayrollHistoryRecord
+    historyRecord: PayrollHistoryRecord,
   ) => void;
   getPayrollHistory: (
     employeeId: number,
     month?: number | null,
-    year?: number | null
+    year?: number | null,
   ) => PayrollHistoryRecord | PayrollHistoryRecord[] | null;
   getDepartmentKPIStats: () => DepartmentKPIStats[];
   getOverallKPI: () => number;

@@ -2,27 +2,56 @@ import { Card } from "../Card";
 import { StatusBadge } from "../StatusBadge";
 
 /**
- * RecentApprovalsCard - Displays recent leave approvals
+ * RecentApprovalsCard - Displays recent leave approvals with actual dates
  * @param {Array} approvals - Array of approval objects
  */
 export const RecentApprovalsCard = ({ approvals }) => {
+  const formatDateRange = (startDate: string, endDate: string) => {
+    if (!startDate || !endDate) return "N/A";
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    return `${start.toLocaleDateString("en-US", { month: "short", day: "numeric" })}-${end.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
+  };
+
   const defaultApprovals = [
     {
       name: "Alice Johnson",
       type: "Paid Leave",
-      date: "Dec 25-26",
+      startDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+        .toISOString()
+        .split("T")[0],
+      endDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000)
+        .toISOString()
+        .split("T")[0],
+      approvalDate: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000)
+        .toISOString()
+        .split("T")[0],
       status: "approved",
     },
     {
       name: "Bob Smith",
       type: "Vacation",
-      date: "Jan 15-18",
+      startDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000)
+        .toISOString()
+        .split("T")[0],
+      endDate: new Date(Date.now() + 18 * 24 * 60 * 60 * 1000)
+        .toISOString()
+        .split("T")[0],
+      approvalDate: new Date().toISOString().split("T")[0],
       status: "pending",
     },
     {
       name: "Carol White",
       type: "Sick Leave",
-      date: "Dec 20",
+      startDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)
+        .toISOString()
+        .split("T")[0],
+      endDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)
+        .toISOString()
+        .split("T")[0],
+      approvalDate: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000)
+        .toISOString()
+        .split("T")[0],
       status: "approved",
     },
   ];
@@ -45,7 +74,18 @@ export const RecentApprovalsCard = ({ approvals }) => {
               </div>
               <StatusBadge status={item.status} />
             </div>
-            <p className="text-xs text-lightGrey mt-2">{item.date}</p>
+            <div className="flex items-center justify-between mt-2">
+              <p className="text-xs text-lightGrey">
+                {formatDateRange(item.startDate, item.endDate)}
+              </p>
+              <p className="text-xs text-gray-500">
+                {item.status === "approved" ? "Approved" : "Pending"} on{" "}
+                {new Date(item.approvalDate).toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                })}
+              </p>
+            </div>
           </div>
         ))}
       </div>

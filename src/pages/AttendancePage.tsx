@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { DashboardLayout } from "../components";
 import {
   CheckInCard,
@@ -15,9 +15,12 @@ import {
   LeavePolicyCard,
   RecentApprovalsCard,
   LeaveHeader,
+  LeaveRequestModal,
 } from "../components/leave";
 import { useAttendanceSession } from "../hooks/useAttendanceSession";
-import { leaveBalance, leaveRecords } from "../utils/dummyData";
+import { useEmployees } from "../hooks/useEmployees";
+import { useLeaveManagement } from "../hooks/useLeaveManagement";
+import { Calendar, Filter } from "lucide-react";
 
 /**
  * ActionCardsGrid - Grid of check-in, check-out, and live session cards
@@ -52,14 +55,194 @@ const LeaveBalanceGrid = ({ balances }) => (
 );
 
 /**
- * PolicyAndApprovalsSection - Grid with policy and recent approvals
+ * AttendanceFilterSection - Filter controls for attendance records
  */
-const PolicyAndApprovalsSection = () => (
-  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
-    <LeavePolicyCard />
-    <RecentApprovalsCard />
+const AttendanceFilterSection = ({
+  filterType,
+  setFilterType,
+  dateFrom,
+  setDateFrom,
+  dateTo,
+  setDateTo,
+  statusFilter,
+  setStatusFilter,
+}) => (
+  <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-6 mb-8">
+    <div className="flex items-center gap-2 mb-6">
+      <Filter size={20} className="text-blue-400" />
+      <h3 className="text-lg font-semibold text-white">
+        Filter Attendance Records
+      </h3>
+    </div>
+
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Filter Type */}
+      <div>
+        <label className="block text-sm font-medium text-gray-300 mb-2">
+          Filter By
+        </label>
+        <select
+          value={filterType}
+          onChange={(e) => setFilterType(e.target.value)}
+          className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors"
+        >
+          <option value="all" className="bg-gray-800">
+            All Records
+          </option>
+          <option value="date" className="bg-gray-800">
+            Date Range
+          </option>
+          <option value="month" className="bg-gray-800">
+            Month
+          </option>
+          <option value="status" className="bg-gray-800">
+            Status
+          </option>
+        </select>
+      </div>
+
+      {/* Date Range - From */}
+      {(filterType === "date" || filterType === "all") && (
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">
+            From Date
+          </label>
+          <input
+            type="date"
+            value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+            className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors"
+          />
+        </div>
+      )}
+
+      {/* Date Range - To */}
+      {(filterType === "date" || filterType === "all") && (
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">
+            To Date
+          </label>
+          <input
+            type="date"
+            value={dateTo}
+            onChange={(e) => setDateTo(e.target.value)}
+            className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors"
+          />
+        </div>
+      )}
+
+      {/* Month Filter */}
+      {filterType === "month" && (
+        <div className="lg:col-span-2">
+          <label className="block text-sm font-medium text-gray-300 mb-2">
+            Select Month & Year
+          </label>
+          <input
+            type="month"
+            value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+            className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors"
+          />
+        </div>
+      )}
+
+      {/* Status Filter */}
+      {(filterType === "status" || filterType === "all") && (
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">
+            Status
+          </label>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors"
+          >
+            <option value="all" className="bg-gray-800">
+              All Status
+            </option>
+            <option value="present" className="bg-gray-800">
+              Present
+            </option>
+            <option value="late" className="bg-gray-800">
+              Late
+            </option>
+            <option value="absent" className="bg-gray-800">
+              Absent
+            </option>
+          </select>
+        </div>
+      )}
+    </div>
   </div>
 );
+
+/**
+ * TodayAttendanceSection - Displays only today's attendance record
+ */
+const TodayAttendanceSection = ({ todayRecord }) => {
+  if (!todayRecord) {
+    return (
+      <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-6 mb-8">
+        <div className="flex items-center gap-2 mb-4">
+          <Calendar size={20} className="text-green-400" />
+          <h3 className="text-lg font-semibold text-white">
+            Today's Attendance
+          </h3>
+        </div>
+        <p className="text-gray-400">No attendance record for today yet.</p>
+      </div>
+    );
+  }
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "present":
+        return "text-green-400 bg-green-400/10";
+      case "late":
+        return "text-yellow-400 bg-yellow-400/10";
+      case "absent":
+        return "text-red-400 bg-red-400/10";
+      default:
+        return "text-gray-400 bg-gray-400/10";
+    }
+  };
+
+  return (
+    <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-6 mb-8">
+      <div className="flex items-center gap-2 mb-4">
+        <Calendar size={20} className="text-green-400" />
+        <h3 className="text-lg font-semibold text-white">Today's Attendance</h3>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+        <div className="bg-white/5 rounded-lg p-4 border border-white/10">
+          <p className="text-sm text-gray-400 mb-1">Date</p>
+          <p className="text-lg font-semibold text-white">{todayRecord.date}</p>
+        </div>
+        <div className="bg-white/5 rounded-lg p-4 border border-white/10">
+          <p className="text-sm text-gray-400 mb-1">Check-in</p>
+          <p className="text-lg font-semibold text-white">
+            {todayRecord.checkIn}
+          </p>
+        </div>
+        <div className="bg-white/5 rounded-lg p-4 border border-white/10">
+          <p className="text-sm text-gray-400 mb-1">Check-out</p>
+          <p className="text-lg font-semibold text-white">
+            {todayRecord.checkOut}
+          </p>
+        </div>
+        <div className="bg-white/5 rounded-lg p-4 border border-white/10">
+          <p className="text-sm text-gray-400 mb-1">Status</p>
+          <span
+            className={`inline-block px-3 py-1 rounded-full text-sm font-medium capitalize ${getStatusColor(todayRecord.status)}`}
+          >
+            {todayRecord.status}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 /**
  * AttendancePage - Combined attendance tracking and leave management page
@@ -71,6 +254,12 @@ export const AttendancePage = ({ onLogout, userName, userRole }) => {
   const [isCheckInModalOpen, setIsCheckInModalOpen] = useState(false);
   const [isCheckOutModalOpen, setIsCheckOutModalOpen] = useState(false);
 
+  // Filter states
+  const [filterType, setFilterType] = useState("all");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+
   const {
     records,
     checkInTime,
@@ -80,19 +269,78 @@ export const AttendancePage = ({ onLogout, userName, userRole }) => {
     handleCheckOut,
   } = useAttendanceSession();
 
+  const { employees, updateEmployeeStatus } = useEmployees();
+
+  // Leave management
+  const {
+    leaveRecords,
+    leaveBalance: leaveBalanceData,
+    isRequestModalOpen,
+    setIsRequestModalOpen,
+    isReviewModalOpen,
+    setIsReviewModalOpen,
+    selectedRequest,
+    leaveForm,
+    setLeaveForm,
+    handleRequestLeave: openRequestModal,
+    handleReviewRequest,
+    handleApproveRequest,
+    handleRejectRequest,
+    handleSubmitLeaveRequest,
+    getAvailableBalance,
+  } = useLeaveManagement();
+
   const onConfirmCheckIn = () => {
     handleCheckIn();
+    // Update employee status in context (assuming first employee is logged-in user)
+    if (employees.length > 0) {
+      updateEmployeeStatus(employees[0].id, "present");
+    }
     setIsCheckInModalOpen(false);
   };
 
   const onConfirmCheckOut = () => {
     handleCheckOut();
+    // Status remains "present" after checkout
     setIsCheckOutModalOpen(false);
   };
 
   const handleRequestLeave = () => {
-    alert("Leave request form will open here");
+    openRequestModal();
   };
+
+  // Get today's date
+  const today = new Date().toISOString().slice(0, 10);
+
+  // Separate today's record from past records
+  const todayRecord = records.find((r) => r.date === today);
+  const pastRecords = records.filter((r) => r.date !== today);
+
+  // Filter past records based on selected filters
+  const filteredRecords = useMemo(() => {
+    let filtered = [...pastRecords];
+
+    if (filterType === "date" && dateFrom && dateTo) {
+      filtered = filtered.filter((r) => r.date >= dateFrom && r.date <= dateTo);
+    } else if (filterType === "month" && dateFrom) {
+      // dateFrom format: YYYY-MM for month input
+      filtered = filtered.filter((r) => r.date.startsWith(dateFrom));
+    }
+
+    if (statusFilter !== "all") {
+      filtered = filtered.filter((r) => r.status === statusFilter);
+    }
+
+    return filtered;
+  }, [pastRecords, filterType, dateFrom, dateTo, statusFilter]);
+
+  // Get leave balances for display
+  const leaveBalancesForDisplay = Object.keys(leaveBalanceData).map((type) => ({
+    type,
+    balance: leaveBalanceData[type].total - leaveBalanceData[type].used,
+    used: leaveBalanceData[type].used,
+    total: leaveBalanceData[type].total,
+  }));
 
   return (
     <DashboardLayout
@@ -137,7 +385,30 @@ export const AttendancePage = ({ onLogout, userName, userRole }) => {
             onCheckOutClick={() => setIsCheckOutModalOpen(true)}
           />
 
-          <AttendanceTable records={records} />
+          {/* Today's Attendance */}
+          <TodayAttendanceSection todayRecord={todayRecord} />
+
+          {/* Filter Section */}
+          <AttendanceFilterSection
+            filterType={filterType}
+            setFilterType={setFilterType}
+            dateFrom={dateFrom}
+            setDateFrom={setDateFrom}
+            dateTo={dateTo}
+            setDateTo={setDateTo}
+            statusFilter={statusFilter}
+            setStatusFilter={setStatusFilter}
+          />
+
+          {/* Past Attendance Records */}
+          <div>
+            <h3 className="text-lg font-semibold text-white mb-4">
+              Attendance History{" "}
+              {filteredRecords.length > 0 &&
+                `(${filteredRecords.length} records)`}
+            </h3>
+            <AttendanceTable records={filteredRecords} />
+          </div>
 
           <CheckInModal
             isOpen={isCheckInModalOpen}
@@ -158,11 +429,40 @@ export const AttendancePage = ({ onLogout, userName, userRole }) => {
         <>
           <LeaveHeader onRequestLeave={handleRequestLeave} />
 
-          <LeaveBalanceGrid balances={leaveBalance} />
+          <LeaveBalanceGrid balances={leaveBalancesForDisplay} />
 
-          <LeaveRequestsTable records={leaveRecords} />
+          <LeaveRequestsTable
+            records={leaveRecords}
+            onReview={handleReviewRequest}
+            onApprove={(record) => handleApproveRequest(record)}
+            onReject={(record) => handleRejectRequest(record)}
+          />
 
-          <PolicyAndApprovalsSection />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+            <LeavePolicyCard />
+            <RecentApprovalsCard approvals={leaveRecords} />
+          </div>
+
+          {/* Leave Request Modal */}
+          <LeaveRequestModal
+            isOpen={isRequestModalOpen}
+            onClose={() => setIsRequestModalOpen(false)}
+            mode="request"
+            leaveRequest={leaveForm}
+            onApprove={handleSubmitLeaveRequest}
+            onReject={() => setIsRequestModalOpen(false)}
+          />
+
+          {/* Leave Review Modal */}
+          <LeaveRequestModal
+            isOpen={isReviewModalOpen}
+            onClose={() => setIsReviewModalOpen(false)}
+            mode="review"
+            leaveRequest={leaveForm}
+            employeeName={selectedRequest?.employeeName}
+            onApprove={() => handleApproveRequest(selectedRequest)}
+            onReject={() => handleRejectRequest(selectedRequest)}
+          />
         </>
       )}
     </DashboardLayout>
