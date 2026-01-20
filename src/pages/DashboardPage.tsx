@@ -12,8 +12,7 @@ import {
   attendanceData,
   payrollByDepartment,
 } from "../utils/dummyData";
-import { TrendingUp, Users, Clock, DollarSign } from "lucide-react";
-import { formatIDR } from "../utils/format";
+import { TrendingUp, Users, Clock } from "lucide-react";
 import { useEmployees } from "../hooks/useEmployees";
 
 // Dashboard stats configuration
@@ -30,13 +29,6 @@ const STATS_CONFIG = [
     icon: Clock,
     color: "from-green-600 to-green-400",
     format: (val, stats) => `${val}/${stats.totalEmployees}`,
-  },
-  {
-    label: "Current Month Payroll",
-    valueKey: "currentPayroll",
-    icon: DollarSign,
-    color: "from-purple-600 to-purple-400",
-    format: (val) => formatIDR(val),
   },
   {
     label: "Average KPI",
@@ -83,7 +75,6 @@ const StatsGrid = ({ stats }) => {
           value={value}
           icon={icon}
           color={color}
-          trend="↑ 12% from last month"
         />
       ))}
     </div>
@@ -125,13 +116,19 @@ const AdminDashboard = ({ onLogout, userName, userRole }) => {
 
   // Calculate total employees (excluding former)
   const totalEmployees = employees.filter(
-    (emp) => emp.employmentType !== "former"
+    (emp) => emp.employmentType !== "former",
+  ).length;
+
+  // Calculate today's attendance: present or late (not absent)
+  const presentToday = employees.filter(
+    (emp) => emp.employmentType !== "former" && emp.status !== "absent",
   ).length;
 
   // Update dashboard stats with real data
   const updatedStats = {
     ...dashboardStats,
     totalEmployees,
+    todayAttendance: presentToday,
     averageKPI: overallKPI,
   };
 
