@@ -1,4 +1,5 @@
 import {
+  Body,
   Controller,
   Get,
   Post,
@@ -9,6 +10,7 @@ import {
 } from "@nestjs/common";
 import {
   ApiBearerAuth,
+  ApiBody,
   ApiOperation,
   ApiQuery,
   ApiResponse,
@@ -18,6 +20,7 @@ import { AttendanceRecordsService } from "@/attendance/records/attendance-record
 import {
   AttendanceRecordResponseDto,
   AttendanceRecordsQueryDto,
+  CreateCheckInDto,
   PaginatedAttendanceRecordsResponseDto,
 } from "@/attendance/dto";
 import { JwtAuthGuard } from "@/auth/guards/jwt-auth.guard";
@@ -38,6 +41,11 @@ export class AttendanceRecordsController {
   @HttpCode(HttpStatus.CREATED)
   @Roles(Role.EMPLOYEE)
   @ApiOperation({ summary: "Check in for the current user" })
+  @ApiBody({ type: CreateCheckInDto, required: false })
+  @ApiResponse({
+    status: 400,
+    description: "Already checked in today or has an open record",
+  })
   @ApiResponse({
     status: 201,
     description: "Checked in successfully",
@@ -45,8 +53,9 @@ export class AttendanceRecordsController {
   })
   async checkIn(
     @CurrentUser() user: UserPayload,
+    @Body() body: CreateCheckInDto,
   ): Promise<AttendanceRecordResponseDto> {
-    return this.recordsService.checkIn(user.id);
+    return this.recordsService.checkIn(user.id, body.timezone);
   }
 
   @Post("check-out")
@@ -65,11 +74,10 @@ export class AttendanceRecordsController {
   }
 
   @Get()
-  @Roles(Role.SUPERVISOR)
-  @ApiOperation({ summary: "Get attendance records (paginated and filtered)" })
+  @Roles(Role.SUPERADMIN)
+  @ApiOperation({ summary: "Get attendance records for all users" })
   @ApiQuery({ name: "page", required: false, type: Number, example: 1 })
   @ApiQuery({ name: "limit", required: false, type: Number, example: 10 })
-  @ApiQuery({ name: "userId", required: false, type: Number, example: 1 })
   @ApiQuery({
     name: "startDate",
     required: false,
@@ -119,6 +127,6 @@ export class AttendanceRecordsController {
     @CurrentUser() user: UserPayload,
     @Query() query: AttendanceRecordsQueryDto,
   ): Promise<PaginatedAttendanceRecordsResponseDto> {
-    return this.recordsService.findMine(user.id, query);
+    return this.recordsService.findAll(query, user.id);
   }
 }

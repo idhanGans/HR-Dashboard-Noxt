@@ -8,6 +8,7 @@ import { OrganizationsModule } from "@/organizations/organizations.module";
 import { AuthModule } from "@/auth/auth.module";
 import { KpiModule } from "@/kpi/kpi.module";
 import { PayrollModule } from "./payroll/payroll.module";
+import { AttendanceModule } from "@/attendance/attendance.module";
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { PayrollModule } from "./payroll/payroll.module";
     UsersModule,
     KpiModule,
     PayrollModule,
+    AttendanceModule,
   ],
   controllers: [AppController],
   providers: [AppService],

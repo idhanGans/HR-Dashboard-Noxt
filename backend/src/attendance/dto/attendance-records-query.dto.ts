@@ -1,15 +1,10 @@
-import { ApiPropertyOptional } from "@nestjs/swagger";
-import { Type } from "class-transformer";
-import { IsDateString, IsInt, IsOptional } from "class-validator";
+import { ApiPropertyOptional, OmitType } from "@nestjs/swagger";
+import { IsDateString, IsOptional } from "class-validator";
 import { PaginationQueryDto } from "@/common/dto";
 
-export class AttendanceRecordsQueryDto extends PaginationQueryDto {
-  @ApiPropertyOptional({ description: "Filter by user ID", example: 1 })
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  userId?: number;
-
+export class AttendanceRecordsQueryDto extends OmitType(PaginationQueryDto, [
+  "search",
+] as const) {
   @ApiPropertyOptional({
     description: "Filter by start date (ISO)",
     example: "2024-02-01T00:00:00Z",

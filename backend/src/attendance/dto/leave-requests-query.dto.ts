@@ -1,10 +1,12 @@
-import { ApiPropertyOptional } from "@nestjs/swagger";
+import { ApiPropertyOptional, OmitType } from "@nestjs/swagger";
 import { Type } from "class-transformer";
 import { IsDateString, IsEnum, IsInt, IsOptional } from "class-validator";
 import { PaginationQueryDto } from "@/common/dto";
-import { LeaveStatus } from "@/attendance/dto/attendance.enums";
+import { LeaveStatus } from "@prisma/client";
 
-export class LeaveRequestsQueryDto extends PaginationQueryDto {
+export class LeaveRequestsQueryDto extends OmitType(PaginationQueryDto, [
+  "search",
+] as const ) {
   @ApiPropertyOptional({ description: "Filter by user ID", example: 1 })
   @IsOptional()
   @Type(() => Number)
@@ -36,3 +38,7 @@ export class LeaveRequestsQueryDto extends PaginationQueryDto {
   @IsDateString()
   endDate?: string;
 }
+
+export class LeaveRequestsMeQueryDto extends OmitType(LeaveRequestsQueryDto, [
+  "userId",
+] as const) {}

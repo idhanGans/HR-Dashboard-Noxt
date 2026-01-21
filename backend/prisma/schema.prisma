@@ -209,6 +209,7 @@ model AttendanceRecord {
   checkInAt      DateTime
   checkOutAt     DateTime?
   checkOutSource AttendanceCheckoutSource @default(MANUAL)
+  timezone       String?
   createdAt      DateTime                 @default(now())
   updatedAt      DateTime                 @updatedAt
   user           User                     @relation(fields: [userId], references: [id], onDelete: Restrict)
@@ -238,6 +239,16 @@ model LeaveRequest {
   @@index([status])
   @@index([startDate, endDate])
   @@index([reviewedById])
+}
+
+model LeaveEntitlement {
+  id           Int      @id @default(autoincrement())
+  type         LeaveType
+  entitledDays Int
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([type])
 }
 
 model Payroll {

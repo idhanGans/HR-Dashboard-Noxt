@@ -21,9 +21,13 @@ import {
 import { LeaveRequestsService } from "@/attendance/leaves/leave-requests.service";
 import {
   CreateLeaveRequestDto,
+  LeaveBalanceDto,
+  LeaveEntitlementDto,
   LeaveRequestResponseDto,
+  LeaveRequestsMeQueryDto,
   LeaveRequestsQueryDto,
   PaginatedLeaveRequestsResponseDto,
+  UpdateLeaveEntitlementsDto,
 } from "@/attendance/dto";
 import { JwtAuthGuard } from "@/auth/guards/jwt-auth.guard";
 import { RolesGuard } from "@/auth/guards/roles.guard";
@@ -56,7 +60,7 @@ export class LeaveRequestsController {
   }
 
   @Get()
-  @Roles(Role.SUPERVISOR)
+  @Roles(Role.SUPERADMIN)
   @ApiOperation({ summary: "Get leave requests (paginated and filtered)" })
   @ApiQuery({ name: "page", required: false, type: Number, example: 1 })
   @ApiQuery({ name: "limit", required: false, type: Number, example: 10 })
@@ -90,6 +94,51 @@ export class LeaveRequestsController {
     return this.leaveRequestsService.findAll(query);
   }
 
+  @Get("balance")
+  @Roles(Role.EMPLOYEE)
+  @ApiOperation({ summary: "Get leave balance for current user" })
+  @ApiResponse({
+    status: 200,
+    description: "Returns leave balances by type",
+    type: [LeaveBalanceDto],
+  })
+  async getBalance(@CurrentUser() user: UserPayload): Promise<LeaveBalanceDto[]> {
+    return this.leaveRequestsService.getLeaveBalances(user.id);
+  }
+
+  @Get("recent-approvals")
+  @Roles(Role.SUPERADMIN)
+  @ApiOperation({ summary: "Get recently approved leave requests" })
+  @ApiQuery({ name: "limit", required: false, type: Number, example: 10 })
+  @ApiResponse({
+    status: 200,
+    description: "Returns recent approvals",
+    type: [LeaveRequestResponseDto],
+  })
+  async findRecentApprovals(
+    @Query("limit") limit?: string,
+  ): Promise<LeaveRequestResponseDto[]> {
+    const parsedLimit = limit ? Number(limit) : undefined;
+    const safeLimit =
+      parsedLimit && parsedLimit > 0 ? Math.min(parsedLimit, 100) : undefined;
+    return this.leaveRequestsService.findRecentApprovals(safeLimit);
+  }
+
+  @Put("entitlements")
+  @Roles(Role.SUPERADMIN)
+  @ApiOperation({ summary: "Update global leave entitlements" })
+  @ApiBody({ type: UpdateLeaveEntitlementsDto })
+  @ApiResponse({
+    status: 200,
+    description: "Updated leave entitlements",
+    type: [LeaveEntitlementDto],
+  })
+  async updateEntitlements(
+    @Body() dto: UpdateLeaveEntitlementsDto,
+  ): Promise<LeaveEntitlementDto[]> {
+    return this.leaveRequestsService.updateEntitlements(dto);
+  }
+
   @Get("me")
   @Roles(Role.EMPLOYEE)
   @ApiOperation({ summary: "Get current user's leave requests" })
@@ -120,13 +169,13 @@ export class LeaveRequestsController {
   })
   async findMine(
     @CurrentUser() user: UserPayload,
-    @Query() query: LeaveRequestsQueryDto,
+    @Query() query: LeaveRequestsMeQueryDto,
   ): Promise<PaginatedLeaveRequestsResponseDto> {
     return this.leaveRequestsService.findMine(user.id, query);
   }
 
   @Put(":id/approve")
-  @Roles(Role.SUPERVISOR)
+  @Roles(Role.SUPERADMIN)
   @ApiOperation({ summary: "Approve a leave request" })
   @ApiParam({ name: "id", description: "Leave request ID", example: 1 })
   @ApiResponse({
@@ -142,7 +191,7 @@ export class LeaveRequestsController {
   }
 
   @Put(":id/reject")
-  @Roles(Role.SUPERVISOR)
+  @Roles(Role.SUPERADMIN)
   @ApiOperation({ summary: "Reject a leave request" })
   @ApiParam({ name: "id", description: "Leave request ID", example: 1 })
   @ApiResponse({

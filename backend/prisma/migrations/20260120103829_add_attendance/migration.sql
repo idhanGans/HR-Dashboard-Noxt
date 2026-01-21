@@ -14,6 +14,7 @@ CREATE TABLE "AttendanceRecord" (
     "checkInAt" TIMESTAMP(3) NOT NULL,
     "checkOutAt" TIMESTAMP(3),
     "checkOutSource" "AttendanceCheckoutSource" NOT NULL DEFAULT 'MANUAL',
+    "timezone" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -35,6 +36,17 @@ CREATE TABLE "LeaveRequest" (
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "LeaveRequest_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "LeaveEntitlement" (
+    "id" SERIAL NOT NULL,
+    "type" "LeaveType" NOT NULL,
+    "entitledDays" INTEGER NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "LeaveEntitlement_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
@@ -60,6 +72,17 @@ CREATE INDEX "LeaveRequest_startDate_endDate_idx" ON "LeaveRequest"("startDate",
 
 -- CreateIndex
 CREATE INDEX "LeaveRequest_reviewedById_idx" ON "LeaveRequest"("reviewedById");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "LeaveEntitlement_type_key" ON "LeaveEntitlement"("type");
+
+-- Seed LeaveEntitlement defaults
+INSERT INTO "LeaveEntitlement" ("type", "entitledDays", "updatedAt")
+VALUES
+    ('PAID_LEAVE', 0, CURRENT_TIMESTAMP),
+    ('UNPAID_LEAVE', 0, CURRENT_TIMESTAMP),
+    ('SICK_LEAVE', 0, CURRENT_TIMESTAMP),
+    ('URGENT_LEAVE', 0, CURRENT_TIMESTAMP);
 
 -- AddForeignKey
 ALTER TABLE "AttendanceRecord" ADD CONSTRAINT "AttendanceRecord_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

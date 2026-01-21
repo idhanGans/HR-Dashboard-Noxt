@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { LeaveStatus, LeaveType } from "@/attendance/dto/attendance.enums";
+import { LeaveStatus, LeaveType } from "@prisma/client";
 
 export class LeaveUserSummaryDto {
   @ApiProperty({ description: "User ID", example: 1 })
@@ -48,6 +48,12 @@ export class LeaveRequestResponseDto {
   })
   status: LeaveStatus;
 
+  @ApiProperty({
+    description: "Total leave days (inclusive)",
+    example: 3,
+  })
+  days: number;
+
   @ApiPropertyOptional({ description: "Reviewer user ID", example: 2 })
   reviewedById?: number | null;
 
@@ -67,7 +73,7 @@ export class LeaveRequestResponseDto {
     description: "Reviewer user",
     type: LeaveUserSummaryDto,
   })
-  reviewedBy?: LeaveUserSummaryDto;
+  reviewedBy?: LeaveUserSummaryDto | null;
 
   @ApiProperty({ description: "Created at", example: "2024-02-09T10:00:00Z" })
   createdAt: Date;

@@ -1,21 +1,25 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
-import { Cron, CronExpression } from "@nestjs/schedule";
+import { Cron } from "@nestjs/schedule";
+import { DateTime } from "luxon";
 import { PrismaService } from "@/prisma/prisma.service";
 import {
-  AttendanceCheckoutSource,
   AttendanceRecordResponseDto,
   AttendanceRecordsQueryDto,
   PaginatedAttendanceRecordsResponseDto,
 } from "@/attendance/dto";
-import { Prisma } from "@prisma/client";
+import { AttendanceCheckoutSource, Prisma } from "@prisma/client";
 
 @Injectable()
 export class AttendanceRecordsService {
   constructor(private prisma: PrismaService) {}
 
-  async checkIn(userId: number): Promise<AttendanceRecordResponseDto> {
+  async checkIn(
+    userId: number,
+    timezone?: string,
+  ): Promise<AttendanceRecordResponseDto> {
     const now = new Date();
-    const { startOfDay, endOfDay } = this.getDayBounds(now);
+    const zone = this.normalizeTimezone(timezone);
+    const { startOfDay, endOfDay } = this.getDayBounds(now, zone);
 
     const existingOpen = await this.prisma.attendanceRecord.findFirst({
       where: {
@@ -46,6 +50,7 @@ export class AttendanceRecordsService {
       data: {
         userId,
         checkInAt: now,
+        timezone: zone,
       },
       include: {
         user: {
@@ -98,16 +103,16 @@ export class AttendanceRecordsService {
 
   async findAll(
     query: AttendanceRecordsQueryDto,
+    userId?: number,
   ): Promise<PaginatedAttendanceRecordsResponseDto> {
     const page = query.page ?? 1;
     const limit = query.limit ?? 10;
     const skip = (page - 1) * limit;
 
     const where: Prisma.AttendanceRecordWhereInput = {};
-    if (query.userId) {
-      where.userId = query.userId;
+    if (userId) {
+      where.userId = userId;
     }
-
     const checkInRange = this.buildDateRangeFilter(
       query.startDate,
       query.endDate,
@@ -153,29 +158,37 @@ export class AttendanceRecordsService {
     userId: number,
     query: AttendanceRecordsQueryDto,
   ): Promise<PaginatedAttendanceRecordsResponseDto> {
-    return this.findAll({
-      ...query,
-      userId,
-    });
+    return this.findAll(query, userId);
   }
 
-  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  @Cron("0 */15 * * * *")
   async autoCheckoutOpenRecords(): Promise<void> {
     const now = new Date();
-    const { startOfDay } = this.getDayBounds(now);
-
-    await this.prisma.attendanceRecord.updateMany({
+    const openRecords = await this.prisma.attendanceRecord.findMany({
       where: {
         checkOutAt: null,
-        checkInAt: {
-          lt: startOfDay,
-        },
       },
-      data: {
-        checkOutAt: startOfDay,
-        checkOutSource: AttendanceCheckoutSource.AUTO,
+      select: {
+        id: true,
+        checkInAt: true,
+        timezone: true,
       },
     });
+
+    for (const record of openRecords) {
+      const zone = this.normalizeTimezone(record.timezone);
+      const endOfDay = this.getEndOfDayUtc(record.checkInAt, zone);
+
+      if (now >= endOfDay) {
+        await this.prisma.attendanceRecord.update({
+          where: { id: record.id },
+          data: {
+            checkOutAt: endOfDay,
+            checkOutSource: AttendanceCheckoutSource.AUTO,
+          },
+        });
+      }
+    }
   }
 
   private buildDateRangeFilter(
@@ -198,13 +211,30 @@ export class AttendanceRecordsService {
     return range;
   }
 
-  private getDayBounds(date: Date): { startOfDay: Date; endOfDay: Date } {
-    const startOfDay = new Date(date);
-    startOfDay.setHours(0, 0, 0, 0);
+  private getDayBounds(
+    date: Date,
+    timezone: string,
+  ): { startOfDay: Date; endOfDay: Date } {
+    const zoned = DateTime.fromJSDate(date, { zone: timezone });
+    const startLocal = zoned.startOf("day");
+    const endLocal = zoned.endOf("day");
 
-    const endOfDay = new Date(date);
-    endOfDay.setHours(23, 59, 59, 999);
+    return {
+      startOfDay: startLocal.toUTC().toJSDate(),
+      endOfDay: endLocal.toUTC().toJSDate(),
+    };
+  }
 
-    return { startOfDay, endOfDay };
+  private getEndOfDayUtc(date: Date, timezone: string): Date {
+    return this.getDayBounds(date, timezone).endOfDay;
+  }
+
+  private normalizeTimezone(timezone?: string | null): string {
+    if (!timezone) {
+      return "UTC";
+    }
+
+    const candidate = DateTime.now().setZone(timezone);
+    return candidate.isValid ? timezone : "UTC";
   }
 }
