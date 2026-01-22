@@ -8,10 +8,16 @@ export const DemoCredentials = () => {
         <strong>Demo Credentials:</strong>
       </p>
       <p className="text-xs text-white">
-        Username: <code>admin</code>
+        Superadmin: <code>superadmin@example.com</code>
       </p>
       <p className="text-xs text-white">
-        Password: <code>demo</code>
+        Supervisor: <code>supervisor@example.com</code>
+      </p>
+      <p className="text-xs text-white">
+        Employee: <code>employee@example.com</code>
+      </p>
+      <p className="text-xs text-white mt-2">
+        Password: <code>password123</code>
       </p>
     </div>
   );

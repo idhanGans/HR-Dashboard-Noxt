@@ -2,16 +2,17 @@ import { Button } from "../components";
 import {
   LoginHeader,
   LoginFormFields,
-  RoleToggle,
   DemoCredentials,
   LoginCard,
 } from "../components/login";
 import { useLoginForm } from "../hooks/useLoginForm";
+import type { FormEvent, ReactNode } from "react";
+import type { LoginProps } from "../types/auth";
 
 /**
  * LoginBackground - Background wrapper for login page
  */
-const LoginBackground = ({ children }) => (
+const LoginBackground = ({ children }: { children: ReactNode }) => (
   <div
     className="min-h-screen flex items-center justify-center p-4"
     style={{
@@ -28,26 +29,38 @@ const LoginBackground = ({ children }) => (
  * LoginForm - Main login form component
  */
 const LoginForm = ({
-  username,
+  email,
   password,
-  userRole,
-  onUsernameChange,
+  error,
+  isSubmitting,
+  onEmailChange,
   onPasswordChange,
-  onRoleChange,
   onSubmit,
+}: {
+  email: string;
+  password: string;
+  error: string | null;
+  isSubmitting: boolean;
+  onEmailChange: (value: string) => void;
+  onPasswordChange: (value: string) => void;
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 }) => (
   <form onSubmit={onSubmit} className="space-y-5">
     <LoginFormFields
-      username={username}
+      email={email}
       password={password}
-      onUsernameChange={onUsernameChange}
+      onEmailChange={onEmailChange}
       onPasswordChange={onPasswordChange}
     />
 
-    <RoleToggle selectedRole={userRole} onRoleChange={onRoleChange} />
+    {error && (
+      <p className="text-sm text-red-400" role="alert">
+        {error}
+      </p>
+    )}
 
-    <Button type="submit" className="w-full">
-      Login
+    <Button type="submit" className="w-full" disabled={isSubmitting}>
+      {isSubmitting ? "Signing in..." : "Login"}
     </Button>
   </form>
 );
@@ -55,14 +68,14 @@ const LoginForm = ({
 /**
  * LoginPage - Login page with glassmorphism design
  */
-export const LoginPage = ({ onLogin }) => {
+export const LoginPage = ({ onLogin }: LoginProps) => {
   const {
-    username,
-    setUsername,
+    email,
+    setEmail,
     password,
     setPassword,
-    userRole,
-    setUserRole,
+    error,
+    isSubmitting,
     handleLogin,
   } = useLoginForm(onLogin);
 
@@ -72,12 +85,12 @@ export const LoginPage = ({ onLogin }) => {
         <LoginHeader />
 
         <LoginForm
-          username={username}
+          email={email}
           password={password}
-          userRole={userRole}
-          onUsernameChange={setUsername}
+          error={error}
+          isSubmitting={isSubmitting}
+          onEmailChange={setEmail}
           onPasswordChange={setPassword}
-          onRoleChange={setUserRole}
           onSubmit={handleLogin}
         />
 

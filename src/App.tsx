@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import "./index.css";
 import {
@@ -12,12 +11,19 @@ import {
   SettingsPage,
 } from "./pages";
 import { EmployeeProvider } from "./contexts/EmployeeContext";
-import { AuthState, ProtectedRouteProps, PublicRouteProps } from "./types/auth";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import type { ProtectedRouteProps, PublicRouteProps } from "./types/auth";
 
-const STORAGE_KEY = "hrdash-auth";
-
-const ProtectedRoute = ({ isAuthenticated, children }: ProtectedRouteProps) => {
+const ProtectedRoute = ({
+  isAuthenticated,
+  children,
+  allowedRoles,
+  userRole,
+}: ProtectedRouteProps) => {
   if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (allowedRoles && (!userRole || !allowedRoles.includes(userRole))) {
+    return <Navigate to="/dashboard" replace />;
+  }
   return <>{children}</>;
 };
 
@@ -26,139 +32,141 @@ const PublicRoute = ({ isAuthenticated, children }: PublicRouteProps) => {
   return <>{children}</>;
 };
 
-function App() {
-  const [auth, setAuth] = useState<AuthState>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) return JSON.parse(saved);
-    return {
-      isAuthenticated: false,
-      userRole: "Administrator" as const,
-      userName: "John Doe",
-    };
-  });
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(auth));
-  }, [auth]);
-
-  const handleLogin = (
-    role: string = "admin",
-    userName: string = "John Doe",
-  ) => {
-    setAuth({
-      isAuthenticated: true,
-      userRole: role === "employee" ? "Employee" : "Administrator",
-      userName: userName || "John Doe",
-    });
-  };
-
-  const handleLogout = () => {
-    setAuth((prev) => ({ ...prev, isAuthenticated: false }));
-  };
+const AppRoutes = () => {
+  const { auth, signIn, signOut } = useAuth();
 
   const layoutProps = {
-    onLogout: handleLogout,
+    onLogout: signOut,
     userName: auth.userName,
     userRole: auth.userRole,
   };
 
   return (
-    <EmployeeProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route
-            path="/login"
-            element={
-              <PublicRoute isAuthenticated={auth.isAuthenticated}>
-                <LoginPage onLogin={handleLogin} />
-              </PublicRoute>
-            }
-          />
+    <Routes>
+      <Route
+        path="/login"
+        element={
+          <PublicRoute isAuthenticated={auth.isAuthenticated}>
+            <LoginPage onLogin={signIn} />
+          </PublicRoute>
+        }
+      />
 
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute isAuthenticated={auth.isAuthenticated}>
-                <DashboardPage {...layoutProps} />
-              </ProtectedRoute>
-            }
-          />
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute
+            isAuthenticated={auth.isAuthenticated}
+            userRole={auth.role}
+          >
+            <DashboardPage {...layoutProps} />
+          </ProtectedRoute>
+        }
+      />
 
-          <Route
-            path="/attendance"
-            element={
-              <ProtectedRoute isAuthenticated={auth.isAuthenticated}>
-                <AttendancePage {...layoutProps} />
-              </ProtectedRoute>
-            }
-          />
+      <Route
+        path="/attendance"
+        element={
+          <ProtectedRoute
+            isAuthenticated={auth.isAuthenticated}
+            userRole={auth.role}
+          >
+            <AttendancePage {...layoutProps} />
+          </ProtectedRoute>
+        }
+      />
 
-          <Route
-            path="/payroll"
-            element={
-              <ProtectedRoute isAuthenticated={auth.isAuthenticated}>
-                <PayrollPage {...layoutProps} />
-              </ProtectedRoute>
-            }
-          />
+      <Route
+        path="/payroll"
+        element={
+          <ProtectedRoute
+            isAuthenticated={auth.isAuthenticated}
+            userRole={auth.role}
+          >
+            <PayrollPage {...layoutProps} />
+          </ProtectedRoute>
+        }
+      />
 
-          <Route
-            path="/kpi"
-            element={
-              <ProtectedRoute isAuthenticated={auth.isAuthenticated}>
-                <KPIPage {...layoutProps} />
-              </ProtectedRoute>
-            }
-          />
+      <Route
+        path="/kpi"
+        element={
+          <ProtectedRoute
+            isAuthenticated={auth.isAuthenticated}
+            userRole={auth.role}
+          >
+            <KPIPage {...layoutProps} />
+          </ProtectedRoute>
+        }
+      />
 
-          <Route
-            path="/employees"
-            element={
-              <ProtectedRoute isAuthenticated={auth.isAuthenticated}>
-                <EmployeesPage {...layoutProps} />
-              </ProtectedRoute>
-            }
-          />
+      <Route
+        path="/employees"
+        element={
+          <ProtectedRoute
+            isAuthenticated={auth.isAuthenticated}
+            userRole={auth.role}
+          >
+            <EmployeesPage {...layoutProps} />
+          </ProtectedRoute>
+        }
+      />
 
-          <Route
-            path="/hiring"
-            element={
-              <ProtectedRoute isAuthenticated={auth.isAuthenticated}>
-                <HiringPage {...layoutProps} />
-              </ProtectedRoute>
-            }
-          />
+      <Route
+        path="/hiring"
+        element={
+          <ProtectedRoute
+            isAuthenticated={auth.isAuthenticated}
+            userRole={auth.role}
+          >
+            <HiringPage {...layoutProps} />
+          </ProtectedRoute>
+        }
+      />
 
-          <Route
-            path="/settings"
-            element={
-              <ProtectedRoute isAuthenticated={auth.isAuthenticated}>
-                <SettingsPage {...layoutProps} />
-              </ProtectedRoute>
-            }
-          />
+      <Route
+        path="/settings"
+        element={
+          <ProtectedRoute
+            isAuthenticated={auth.isAuthenticated}
+            userRole={auth.role}
+          >
+            <SettingsPage {...layoutProps} />
+          </ProtectedRoute>
+        }
+      />
 
-          <Route
-            path="/"
-            element={
-              <Navigate
-                to={auth.isAuthenticated ? "/dashboard" : "/login"}
-                replace
-              />
-            }
+      <Route
+        path="/"
+        element={
+          <Navigate
+            to={auth.isAuthenticated ? "/dashboard" : "/login"}
+            replace
           />
-          <Route
-            path="*"
-            element={
-              <Navigate
-                to={auth.isAuthenticated ? "/dashboard" : "/login"}
-                replace
-              />
-            }
+        }
+      />
+      <Route
+        path="*"
+        element={
+          <Navigate
+            to={auth.isAuthenticated ? "/dashboard" : "/login"}
+            replace
           />
-        </Routes>
-      </BrowserRouter>
-    </EmployeeProvider>
+        }
+      />
+    </Routes>
+  );
+};
+
+function App() {
+  return (
+    <AuthProvider>
+      <EmployeeProvider>
+        <BrowserRouter>
+          <AppRoutes />
+        </BrowserRouter>
+      </EmployeeProvider>
+    </AuthProvider>
   );
 }
 
