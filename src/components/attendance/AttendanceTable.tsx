@@ -8,6 +8,7 @@ import { StatusBadge } from "../StatusBadge";
  */
 export const AttendanceTable = ({ records }) => {
   const columns = [
+    { key: "employeeName", label: "Employee" },
     { key: "date", label: "Date" },
     { key: "checkIn", label: "Check-in" },
     { key: "checkOut", label: "Check-out" },

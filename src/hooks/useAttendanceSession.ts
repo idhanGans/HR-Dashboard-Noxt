@@ -6,7 +6,10 @@ const STORAGE_KEY = "hrdash-attendance-session";
 /**
  * useAttendanceSession - Custom hook for attendance session management
  */
-export const useAttendanceSession = () => {
+export const useAttendanceSession = (currentEmployee?: {
+  id?: number;
+  name?: string;
+}) => {
   const [records, setRecords] = useState(seedRecords);
   const [checkInTime, setCheckInTime] = useState(() => {
     try {
@@ -37,6 +40,9 @@ export const useAttendanceSession = () => {
     setCheckInTime(now);
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ checkInTime: now }));
 
+    const employeeId = currentEmployee?.id;
+    const employeeName = currentEmployee?.name ?? "Current User";
+
     // Upsert today's record
     setRecords((prev) => {
       const existingIdx = prev.findIndex((r) => r.date === todayKey);
@@ -48,6 +54,8 @@ export const useAttendanceSession = () => {
         }),
         checkOut: "-",
         status: "present",
+        employeeId,
+        employeeName,
       };
       if (existingIdx >= 0) {
         const next = [...prev];
@@ -75,6 +83,11 @@ export const useAttendanceSession = () => {
         const next = [...prev];
         next[existingIdx] = {
           ...next[existingIdx],
+          employeeId: next[existingIdx].employeeId ?? currentEmployee?.id,
+          employeeName:
+            next[existingIdx].employeeName ??
+            currentEmployee?.name ??
+            "Current User",
           checkOut: new Date(now).toLocaleTimeString([], {
             hour: "2-digit",
             minute: "2-digit",
@@ -93,6 +106,8 @@ export const useAttendanceSession = () => {
             minute: "2-digit",
           }),
           status: "present",
+          employeeId: currentEmployee?.id,
+          employeeName: currentEmployee?.name ?? "Current User",
         },
         ...prev,
       ];

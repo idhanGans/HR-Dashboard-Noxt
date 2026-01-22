@@ -44,6 +44,8 @@ export interface AttendanceRecord {
   checkIn: string;
   checkOut: string;
   status: "present" | "absent" | "late";
+  employeeId?: number;
+  employeeName?: string;
 }
 
 export interface AttendanceSession {

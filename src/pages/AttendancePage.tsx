@@ -66,6 +66,9 @@ const AttendanceFilterSection = ({
   setDateTo,
   statusFilter,
   setStatusFilter,
+  employeeFilter,
+  setEmployeeFilter,
+  employees,
 }) => (
   <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-6 mb-8">
     <div className="flex items-center gap-2 mb-6">
@@ -75,7 +78,7 @@ const AttendanceFilterSection = ({
       </h3>
     </div>
 
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
       {/* Filter Type */}
       <div>
         <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -98,6 +101,27 @@ const AttendanceFilterSection = ({
           <option value="status" className="bg-gray-800">
             Status
           </option>
+        </select>
+      </div>
+
+      {/* Employee Filter */}
+      <div>
+        <label className="block text-sm font-medium text-gray-300 mb-2">
+          Employee
+        </label>
+        <select
+          value={employeeFilter}
+          onChange={(e) => setEmployeeFilter(e.target.value)}
+          className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors"
+        >
+          <option value="all" className="bg-gray-800">
+            All Employees
+          </option>
+          {employees?.map((emp) => (
+            <option key={emp.id} value={String(emp.id)} className="bg-gray-800">
+              {emp.name}
+            </option>
+          ))}
         </select>
       </div>
 
@@ -259,6 +283,9 @@ export const AttendancePage = ({ onLogout, userName, userRole }) => {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [employeeFilter, setEmployeeFilter] = useState("all");
+
+  const { employees, updateEmployeeStatus } = useEmployees();
 
   const {
     records,
@@ -267,9 +294,9 @@ export const AttendancePage = ({ onLogout, userName, userRole }) => {
     isCheckedIn,
     handleCheckIn,
     handleCheckOut,
-  } = useAttendanceSession();
-
-  const { employees, updateEmployeeStatus } = useEmployees();
+  } = useAttendanceSession(
+    employees[0] ? { id: employees[0].id, name: employees[0].name } : undefined,
+  );
 
   // Leave management
   const {
@@ -309,12 +336,42 @@ export const AttendancePage = ({ onLogout, userName, userRole }) => {
     openRequestModal();
   };
 
+  const employeeLookup = useMemo(
+    () =>
+      employees.reduce(
+        (acc, emp) => {
+          acc[emp.id] = emp.name;
+          return acc;
+        },
+        {} as Record<number, string>,
+      ),
+    [employees],
+  );
+
+  const recordsWithEmployee = useMemo(() => {
+    if (!records.length) return [];
+
+    return records.map((record, idx) => {
+      const fallbackEmployee = employees.length
+        ? employees[idx % employees.length]
+        : undefined;
+      const employeeId = record.employeeId ?? fallbackEmployee?.id;
+      const employeeName =
+        record.employeeName ??
+        (employeeId ? employeeLookup[employeeId] : undefined) ??
+        fallbackEmployee?.name ??
+        "Unassigned";
+
+      return { ...record, employeeId, employeeName };
+    });
+  }, [records, employees, employeeLookup]);
+
   // Get today's date
   const today = new Date().toISOString().slice(0, 10);
 
   // Separate today's record from past records
-  const todayRecord = records.find((r) => r.date === today);
-  const pastRecords = records.filter((r) => r.date !== today);
+  const todayRecord = recordsWithEmployee.find((r) => r.date === today);
+  const pastRecords = recordsWithEmployee.filter((r) => r.date !== today);
 
   // Filter past records based on selected filters
   const filteredRecords = useMemo(() => {
@@ -331,8 +388,20 @@ export const AttendancePage = ({ onLogout, userName, userRole }) => {
       filtered = filtered.filter((r) => r.status === statusFilter);
     }
 
+    if (employeeFilter !== "all") {
+      filtered = filtered.filter((r) => {
+        const idMatch = r.employeeId
+          ? String(r.employeeId) === employeeFilter
+          : false;
+        const nameMatch = r.employeeName
+          ? r.employeeName.toLowerCase() === employeeFilter.toLowerCase()
+          : false;
+        return idMatch || nameMatch;
+      });
+    }
+
     return filtered;
-  }, [pastRecords, filterType, dateFrom, dateTo, statusFilter]);
+  }, [pastRecords, filterType, dateFrom, dateTo, statusFilter, employeeFilter]);
 
   // Get leave balances for display
   const leaveBalancesForDisplay = Object.keys(leaveBalanceData).map((type) => ({
@@ -398,6 +467,9 @@ export const AttendancePage = ({ onLogout, userName, userRole }) => {
             setDateTo={setDateTo}
             statusFilter={statusFilter}
             setStatusFilter={setStatusFilter}
+            employeeFilter={employeeFilter}
+            setEmployeeFilter={setEmployeeFilter}
+            employees={employees}
           />
 
           {/* Past Attendance Records */}
