@@ -1,10 +1,15 @@
 import { Card } from "../Card";
+import type { Employee } from "../../types";
 
 /**
  * PaymentInfoCard - Displays payment/bank information
  * @param {Object} employee - Employee object with payroll data
  */
-export const PaymentInfoCard = ({ employee }) => {
+export const PaymentInfoCard = ({
+  employee,
+}: {
+  employee?: Employee;
+}) => {
   const defaultInfo = {
     bankName: "Not specified",
     accountHolder: "Not specified",

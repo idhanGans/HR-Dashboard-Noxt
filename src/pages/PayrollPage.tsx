@@ -11,6 +11,14 @@ import { PayrollFormModal } from "../components/employees";
 import { Card } from "../components";
 import { useEmployees } from "../hooks/useEmployees";
 import { useMediaQuery } from "../hooks/useMediaQuery";
+import type {
+  Employee,
+  PayrollFormData,
+  PayrollHistoryRecord,
+  PayrollInfo,
+  SalaryBreakdown,
+} from "../types";
+import type { LayoutProps } from "../types/auth";
 
 /**
  * EmployeeSelector - Dropdown to select employee
@@ -20,6 +28,11 @@ const EmployeeSelector = ({
   selectedId,
   onChange,
   isCompactLabel,
+}: {
+  employees: Employee[];
+  selectedId: number | null;
+  onChange: (id: number | null) => void;
+  isCompactLabel: boolean;
 }) => (
   <Card className="mb-6">
     <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -27,7 +40,9 @@ const EmployeeSelector = ({
     </label>
     <select
       value={selectedId || ""}
-      onChange={(e) => onChange(Number(e.target.value))}
+      onChange={(e) =>
+        onChange(e.target.value ? Number(e.target.value) : null)
+      }
       className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors"
     >
       <option value="">Choose an employee</option>
@@ -52,6 +67,11 @@ const MonthYearFilter = ({
   selectedYear,
   onChange,
   employee,
+}: {
+  selectedMonth: number;
+  selectedYear: number;
+  onChange: (month: number, year: number) => void;
+  employee?: Employee;
 }) => {
   const months = [
     "January",
@@ -114,7 +134,15 @@ const MonthYearFilter = ({
 /**
  * MainPayslipSection - Main payslip display area
  */
-const MainPayslipSection = ({ salaryBreakdown, employee, payrollData }) => (
+const MainPayslipSection = ({
+  salaryBreakdown,
+  employee,
+  payrollData,
+}: {
+  salaryBreakdown: SalaryBreakdown;
+  employee?: Employee;
+  payrollData?: PayrollInfo | PayrollHistoryRecord | null;
+}) => (
   <div className="lg:col-span-2">
     <PayslipCard
       salaryBreakdown={salaryBreakdown}
@@ -127,7 +155,17 @@ const MainPayslipSection = ({ salaryBreakdown, employee, payrollData }) => (
 /**
  * SidebarSection - Sidebar with summary, download, and payment info
  */
-const SidebarSection = ({ salaryBreakdown, employee, onDownload, onEdit }) => (
+const SidebarSection = ({
+  salaryBreakdown,
+  employee,
+  onDownload,
+  onEdit,
+}: {
+  salaryBreakdown: SalaryBreakdown;
+  employee?: Employee;
+  onDownload: () => void;
+  onEdit: () => void;
+}) => (
   <div className="space-y-6">
     <PayrollSummary salaryBreakdown={salaryBreakdown} />
 
@@ -160,18 +198,21 @@ const SidebarSection = ({ salaryBreakdown, employee, onDownload, onEdit }) => (
 /**
  * PayrollPage - Payroll and salary slip page with employee selection
  */
-export const PayrollPage = ({ onLogout, userName, userRole }) => {
+
+export const PayrollPage = ({ onLogout, userName, userRole }: LayoutProps) => {
   const {
     employees,
     addPayrollHistory,
     getPayrollHistory,
     updateEmployeePayroll,
   } = useEmployees();
-  const [selectedEmployeeId, setSelectedEmployeeId] = useState(null);
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<number | null>(
+    null,
+  );
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [isPayrollModalOpen, setIsPayrollModalOpen] = useState(false);
-  const [payrollFormData, setPayrollFormData] = useState({
+  const [payrollFormData, setPayrollFormData] = useState<PayrollFormData>({
     basicSalary: 0,
     allowances: 0,
     bonus: 0,
@@ -193,17 +234,17 @@ export const PayrollPage = ({ onLogout, userName, userRole }) => {
   );
 
   // Get payroll data for selected month/year
-  const getPayrollForPeriod = () => {
-    if (!selectedEmployee) return null;
+  const getPayrollForPeriod = (): PayrollInfo | PayrollHistoryRecord | null => {
+    if (!selectedEmployee || selectedEmployeeId === null) return null;
 
     // Try to get from history first
     const historyRecord = getPayrollHistory(
       selectedEmployeeId,
       selectedMonth,
-      selectedYear
+      selectedYear,
     );
 
-    if (historyRecord) {
+    if (historyRecord && !Array.isArray(historyRecord)) {
       return historyRecord;
     }
 
@@ -213,7 +254,7 @@ export const PayrollPage = ({ onLogout, userName, userRole }) => {
       selectedMonth === currentDate.getMonth() + 1 &&
       selectedYear === currentDate.getFullYear()
     ) {
-      return selectedEmployee.payroll;
+      return selectedEmployee.payroll ?? null;
     }
 
     return null;
@@ -278,7 +319,7 @@ export const PayrollPage = ({ onLogout, userName, userRole }) => {
   };
 
   const handleSavePayroll = () => {
-    if (!selectedEmployee) return;
+    if (!selectedEmployee || selectedEmployeeId === null) return;
 
     // Create history record
     const historyRecord = {
@@ -323,21 +364,27 @@ export const PayrollPage = ({ onLogout, userName, userRole }) => {
     alert("✓ Payroll updated successfully!");
   };
 
-  const handleMonthYearChange = (month, year) => {
+  const handleMonthYearChange = (month: number, year: number) => {
     setSelectedMonth(month);
     setSelectedYear(year);
   };
 
   // Convert employee payroll to salaryBreakdown format
-  const salaryBreakdown = payrollData
+  const salaryBreakdown: SalaryBreakdown = payrollData
     ? {
         basicSalary: payrollData.basicSalary,
         allowances: payrollData.allowances,
         bonus: payrollData.bonus,
-        deductions: payrollData.deductions,
-        totalSalary: payrollData.netSalary,
+        deductions: payrollData.deductions ?? 0,
+        totalSalary: payrollData.netSalary ?? 0,
       }
-    : null;
+    : {
+        basicSalary: 0,
+        allowances: 0,
+        bonus: 0,
+        deductions: 0,
+        totalSalary: 0,
+      };
 
   return (
     <DashboardLayout
@@ -407,7 +454,7 @@ export const PayrollPage = ({ onLogout, userName, userRole }) => {
       <PayrollFormModal
         isOpen={isPayrollModalOpen}
         onClose={() => setIsPayrollModalOpen(false)}
-        employee={selectedEmployee}
+        employee={selectedEmployee ?? null}
         payrollData={payrollFormData}
         onPayrollChange={setPayrollFormData}
         onSave={handleSavePayroll}

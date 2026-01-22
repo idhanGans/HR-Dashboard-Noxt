@@ -1,5 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Modal } from "../Modal";
+import type { Employee, KPIMetrics, KPIProfile } from "../../types";
+
+interface KPIFormModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  employee: Employee | null;
+  kpiData: KPIProfile;
+  onKpiChange: (data: KPIProfile) => void;
+  onSave: () => void;
+}
 
 /**
  * KPIFormModal - Modal for managing employee KPI scores
@@ -17,7 +27,7 @@ export const KPIFormModal = ({
   kpiData,
   onKpiChange,
   onSave,
-}) => {
+}: KPIFormModalProps) => {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
@@ -44,7 +54,7 @@ export const KPIFormModal = ({
   const handleSave = () => {
     // Save KPI with month/year reference
     const updatedKpiData = {
-      ...kpiForm,
+      ...kpiData,
       month: selectedMonth,
       year: selectedYear,
     };
@@ -53,10 +63,17 @@ export const KPIFormModal = ({
     onSave();
   };
 
-  const handleMetricChange = (metric, value) => {
+  const handleMetricChange = (metric: string, value: string) => {
     const numValue = parseFloat(value) || 0;
-    const updatedMetrics = {
-      ...kpiData.metrics,
+    const baseMetrics: KPIMetrics = {
+      productivity: 0,
+      quality: 0,
+      teamwork: 0,
+      punctuality: 0,
+    };
+    const updatedMetrics: KPIMetrics = {
+      ...baseMetrics,
+      ...(kpiData.metrics || {}),
       [metric]: numValue,
     };
 

@@ -7,7 +7,15 @@ import { Button } from "../Button";
  * @param {Function} onSearchChange - Callback when search changes
  * @param {Function} onAddClick - Callback when add button is clicked
  */
-export const EmployeeHeader = ({ search, onSearchChange, onAddClick }) => {
+export const EmployeeHeader = ({
+  search,
+  onSearchChange,
+  onAddClick,
+}: {
+  search: string;
+  onSearchChange: (value: string) => void;
+  onAddClick: () => void;
+}) => {
   return (
     <div className="mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
       <div>

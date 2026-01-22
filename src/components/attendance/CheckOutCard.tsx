@@ -2,12 +2,20 @@ import { Card } from "../Card";
 import { Button } from "../Button";
 import { LogOut } from "lucide-react";
 
+interface CheckOutCardProps {
+  isCheckedIn: boolean;
+  onClick: () => void;
+}
+
 /**
  * CheckOutCard - Card for check-out action
  * @param {boolean} isCheckedIn - Whether user is checked in
  * @param {Function} onClick - Callback when button is clicked
  */
-export const CheckOutCard = ({ isCheckedIn, onClick }) => {
+export const CheckOutCard = ({
+  isCheckedIn,
+  onClick,
+}: CheckOutCardProps) => {
   return (
     <Card className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>

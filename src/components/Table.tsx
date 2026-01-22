@@ -1,5 +1,32 @@
+import { isValidElement } from "react";
+import type { ReactNode } from "react";
+
+type TableColumn<T> = {
+  key: string;
+  label: string;
+  render?: (row: T) => ReactNode;
+};
+
+interface TableProps<T> {
+  columns: TableColumn<T>[];
+  data: T[];
+  mobileVariant?: "card" | "table";
+}
+
 // Reusable Table component
-export const Table = ({ columns, data, mobileVariant = "card" }) => {
+const renderCellValue = (value: unknown): ReactNode => {
+  if (value === null || value === undefined) return "";
+  if (typeof value === "string" || typeof value === "number") return value;
+  if (typeof value === "boolean") return value ? "Yes" : "No";
+  if (isValidElement(value)) return value;
+  return String(value);
+};
+
+export const Table = <T extends object>({
+  columns,
+  data,
+  mobileVariant = "card",
+}: TableProps<T>) => {
   const showCardView = mobileVariant === "card";
   const tableWrapperClass = showCardView ? "hidden sm:block" : "block";
 
@@ -13,7 +40,7 @@ export const Table = ({ columns, data, mobileVariant = "card" }) => {
             <tr className="border-b border-white/10">
               {columns.map((col) => (
                 <th
-                  key={col.key}
+                  key={String(col.key)}
                   className="text-left px-3 py-2 sm:px-4 sm:py-3 text-xs sm:text-sm font-semibold text-lightGrey"
                 >
                   {col.label}
@@ -29,10 +56,12 @@ export const Table = ({ columns, data, mobileVariant = "card" }) => {
               >
                 {columns.map((col) => (
                   <td
-                    key={col.key}
+                    key={String(col.key)}
                     className="px-3 py-2 sm:px-4 sm:py-3 text-xs sm:text-sm text-white"
                   >
-                    {col.render ? col.render(row) : row[col.key]}
+                    {col.render
+                      ? col.render(row)
+                      : renderCellValue(row[col.key as keyof T])}
                   </td>
                 ))}
               </tr>
@@ -50,12 +79,14 @@ export const Table = ({ columns, data, mobileVariant = "card" }) => {
             >
               <div className="space-y-3">
                 {columns.map((col) => (
-                  <div key={col.key} className="space-y-1">
+                  <div key={String(col.key)} className="space-y-1">
                     <p className="text-xs uppercase tracking-wide text-lightGrey">
                       {col.label}
                     </p>
                     <div className="text-sm text-white">
-                      {col.render ? col.render(row) : row[col.key]}
+                      {col.render
+                        ? col.render(row)
+                        : renderCellValue(row[col.key as keyof T])}
                     </div>
                   </div>
                 ))}

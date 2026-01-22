@@ -8,6 +8,8 @@ import {
   SettingsHeader,
 } from "../components/settings";
 import { useSettings } from "../hooks/useSettings";
+import type { SettingsState } from "../types";
+import type { LayoutProps } from "../types/auth";
 
 /**
  * SettingsContent - Main settings content area
@@ -18,6 +20,21 @@ const SettingsContent = ({
   onNotificationChange,
   onPreferenceChange,
   onSave,
+}: {
+  settings: SettingsState;
+  onSettingChange: <K extends keyof SettingsState>(
+    key: K,
+    value: SettingsState[K],
+  ) => void;
+  onNotificationChange: <K extends keyof SettingsState["notifications"]>(
+    key: K,
+    value: SettingsState["notifications"][K],
+  ) => void;
+  onPreferenceChange: <K extends "theme" | "language">(
+    key: K,
+    value: SettingsState[K],
+  ) => void;
+  onSave: () => void;
 }) => (
   <div className="lg:col-span-2 space-y-6">
     <ProfileSettings settings={settings} onSettingChange={onSettingChange} />
@@ -39,7 +56,11 @@ const SettingsContent = ({
 /**
  * SettingsPage - Settings page
  */
-export const SettingsPage = ({ onLogout, userName, userRole }) => {
+export const SettingsPage = ({
+  onLogout,
+  userName,
+  userRole,
+}: LayoutProps) => {
   const {
     settings,
     activeSection,

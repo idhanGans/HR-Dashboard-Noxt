@@ -2,7 +2,13 @@
  * LoginCard - Glass card container for login form
  * @param {React.ReactNode} children - Child components
  */
-export const LoginCard = ({ children }) => {
+import type { ReactNode } from "react";
+
+interface LoginCardProps {
+  children: ReactNode;
+}
+
+export const LoginCard = ({ children }: LoginCardProps) => {
   return (
     <div
       className="glass-card w-full max-w-md p-6 sm:p-8 border shadow-glass"

@@ -14,9 +14,20 @@ import {
 } from "../utils/dummyData";
 import { TrendingUp, Users, Clock } from "lucide-react";
 import { useDashboardStats } from "../hooks/useDashboardStats";
+import type { ComponentType } from "react";
+import type { DashboardStats, Employee, KPITrendData } from "../types";
+import type { LayoutProps } from "../types/auth";
 
 // Dashboard stats configuration
-const STATS_CONFIG = [
+type StatConfig = {
+  label: string;
+  valueKey: keyof DashboardStats;
+  icon: ComponentType<{ size?: number; className?: string }>;
+  color: string;
+  format?: (value: number, stats: DashboardStats) => string | number;
+};
+
+const STATS_CONFIG: StatConfig[] = [
   {
     label: "Total Employees",
     valueKey: "totalEmployees",
@@ -53,7 +64,7 @@ const DashboardHeader = () => (
 /**
  * StatsGrid - Grid of stat cards
  */
-const StatsGrid = ({ stats }) => {
+const StatsGrid = ({ stats }: { stats: DashboardStats }) => {
   const statCards = STATS_CONFIG.map((config) => {
     const rawValue = stats[config.valueKey];
     const value = config.format ? config.format(rawValue, stats) : rawValue;
@@ -84,7 +95,7 @@ const StatsGrid = ({ stats }) => {
 /**
  * ChartsSection - Section containing attendance and KPI charts
  */
-const ChartsSection = ({ kpiData }) => (
+const ChartsSection = ({ kpiData }: { kpiData: KPITrendData[] }) => (
   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
     <AttendanceChart data={attendanceData} />
     <KPITrendChart data={kpiData} />
@@ -94,7 +105,7 @@ const ChartsSection = ({ kpiData }) => (
 /**
  * BottomSection - Payroll pie chart, quick actions, and top performers
  */
-const BottomSection = ({ topPerformers }) => (
+const BottomSection = ({ topPerformers }: { topPerformers: Employee[] }) => (
   <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
     <PayrollPieChart payrollData={payrollByDepartment} />
     <QuickActions />
@@ -105,7 +116,7 @@ const BottomSection = ({ topPerformers }) => (
 /**
  * AdminDashboard - Main admin dashboard view with real employee data
  */
-const AdminDashboard = ({ onLogout, userName, userRole }) => {
+const AdminDashboard = ({ onLogout, userName, userRole }: LayoutProps) => {
   const { totalEmployees, presentToday, overallKPI, kpiTrend, topPerformers } =
     useDashboardStats();
 

@@ -1,13 +1,23 @@
 import { Modal } from "../Modal";
 import { Button } from "../Button";
 
+interface CheckOutModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+}
+
 /**
  * CheckOutModal - Confirmation modal for check-out
  * @param {boolean} isOpen - Whether modal is open
  * @param {Function} onClose - Callback to close modal
  * @param {Function} onConfirm - Callback when confirmed
  */
-export const CheckOutModal = ({ isOpen, onClose, onConfirm }) => {
+export const CheckOutModal = ({
+  isOpen,
+  onClose,
+  onConfirm,
+}: CheckOutModalProps) => {
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Check-out">
       <div className="space-y-4">

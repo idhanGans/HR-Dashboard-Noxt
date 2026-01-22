@@ -1,10 +1,17 @@
 import { Card } from "../Card";
+import type { PerformanceInsights as PerformanceInsightsType } from "../../types/employee";
+
+type InsightColor = "green" | "blue" | "yellow";
 
 /**
  * PerformanceInsights - Displays performance insight cards
  * @param {Object} insights - Insights object with topPerformer, mostImproved, needsAttention
  */
-export const PerformanceInsights = ({ insights }) => {
+export const PerformanceInsights = ({
+  insights,
+}: {
+  insights?: PerformanceInsightsType;
+}) => {
   const defaultInsights = {
     topPerformer: { department: "HR Department", score: "8.9/10" },
     mostImproved: {
@@ -52,14 +59,24 @@ export const PerformanceInsights = ({ insights }) => {
 /**
  * InsightItem - Individual insight display item
  */
-const InsightItem = ({ color, label, value, note }) => {
-  const colorClasses = {
+const InsightItem = ({
+  color,
+  label,
+  value,
+  note,
+}: {
+  color: InsightColor;
+  label: string;
+  value: string;
+  note?: string;
+}) => {
+  const colorClasses: Record<InsightColor, string> = {
     green: "bg-green-900/20 border-green-400/30 text-green-400",
     blue: "bg-blue-900/20 border-blue-400/30 text-blue-400",
     yellow: "bg-yellow-900/20 border-yellow-400/30 text-yellow-400",
   };
 
-  const textColor = colorClasses[color]?.split(" ").pop() || "text-green-400";
+  const textColor = colorClasses[color].split(" ").pop() || "text-green-400";
   const bgBorder = colorClasses[color] || colorClasses.green;
 
   return (

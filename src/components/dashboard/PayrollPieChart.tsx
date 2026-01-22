@@ -1,14 +1,23 @@
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import { Card } from "../Card";
+import type { PayrollByDepartment } from "../../types";
 
 const DEFAULT_COLORS = ["#06b6d4", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"];
+
+interface PayrollPieChartProps {
+  payrollData: PayrollByDepartment;
+  colors?: string[];
+}
 
 /**
  * PayrollPieChart - Displays payroll distribution by department
  * @param {Object} payrollData - Object with labels array and data array
  * @param {Array} colors - Optional array of colors for pie segments
  */
-export const PayrollPieChart = ({ payrollData, colors = DEFAULT_COLORS }) => {
+export const PayrollPieChart = ({
+  payrollData,
+  colors = DEFAULT_COLORS,
+}: PayrollPieChartProps) => {
   const chartData = payrollData.labels.map((label, idx) => ({
     name: label,
     value: payrollData.data[idx],
@@ -27,9 +36,11 @@ export const PayrollPieChart = ({ payrollData, colors = DEFAULT_COLORS }) => {
               cx="50%"
               cy="50%"
               labelLine={false}
-              label={({ name, percent }) =>
-                `${name} ${(percent * 100).toFixed(0)}%`
-              }
+              label={({ name, percent }) => {
+                const percentage =
+                  typeof percent === "number" ? (percent * 100).toFixed(0) : "0";
+                return `${name} ${percentage}%`;
+              }}
               outerRadius={80}
               fill="#8884d8"
               dataKey="value"

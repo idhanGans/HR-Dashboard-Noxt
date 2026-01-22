@@ -12,8 +12,9 @@ import {
   candidatePipeline,
   interviewSchedule,
 } from "../utils/dummyData";
+import type { LayoutProps } from "../types/auth";
 
-export const HiringPage = ({ onLogout, userName, userRole }) => {
+export const HiringPage = ({ onLogout, userName, userRole }: LayoutProps) => {
   return (
     <DashboardLayout
       userRole={userRole}

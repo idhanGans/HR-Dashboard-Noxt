@@ -1,5 +1,17 @@
 import { Card } from "../Card";
 import { formatIDR } from "../../utils/format";
+import type {
+  Employee,
+  PayrollHistoryRecord,
+  PayrollInfo,
+  SalaryBreakdown,
+} from "../../types";
+
+interface PayslipCardProps {
+  salaryBreakdown: SalaryBreakdown;
+  employee?: Employee;
+  payrollData?: PayrollInfo | PayrollHistoryRecord | null;
+}
 
 /**
  * PayslipCard - Main payslip display card with earnings and deductions
@@ -7,11 +19,15 @@ import { formatIDR } from "../../utils/format";
  * @param {Object} employee - Employee object
  * @param {Object} payrollData - Optional detailed payroll data with breakdown
  */
-export const PayslipCard = ({ salaryBreakdown, employee, payrollData }) => {
+export const PayslipCard = ({
+  salaryBreakdown,
+  employee,
+  payrollData,
+}: PayslipCardProps) => {
   const totalEarnings =
-    salaryBreakdown.basicSalary +
-    salaryBreakdown.allowances +
-    salaryBreakdown.bonus;
+    (salaryBreakdown.basicSalary ?? 0) +
+    (salaryBreakdown.allowances ?? 0) +
+    (salaryBreakdown.bonus ?? 0);
 
   return (
     <Card className="p-4 sm:p-8">
@@ -20,20 +36,20 @@ export const PayslipCard = ({ salaryBreakdown, employee, payrollData }) => {
 
       {/* Earnings Section */}
       <EarningsSection
-        basicSalary={salaryBreakdown.basicSalary}
-        allowances={salaryBreakdown.allowances}
-        bonus={salaryBreakdown.bonus}
+        basicSalary={salaryBreakdown.basicSalary ?? 0}
+        allowances={salaryBreakdown.allowances ?? 0}
+        bonus={salaryBreakdown.bonus ?? 0}
         total={totalEarnings}
       />
 
       {/* Deductions Section */}
       <DeductionsSection
-        deductions={salaryBreakdown.deductions}
+        deductions={salaryBreakdown.deductions ?? 0}
         payrollData={payrollData}
       />
 
       {/* Net Salary */}
-      <NetSalaryDisplay netSalary={salaryBreakdown.totalSalary} />
+      <NetSalaryDisplay netSalary={salaryBreakdown.totalSalary ?? 0} />
     </Card>
   );
 };
@@ -41,7 +57,7 @@ export const PayslipCard = ({ salaryBreakdown, employee, payrollData }) => {
 /**
  * PayslipHeader - Header section of the payslip
  */
-const PayslipHeader = ({ employee }) => {
+const PayslipHeader = ({ employee }: { employee?: Employee }) => {
   const currentDate = new Date();
   const period = currentDate.toLocaleString("en-US", {
     month: "long",
@@ -79,7 +95,17 @@ const PayslipHeader = ({ employee }) => {
 /**
  * EarningsSection - Displays earnings breakdown
  */
-const EarningsSection = ({ basicSalary, allowances, bonus, total }) => {
+const EarningsSection = ({
+  basicSalary,
+  allowances,
+  bonus,
+  total,
+}: {
+  basicSalary: number;
+  allowances: number;
+  bonus: number;
+  total: number;
+}) => {
   return (
     <div className="mb-6">
       <h3 className="text-lg font-semibold text-white mb-4">Earnings</h3>
@@ -112,7 +138,13 @@ const EarningsSection = ({ basicSalary, allowances, bonus, total }) => {
 /**
  * DeductionsSection - Displays deductions breakdown
  */
-const DeductionsSection = ({ deductions, payrollData }) => {
+const DeductionsSection = ({
+  deductions,
+  payrollData,
+}: {
+  deductions: number;
+  payrollData?: PayrollInfo | PayrollHistoryRecord | null;
+}) => {
   // Check if we have detailed payroll data structure (not just checking values)
   const hasDetailedBreakdown =
     payrollData &&
@@ -201,7 +233,7 @@ const DeductionsSection = ({ deductions, payrollData }) => {
 /**
  * NetSalaryDisplay - Displays net salary (take home pay)
  */
-const NetSalaryDisplay = ({ netSalary }) => {
+const NetSalaryDisplay = ({ netSalary }: { netSalary: number }) => {
   return (
     <div className="bg-gradient-to-r from-green-900/30 to-green-800/30 border border-green-400/30 rounded-lg p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
       <span className="text-base sm:text-lg font-semibold text-white">

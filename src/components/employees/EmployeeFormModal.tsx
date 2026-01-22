@@ -1,5 +1,16 @@
 import { Modal } from "../Modal";
 import { Button } from "../Button";
+import type { Dispatch, SetStateAction } from "react";
+import type { EmployeeForm } from "../../types";
+
+interface EmployeeFormModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  mode: "add" | "edit";
+  form: EmployeeForm;
+  onFormChange: Dispatch<SetStateAction<EmployeeForm>>;
+  onSave: () => void;
+}
 
 /**
  * EmployeeFormModal - Modal form for adding/editing employees
@@ -17,8 +28,8 @@ export const EmployeeFormModal = ({
   form,
   onFormChange,
   onSave,
-}) => {
-  const handleChange = (field, value) => {
+}: EmployeeFormModalProps) => {
+  const handleChange = (field: string, value: string) => {
     onFormChange({ ...form, [field]: value });
   };
 

@@ -1,4 +1,5 @@
 import { Card } from "../Card";
+import type { SettingsState } from "../../types";
 
 /**
  * NotificationSettings - Notification preferences settings
@@ -8,8 +9,18 @@ import { Card } from "../Card";
 export const NotificationSettings = ({
   notifications,
   onNotificationChange,
+}: {
+  notifications: SettingsState["notifications"];
+  onNotificationChange: <K extends keyof SettingsState["notifications"]>(
+    key: K,
+    value: SettingsState["notifications"][K],
+  ) => void;
 }) => {
-  const notificationOptions = [
+  const notificationOptions: Array<{
+    key: keyof SettingsState["notifications"];
+    label: string;
+    desc: string;
+  }> = [
     {
       key: "email",
       label: "Email Notifications",

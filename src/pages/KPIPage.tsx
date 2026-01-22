@@ -8,11 +8,19 @@ import {
   KPIHeader,
 } from "../components/kpi";
 import { useEmployees } from "../hooks/useEmployees";
+import type { DepartmentKPIStats } from "../types/employee";
+import type { LayoutProps } from "../types/auth";
 
 /**
  * ComparisonSection - Department KPI comparison grid
  */
-const ComparisonSection = ({ chartData, listData }) => (
+const ComparisonSection = ({
+  chartData,
+  listData,
+}: {
+  chartData: { name: string; score: number; target: number; trend?: string }[];
+  listData: DepartmentKPIStats[];
+}) => (
   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
     <DepartmentKPIChart data={chartData} />
     <DepartmentPerformanceList departments={listData} />
@@ -22,7 +30,7 @@ const ComparisonSection = ({ chartData, listData }) => (
 /**
  * KPIPage - KPI tracking page with real employee data
  */
-export const KPIPage = ({ onLogout, userName, userRole }) => {
+export const KPIPage = ({ onLogout, userName, userRole }: LayoutProps) => {
   const {
     getOverallKPI,
     getKPITrendData,

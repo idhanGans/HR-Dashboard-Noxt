@@ -2,12 +2,17 @@ import { Card } from "../Card";
 import { Button } from "../Button";
 import { Clock } from "lucide-react";
 
+interface CheckInCardProps {
+  isCheckedIn: boolean;
+  onClick: () => void;
+}
+
 /**
  * CheckInCard - Card for check-in action
  * @param {boolean} isCheckedIn - Whether user is already checked in
  * @param {Function} onClick - Callback when button is clicked
  */
-export const CheckInCard = ({ isCheckedIn, onClick }) => {
+export const CheckInCard = ({ isCheckedIn, onClick }: CheckInCardProps) => {
   return (
     <Card className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>

@@ -5,7 +5,7 @@ import { Card } from "../Card";
  * @param {number} ms - Milliseconds to format
  * @returns {string} Formatted time string
  */
-const formatHMS = (ms) => {
+const formatHMS = (ms: number) => {
   const total = Math.floor(ms / 1000);
   const h = String(Math.floor(total / 3600)).padStart(2, "0");
   const m = String(Math.floor((total % 3600) / 60)).padStart(2, "0");
@@ -18,7 +18,7 @@ const formatHMS = (ms) => {
  * @param {number} ts - Timestamp in milliseconds
  * @returns {string} Formatted time string
  */
-const formatTime = (ts) =>
+const formatTime = (ts: number | null) =>
   ts
     ? new Date(ts).toLocaleTimeString([], {
         hour: "2-digit",
@@ -33,7 +33,17 @@ const formatTime = (ts) =>
  * @param {number} checkInTime - Check-in timestamp in milliseconds
  * @param {number} elapsed - Elapsed time in milliseconds
  */
-export const LiveSessionCard = ({ isCheckedIn, checkInTime, elapsed }) => {
+interface LiveSessionCardProps {
+  isCheckedIn: boolean;
+  checkInTime: number | null;
+  elapsed: number;
+}
+
+export const LiveSessionCard = ({
+  isCheckedIn,
+  checkInTime,
+  elapsed,
+}: LiveSessionCardProps) => {
   return (
     <Card className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>

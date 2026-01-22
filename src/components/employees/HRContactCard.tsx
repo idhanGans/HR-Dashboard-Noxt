@@ -5,7 +5,11 @@ import { Mail, Phone, MapPin } from "lucide-react";
  * HRContactCard - Displays HR contact information
  * @param {Object} contact - Contact information object
  */
-export const HRContactCard = ({ contact }) => {
+export const HRContactCard = ({
+  contact,
+}: {
+  contact?: { email?: string; phone?: string; address?: string };
+}) => {
   const defaultContact = {
     email: "hr@company.com",
     phone: "+62 811-2222-0000",

@@ -1,5 +1,16 @@
 import { Modal } from "../Modal";
 import { formatCurrency } from "../../utils/format";
+import type { Dispatch, SetStateAction } from "react";
+import type { Employee, PayrollFormData } from "../../types";
+
+interface PayrollFormModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  employee: Employee | null;
+  payrollData: PayrollFormData;
+  onPayrollChange: Dispatch<SetStateAction<PayrollFormData>>;
+  onSave: () => void;
+}
 
 /**
  * PayrollFormModal - Modal for managing employee payroll
@@ -17,10 +28,10 @@ export const PayrollFormModal = ({
   payrollData,
   onPayrollChange,
   onSave,
-}) => {
+}: PayrollFormModalProps) => {
   if (!employee) return null;
 
-  const handleFieldChange = (field, value) => {
+  const handleFieldChange = (field: string, value: string) => {
     const numValue = parseFloat(value) || 0;
     const updated = { ...payrollData, [field]: numValue };
 

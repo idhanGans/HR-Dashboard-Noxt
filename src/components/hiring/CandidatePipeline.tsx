@@ -1,7 +1,12 @@
 import { Card } from "../Card";
 import { Button } from "../Button";
+import type { CandidatePipeline as CandidatePipelineItem } from "../../types";
 
-export const CandidatePipeline = ({ candidates }) => {
+interface CandidatePipelineProps {
+  candidates: CandidatePipelineItem[];
+}
+
+export const CandidatePipeline = ({ candidates }: CandidatePipelineProps) => {
   return (
     <Card>
       <div className="flex items-center justify-between mb-4">

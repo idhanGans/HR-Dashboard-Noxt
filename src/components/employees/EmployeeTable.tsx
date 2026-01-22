@@ -1,6 +1,4 @@
 import { Card } from "../Card";
-import { Table } from "../Table";
-import { StatusBadge } from "../StatusBadge";
 import {
   Edit,
   LogOut,
@@ -9,6 +7,15 @@ import {
   MoreVertical,
 } from "lucide-react";
 import { useState } from "react";
+import type { Employee } from "../../types";
+
+interface EmployeeTableProps {
+  employees: Employee[];
+  onEdit: (employee: Employee) => void;
+  onMarkFormer: (employee: Employee) => void;
+  onManageKPI: (employee: Employee) => void;
+  onManagePayroll: (employee: Employee) => void;
+}
 
 /**
  * EmployeeTable - Displays employee data in a table with detailed directory view
@@ -24,9 +31,18 @@ export const EmployeeTable = ({
   onMarkFormer,
   onManageKPI,
   onManagePayroll,
-}) => {
+}: EmployeeTableProps) => {
+  const renderCellValue = (value: unknown) => {
+    if (value === null || value === undefined) return "";
+    if (typeof value === "string" || typeof value === "number") return value;
+    if (typeof value === "boolean") return value ? "Yes" : "No";
+    return String(value);
+  };
+
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
-  const [closeTimeout, setCloseTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [closeTimeout, setCloseTimeout] = useState<
+    ReturnType<typeof setTimeout> | null
+  >(null);
 
   const handleMouseLeave = () => {
     const timeout = setTimeout(() => {
@@ -42,31 +58,18 @@ export const EmployeeTable = ({
     }
   };
 
-  // Helper function to extract first and last name
-  const getNameParts = (fullName: string) => {
-    const parts = fullName.trim().split(" ");
-    const lastName = parts.length > 1 ? parts[parts.length - 1] : "";
-    const firstName = parts.slice(0, -1).join(" ") || parts[0];
-    return { firstName, lastName };
-  };
-
-  // Helper function to get email ID (first part before @)
-  const getEmailId = (email: string) => {
-    return email.split("@")[0];
-  };
-
   const columns = [
     {
       key: "no",
       label: "No",
-      render: (row) => (
+      render: (row: Employee) => (
         <span className="text-white font-semibold">{row.id}</span>
       ),
     },
     {
       key: "employeeId",
       label: "Employee ID",
-      render: (row) => (
+      render: (row: Employee) => (
         <span className="text-lightGrey font-mono text-sm">
           EMP-{String(row.id).padStart(4, "0")}
         </span>
@@ -75,7 +78,7 @@ export const EmployeeTable = ({
     {
       key: "name",
       label: "Name",
-      render: (row) => (
+      render: (row: Employee) => (
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
             {row.avatar || row.name.slice(0, 2).toUpperCase()}
@@ -87,7 +90,7 @@ export const EmployeeTable = ({
     {
       key: "email",
       label: "Email",
-      render: (row) => (
+      render: (row: Employee) => (
         <span className="text-lightGrey text-sm truncate" title={row.email}>
           {row.email}
         </span>
@@ -96,14 +99,14 @@ export const EmployeeTable = ({
     {
       key: "phone",
       label: "Phone",
-      render: (row) => (
+      render: (row: Employee) => (
         <span className="text-lightGrey text-sm">{row.phone}</span>
       ),
     },
     {
       key: "department",
       label: "Department",
-      render: (row) => (
+      render: (row: Employee) => (
         <span className="text-white bg-white/5 px-3 py-1 rounded text-sm">
           {row.department}
         </span>
@@ -112,12 +115,14 @@ export const EmployeeTable = ({
     {
       key: "position",
       label: "Position",
-      render: (row) => <span className="text-white text-sm">{row.role}</span>,
+      render: (row: Employee) => (
+        <span className="text-white text-sm">{row.role}</span>
+      ),
     },
     {
       key: "actions",
       label: "Actions",
-      render: (row) => (
+      render: (row: Employee) => (
         <div
           className="relative"
           onMouseLeave={handleMouseLeave}
@@ -236,7 +241,7 @@ export const EmployeeTable = ({
                       ? index + 1
                       : col.render
                         ? col.render(row)
-                        : row[col.key]}
+                        : renderCellValue(row[col.key as keyof Employee])}
                   </td>
                 ))}
               </tr>

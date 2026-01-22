@@ -1,9 +1,11 @@
 import { useState, useEffect, ReactNode } from "react";
 import { employees as seedEmployees } from "../utils/dummyData";
 import { EmployeeContext } from "../hooks/useEmployees";
-import { Employee } from "../types";
-import {
+import { Employee, EmployeeStatus } from "../types";
+import type {
   PayrollHistoryRecord,
+} from "../types";
+import type {
   DepartmentKPIStats,
   PerformanceInsights,
 } from "../types/employee";
@@ -40,7 +42,7 @@ export const EmployeeProvider = ({ children }: EmployeeProviderProps) => {
   };
 
   // Update employee status (for attendance tracking)
-  const updateEmployeeStatus = (id: number, status: string) => {
+  const updateEmployeeStatus = (id: number, status: EmployeeStatus) => {
     setEmployees((prev) =>
       prev.map((emp) => (emp.id === id ? { ...emp, status } : emp)),
     );

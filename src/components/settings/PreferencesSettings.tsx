@@ -1,11 +1,21 @@
 import { Card } from "../Card";
+import type { SettingsState } from "../../types";
 
 /**
  * PreferencesSettings - Theme and language preferences
  * @param {Object} preferences - Preferences object with theme and language
  * @param {Function} onPreferenceChange - Callback when preference changes
  */
-export const PreferencesSettings = ({ preferences, onPreferenceChange }) => {
+export const PreferencesSettings = ({
+  preferences,
+  onPreferenceChange,
+}: {
+  preferences: Pick<SettingsState, "theme" | "language">;
+  onPreferenceChange: <K extends "theme" | "language">(
+    key: K,
+    value: SettingsState[K],
+  ) => void;
+}) => {
   return (
     <Card>
       <h2 className="text-lg font-bold text-white mb-6">Preferences</h2>

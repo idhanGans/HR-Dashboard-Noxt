@@ -9,12 +9,17 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { Card } from "../Card";
+import type { AttendanceData } from "../../types";
+
+interface AttendanceChartProps {
+  data: AttendanceData[];
+}
 
 /**
  * AttendanceChart - Displays monthly attendance bar chart
  * @param {Array} data - Array of attendance data objects with month, present, absent, late keys
  */
-export const AttendanceChart = ({ data }) => {
+export const AttendanceChart = ({ data }: AttendanceChartProps) => {
   return (
     <Card className="flex flex-col">
       <h2 className="text-lg font-bold text-white mb-4">Monthly Attendance</h2>

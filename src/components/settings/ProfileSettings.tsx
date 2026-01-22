@@ -1,11 +1,21 @@
 import { Card } from "../Card";
+import type { SettingsState } from "../../types";
 
 /**
  * ProfileSettings - Profile information settings form
  * @param {Object} settings - Settings object with fullName, email, phone, department
  * @param {Function} onSettingChange - Callback when setting changes
  */
-export const ProfileSettings = ({ settings, onSettingChange }) => {
+export const ProfileSettings = ({
+  settings,
+  onSettingChange,
+}: {
+  settings: SettingsState;
+  onSettingChange: <K extends keyof SettingsState>(
+    key: K,
+    value: SettingsState[K],
+  ) => void;
+}) => {
   return (
     <Card>
       <h2 className="text-lg font-bold text-white mb-6">Profile Information</h2>

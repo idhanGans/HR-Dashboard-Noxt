@@ -4,7 +4,11 @@ import { Card } from "../Card";
  * LeavePolicyCard - Displays leave policy information
  * @param {Array} policies - Array of policy objects with type and description
  */
-export const LeavePolicyCard = ({ policies }) => {
+export const LeavePolicyCard = ({
+  policies,
+}: {
+  policies?: { type: string; description: string }[];
+}) => {
   const defaultPolicies = [
     { type: "Paid Leave", description: "12 days per year, fully paid" },
     { type: "Sick Leave", description: "8 days per year, fully paid" },

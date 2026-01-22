@@ -1,6 +1,11 @@
 import { Card } from "../Card";
+import type { HiringStats as HiringStatsType } from "../../types";
 
-export const HiringStats = ({ stats }) => {
+export const HiringStats = ({
+  stats,
+}: {
+  stats: HiringStatsType[];
+}) => {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
       {stats.map((stat) => (

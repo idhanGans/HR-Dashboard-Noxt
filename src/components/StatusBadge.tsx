@@ -1,6 +1,11 @@
+interface StatusBadgeProps {
+  status: string;
+  label?: string;
+}
+
 // Reusable Status Badge component
-export const StatusBadge = ({ status, label }) => {
-  const statusStyles = {
+export const StatusBadge = ({ status, label }: StatusBadgeProps) => {
+  const statusStyles: Record<string, string> = {
     present: "status-success",
     absent: "status-danger",
     late: "status-warning",

@@ -1,10 +1,17 @@
 import { Card } from "../Card";
+import type { DepartmentKPIStats } from "../../types/employee";
+
+interface DepartmentPerformanceListProps {
+  departments?: DepartmentKPIStats[];
+}
 
 /**
  * DepartmentPerformanceList - List of departments with performance indicators
  * @param {Array} departments - Array of department KPI objects
  */
-export const DepartmentPerformanceList = ({ departments }) => {
+export const DepartmentPerformanceList = ({
+  departments,
+}: DepartmentPerformanceListProps) => {
   const safeDepartments = departments || [];
   return (
     <Card>

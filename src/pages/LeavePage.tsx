@@ -7,11 +7,17 @@ import {
   LeaveHeader,
 } from "../components/leave";
 import { leaveBalance, leaveRecords } from "../utils/dummyData";
+import type { LeaveBalance } from "../types";
+import type { LayoutProps } from "../types/auth";
 
 /**
  * LeaveBalanceGrid - Grid of leave balance cards
  */
-const LeaveBalanceGrid = ({ balances }) => (
+const LeaveBalanceGrid = ({
+  balances,
+}: {
+  balances: LeaveBalance[];
+}) => (
   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
     {balances.map((leave) => (
       <LeaveBalanceCard key={leave.type} leave={leave} />
@@ -32,7 +38,7 @@ const PolicyAndApprovalsSection = () => (
 /**
  * LeavePage - Leave management page
  */
-export const LeavePage = ({ onLogout, userName, userRole }) => {
+export const LeavePage = ({ onLogout, userName, userRole }: LayoutProps) => {
   const handleRequestLeave = () => {
     alert("Leave request form will open here");
   };

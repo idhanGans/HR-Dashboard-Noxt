@@ -5,7 +5,11 @@ import { Button } from "../Button";
  * LeaveHeader - Page header for leave management page
  * @param {Function} onRequestLeave - Callback when request leave button is clicked
  */
-export const LeaveHeader = ({ onRequestLeave }) => {
+export const LeaveHeader = ({
+  onRequestLeave,
+}: {
+  onRequestLeave: () => void;
+}) => {
   return (
     <div className="mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
       <div>

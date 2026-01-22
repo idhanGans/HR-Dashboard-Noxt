@@ -1,28 +1,33 @@
 /**
  * LoginFormFields - Username and password input fields
- * @param {string} username - Current username value
+ * @param {string} email - Current email value
  * @param {string} password - Current password value
- * @param {Function} onUsernameChange - Callback when username changes
+ * @param {Function} onEmailChange - Callback when email changes
  * @param {Function} onPasswordChange - Callback when password changes
  */
 export const LoginFormFields = ({
-  username,
+  email,
   password,
-  onUsernameChange,
+  onEmailChange,
   onPasswordChange,
+}: {
+  email: string;
+  password: string;
+  onEmailChange: (value: string) => void;
+  onPasswordChange: (value: string) => void;
 }) => {
   return (
     <>
-      {/* Username Input */}
+      {/* Email Input */}
       <div>
         <label className="block text-sm font-medium text-white mb-2">
-          Username
+          Email
         </label>
         <input
-          type="text"
-          value={username}
-          onChange={(e) => onUsernameChange(e.target.value)}
-          placeholder="Enter username"
+          type="email"
+          value={email}
+          onChange={(e) => onEmailChange(e.target.value)}
+          placeholder="Enter email"
           className="glass-input w-full"
           required
         />

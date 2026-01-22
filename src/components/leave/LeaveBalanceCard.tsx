@@ -1,10 +1,11 @@
 import { Card } from "../Card";
+import type { LeaveBalance } from "../../types";
 
 /**
  * LeaveBalanceCard - Displays leave balance for a specific type
  * @param {Object} leave - Leave balance object with type, balance, used, total
  */
-export const LeaveBalanceCard = ({ leave }) => {
+export const LeaveBalanceCard = ({ leave }: { leave: LeaveBalance }) => {
   const usedPercentage = (leave.used / leave.total) * 100;
   const balancePercentage = (leave.balance / leave.total) * 100;
 

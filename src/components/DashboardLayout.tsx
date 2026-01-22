@@ -1,9 +1,20 @@
 import { useState } from "react";
+import type { ReactNode } from "react";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
+import type { LayoutProps } from "../types/auth";
 
 // Main layout wrapper for dashboard pages
-export const DashboardLayout = ({ children, userRole, userName, onLogout }) => {
+interface DashboardLayoutProps extends LayoutProps {
+  children: ReactNode;
+}
+
+export const DashboardLayout = ({
+  children,
+  userRole,
+  userName,
+  onLogout,
+}: DashboardLayoutProps) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const handleToggleSidebar = () => setIsSidebarOpen((prev) => !prev);

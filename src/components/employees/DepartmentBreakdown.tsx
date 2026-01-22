@@ -1,11 +1,31 @@
 import { Card } from "../Card";
+import type { Employee } from "../../types";
+
+const DEFAULT_DEPARTMENTS = [
+  "Engineering",
+  "Sales",
+  "Marketing",
+  "HR",
+  "Product",
+  "Operations",
+  "Finance",
+  "Customer Success",
+];
+
+interface DepartmentBreakdownProps {
+  employees: Employee[];
+  departments?: string[];
+}
 
 /**
  * DepartmentBreakdown - Shows employee distribution by department
  * @param {Array} employees - Array of employee objects
  * @param {Array} departments - Array of department names
  */
-export const DepartmentBreakdown = ({ employees, departments }) => {
+export const DepartmentBreakdown = ({
+  employees,
+  departments = DEFAULT_DEPARTMENTS,
+}: DepartmentBreakdownProps) => {
   return (
     <Card>
       <h2 className="text-lg font-bold text-white mb-4">
@@ -41,17 +61,4 @@ export const DepartmentBreakdown = ({ employees, departments }) => {
       </div>
     </Card>
   );
-};
-
-DepartmentBreakdown.defaultProps = {
-  departments: [
-    "Engineering",
-    "Sales",
-    "Marketing",
-    "HR",
-    "Product",
-    "Operations",
-    "Finance",
-    "Customer Success",
-  ],
 };

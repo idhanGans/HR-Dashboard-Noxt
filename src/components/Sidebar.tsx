@@ -7,12 +7,21 @@ import {
   Users,
   UserPlus,
   LogOut,
-  Calendar,
   Settings,
 } from "lucide-react";
 
 // Sidebar navigation component
-export const Sidebar = ({ userRole, onLogout, isOpen = false, onClose }) => {
+export const Sidebar = ({
+  userRole,
+  onLogout,
+  isOpen = false,
+  onClose,
+}: {
+  userRole: string;
+  onLogout: () => void;
+  isOpen?: boolean;
+  onClose: () => void;
+}) => {
   const location = useLocation();
 
   const menuItems = [
@@ -60,7 +69,6 @@ export const Sidebar = ({ userRole, onLogout, isOpen = false, onClose }) => {
 
         {/* Navigation Menu */}
         <nav className="flex-1 space-y-2">
-          {/* eslint-disable-next-line no-unused-vars */}
           {menuItems.map(({ label, path, icon: Icon }) => (
             <Link
               key={path}

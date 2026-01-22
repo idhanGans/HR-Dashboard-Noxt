@@ -6,7 +6,13 @@ import { User, Bell, Eye, Lock } from "lucide-react";
  * @param {string} activeSection - Currently active section ID
  * @param {Function} onSectionChange - Callback when section changes
  */
-export const SettingsSidebar = ({ activeSection, onSectionChange }) => {
+export const SettingsSidebar = ({
+  activeSection,
+  onSectionChange,
+}: {
+  activeSection: string;
+  onSectionChange?: (section: string) => void;
+}) => {
   const sections = [
     { id: "profile", label: "Profile", icon: User },
     { id: "notifications", label: "Notifications", icon: Bell },

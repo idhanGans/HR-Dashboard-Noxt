@@ -3,7 +3,13 @@
  * @param {string} selectedRole - Currently selected role
  * @param {Function} onRoleChange - Callback when role changes
  */
-export const RoleToggle = ({ selectedRole, onRoleChange }) => {
+export const RoleToggle = ({
+  selectedRole,
+  onRoleChange,
+}: {
+  selectedRole: string;
+  onRoleChange: (role: string) => void;
+}) => {
   const roles = [
     { id: "admin", label: "Admin" },
     { id: "employee", label: "Employee" },

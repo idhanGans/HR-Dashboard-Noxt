@@ -1,4 +1,13 @@
+import type { ComponentType } from "react";
 import { Card } from "../Card";
+
+interface StatCardProps {
+  label: string;
+  value: string | number;
+  icon: ComponentType<{ size?: number; className?: string }>;
+  color: string;
+  trend?: string;
+}
 
 /**
  * StatCard - Displays a summary statistic with icon
@@ -8,7 +17,13 @@ import { Card } from "../Card";
  * @param {string} color - Tailwind gradient classes for icon background
  * @param {string} trend - Optional trend text (e.g., "↑ 12% from last month")
  */
-export const StatCard = ({ label, value, icon: Icon, color, trend }) => {
+export const StatCard = ({
+  label,
+  value,
+  icon: Icon,
+  color,
+  trend,
+}: StatCardProps) => {
   return (
     <Card className="flex flex-col">
       <div className="flex items-start justify-between mb-4">

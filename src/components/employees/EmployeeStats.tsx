@@ -4,7 +4,11 @@ import { Card } from "../Card";
  * EmployeeStats - Display employee statistics cards
  * @param {Object} counts - Object containing total, permanent, temporary, former counts
  */
-export const EmployeeStats = ({ counts }) => {
+export const EmployeeStats = ({
+  counts,
+}: {
+  counts: { total: number; permanent: number; temporary: number; former: number };
+}) => {
   const stats = [
     {
       label: "Total Employees",

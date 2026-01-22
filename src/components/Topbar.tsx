@@ -5,6 +5,10 @@ export const Topbar = ({
   userName = "John Doe",
   userRole = "Administrator",
   onToggleSidebar,
+}: {
+  userName?: string;
+  userRole?: string;
+  onToggleSidebar: () => void;
 }) => {
   return (
     <div className="fixed top-0 left-0 lg:left-64 right-0 bg-black/30 backdrop-blur-md border-b border-white/10 px-4 sm:px-6 py-2 sm:py-4 flex items-center gap-3 z-40">

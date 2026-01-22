@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { attendanceRecords as seedRecords } from "../utils/dummyData";
+import type { AttendanceRecord } from "../types";
 
 const STORAGE_KEY = "hrdash-attendance-session";
 
@@ -10,8 +11,8 @@ export const useAttendanceSession = (currentEmployee?: {
   id?: number;
   name?: string;
 }) => {
-  const [records, setRecords] = useState(seedRecords);
-  const [checkInTime, setCheckInTime] = useState(() => {
+  const [records, setRecords] = useState<AttendanceRecord[]>(seedRecords);
+  const [checkInTime, setCheckInTime] = useState<number | null>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
@@ -46,7 +47,7 @@ export const useAttendanceSession = (currentEmployee?: {
     // Upsert today's record
     setRecords((prev) => {
       const existingIdx = prev.findIndex((r) => r.date === todayKey);
-      const record = {
+      const record: AttendanceRecord = {
         date: todayKey,
         checkIn: new Date(now).toLocaleTimeString([], {
           hour: "2-digit",
@@ -68,7 +69,7 @@ export const useAttendanceSession = (currentEmployee?: {
 
   const handleCheckOut = () => {
     const now = Date.now();
-    const fmtTime = (ts) =>
+    const fmtTime = (ts: number | null) =>
       ts
         ? new Date(ts).toLocaleTimeString([], {
             hour: "2-digit",
@@ -97,8 +98,7 @@ export const useAttendanceSession = (currentEmployee?: {
         return next;
       }
       // If no record exists yet, create one with current times
-      return [
-        {
+      const newRecord: AttendanceRecord = {
           date: todayKey,
           checkIn: fmtTime(checkInTime),
           checkOut: new Date(now).toLocaleTimeString([], {
@@ -108,9 +108,8 @@ export const useAttendanceSession = (currentEmployee?: {
           status: "present",
           employeeId: currentEmployee?.id,
           employeeName: currentEmployee?.name ?? "Current User",
-        },
-        ...prev,
-      ];
+      };
+      return [newRecord, ...prev];
     });
 
     // Clear session

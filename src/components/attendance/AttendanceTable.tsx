@@ -1,12 +1,17 @@
 import { Card } from "../Card";
 import { Table } from "../Table";
 import { StatusBadge } from "../StatusBadge";
+import type { AttendanceRecord } from "../../types";
+
+interface AttendanceTableProps {
+  records: AttendanceRecord[];
+}
 
 /**
  * AttendanceTable - Displays attendance records table
  * @param {Array} records - Array of attendance record objects
  */
-export const AttendanceTable = ({ records }) => {
+export const AttendanceTable = ({ records }: AttendanceTableProps) => {
   const columns = [
     { key: "employeeName", label: "Employee" },
     { key: "date", label: "Date" },
@@ -15,7 +20,7 @@ export const AttendanceTable = ({ records }) => {
     {
       key: "status",
       label: "Status",
-      render: (row) => <StatusBadge status={row.status} />,
+      render: (row: AttendanceRecord) => <StatusBadge status={row.status} />,
     },
   ];
 

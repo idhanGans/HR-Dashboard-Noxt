@@ -1,11 +1,18 @@
 import { Card } from "../Card";
 import { TrendingUp } from "lucide-react";
+import type { Employee } from "../../types";
+
+interface TopPerformersCardProps {
+  performers?: Employee[];
+}
 
 /**
  * TopPerformersCard - Display top performing employees based on KPI
  * @param {Array} performers - Array of top performing employees
  */
-export const TopPerformersCard = ({ performers = [] }) => {
+export const TopPerformersCard = ({
+  performers = [],
+}: TopPerformersCardProps) => {
   if (performers.length === 0) {
     return (
       <Card>

@@ -39,7 +39,7 @@ export const attendanceData: AttendanceData[] = [
   { month: "Dec", present: 301, absent: 7, late: 9 },
 ];
 
-export const kpiTrendData = [
+export const kpiTrendData: KPITrendData[] = [
   { month: "Jan", value: 7.4 },
   { month: "Feb", value: 7.8 },
   { month: "Mar", value: 8.0 },
@@ -54,7 +54,7 @@ export const kpiTrendData = [
   { month: "Dec", value: 8.9 },
 ];
 
-export const payrollByDepartment = {
+export const payrollByDepartment: PayrollByDepartment = {
   labels: [
     "Engineering",
     "Sales",
@@ -70,7 +70,7 @@ export const payrollByDepartment = {
   ],
 };
 
-export const attendanceRecords = [
+export const attendanceRecords: AttendanceRecord[] = [
   {
     date: "2025-01-02",
     checkIn: "08:55 AM",
@@ -137,7 +137,7 @@ export const attendanceRecords = [
   },
 ];
 
-export const salaryBreakdown = {
+export const salaryBreakdown: SalaryBreakdown = {
   basicSalary: 15000000,
   allowances: 3500000,
   bonus: 2000000,
@@ -145,7 +145,7 @@ export const salaryBreakdown = {
   totalSalary: 18750000,
 };
 
-export const employees = [
+export const employees: Employee[] = [
   {
     id: 1,
     name: "Alice Johnson",
@@ -847,15 +847,17 @@ export const employees = [
   },
 ];
 
-export const userProfile = {
+export const userProfile: UserProfile = {
   name: "John Doe",
   role: "Administrator",
+  position: "HR Manager",
   department: "HR",
   email: "john.doe@company.com",
   phone: "+1 (555) 123-4567",
+  joinDate: "2022-01-15",
 };
 
-export const departmentList = [
+export const departmentList: string[] = [
   "Engineering",
   "Sales",
   "Marketing",
@@ -866,7 +868,7 @@ export const departmentList = [
   "Customer Success",
 ];
 
-export const leaveRecords = [
+export const leaveRecords: LeaveRecord[] = [
   {
     date: "2024-12-25 to 2024-12-26",
     type: "Paid Leave",
@@ -893,21 +895,22 @@ export const leaveRecords = [
   },
 ];
 
-export const leaveBalance = [
+export const leaveBalance: LeaveBalance[] = [
   { type: "Paid Leave", balance: 8, used: 4, total: 12 },
   { type: "Sick Leave", balance: 5, used: 3, total: 8 },
   { type: "Vacation", balance: 6, used: 4, total: 10 },
 ];
 
-export const hiringStats = [
+export const hiringStats: HiringStats[] = [
   { label: "Open Roles", value: 8, note: "+2 this month" },
   { label: "Active Candidates", value: 42, note: "12 in final stage" },
   { label: "Interviews This Week", value: 17, note: "3 today" },
   { label: "Offers Sent", value: 5, note: "2 pending response" },
 ];
 
-export const openPositions = [
+export const openPositions: OpenPosition[] = [
   {
+    id: 1,
     role: "Senior Frontend Engineer",
     department: "Engineering",
     manager: "A. Johnson",
@@ -916,6 +919,7 @@ export const openPositions = [
     status: "Open",
   },
   {
+    id: 2,
     role: "Product Designer",
     department: "Product",
     manager: "S. Patel",
@@ -924,6 +928,7 @@ export const openPositions = [
     status: "Open",
   },
   {
+    id: 3,
     role: "Account Executive",
     department: "Sales",
     manager: "M. Tan",
@@ -932,6 +937,7 @@ export const openPositions = [
     status: "Open",
   },
   {
+    id: 4,
     role: "People Ops Specialist",
     department: "HR",
     manager: "R. Gomez",
@@ -941,7 +947,7 @@ export const openPositions = [
   },
 ];
 
-export const candidatePipeline = [
+export const candidatePipeline: CandidatePipeline[] = [
   {
     name: "Dana Kim",
     role: "Senior Frontend Engineer",
@@ -968,7 +974,7 @@ export const candidatePipeline = [
   },
 ];
 
-export const interviewSchedule = [
+export const interviewSchedule: InterviewSchedule[] = [
   {
     time: "09:30",
     candidate: "Dana Kim",

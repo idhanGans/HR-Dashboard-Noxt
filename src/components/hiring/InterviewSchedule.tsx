@@ -1,7 +1,12 @@
 import { Card } from "../Card";
 import { Button } from "../Button";
+import type { InterviewSchedule as InterviewScheduleType } from "../../types";
 
-export const InterviewSchedule = ({ slots }) => {
+export const InterviewSchedule = ({
+  slots,
+}: {
+  slots: InterviewScheduleType[];
+}) => {
   return (
     <Card>
       <div className="flex items-center justify-between mb-4">

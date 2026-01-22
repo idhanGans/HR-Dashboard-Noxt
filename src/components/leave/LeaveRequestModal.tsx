@@ -1,5 +1,11 @@
 import { Modal } from "../Modal";
 import { AlertCircle, CheckCircle, XCircle } from "lucide-react";
+import type { LeaveRecord } from "../../types";
+
+type LeaveRequest = LeaveRecord & {
+  availableBalance?: number;
+  requestedDate?: string;
+};
 
 /**
  * LeaveRequestModal - Modal for requesting, reviewing, and approving/rejecting leaves
@@ -9,9 +15,19 @@ export const LeaveRequestModal = ({
   onClose,
   mode,
   leaveRequest,
+  onChange,
   onApprove,
   onReject,
   employeeName,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  mode: "request" | "review";
+  leaveRequest: LeaveRequest;
+  onChange?: (updates: Partial<LeaveRequest>) => void;
+  onApprove: () => void;
+  onReject: () => void;
+  employeeName?: string;
 }) => {
   const getLeaveTypeColor = (type: string) => {
     switch (type?.toLowerCase()) {
@@ -26,21 +42,13 @@ export const LeaveRequestModal = ({
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status?.toLowerCase()) {
-      case "approved":
-        return "text-green-400 bg-green-400/10";
-      case "rejected":
-        return "text-red-400 bg-red-400/10";
-      case "pending":
-        return "text-yellow-400 bg-yellow-400/10";
-      default:
-        return "text-gray-400 bg-gray-400/10";
-    }
+  const handleFieldChange = (updates: Partial<LeaveRequest>) => {
+    if (mode === "review") return;
+    onChange?.(updates);
   };
 
   // Calculate duration in days
-  const calculateDays = (startDate: string, endDate: string) => {
+  const calculateDays = (startDate?: string, endDate?: string) => {
     if (!startDate || !endDate) return 0;
     const start = new Date(startDate);
     const end = new Date(endDate);
@@ -59,7 +67,7 @@ export const LeaveRequestModal = ({
     const validations = {
       dateRange: leaveRequest?.startDate && leaveRequest?.endDate,
       leaveType: leaveRequest?.type,
-      reason: leaveRequest?.reason?.trim().length > 0,
+      reason: (leaveRequest?.reason?.trim()?.length ?? 0) > 0,
       sufficient: (leaveRequest?.availableBalance || 0) >= daysRequested,
     };
     return validations;
@@ -102,9 +110,7 @@ export const LeaveRequestModal = ({
                 type="date"
                 value={leaveRequest?.startDate || ""}
                 onChange={(e) => {
-                  if (mode !== "review") {
-                    leaveRequest.startDate = e.target.value;
-                  }
+                  handleFieldChange({ startDate: e.target.value });
                 }}
                 disabled={mode === "review"}
                 className={`w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors ${
@@ -122,9 +128,7 @@ export const LeaveRequestModal = ({
                 type="date"
                 value={leaveRequest?.endDate || ""}
                 onChange={(e) => {
-                  if (mode !== "review") {
-                    leaveRequest.endDate = e.target.value;
-                  }
+                  handleFieldChange({ endDate: e.target.value });
                 }}
                 disabled={mode === "review"}
                 className={`w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors ${
@@ -141,6 +145,7 @@ export const LeaveRequestModal = ({
             </label>
             <select
               value={leaveRequest?.type || ""}
+              onChange={(e) => handleFieldChange({ type: e.target.value })}
               disabled={mode === "review"}
               className={`w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors ${
                 mode === "review" ? "cursor-not-allowed opacity-70" : ""
@@ -171,6 +176,7 @@ export const LeaveRequestModal = ({
             </label>
             <textarea
               value={leaveRequest?.reason || ""}
+              onChange={(e) => handleFieldChange({ reason: e.target.value })}
               disabled={mode === "review"}
               rows={3}
               className={`w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors resize-none ${

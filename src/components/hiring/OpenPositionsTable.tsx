@@ -1,14 +1,19 @@
 import { Card } from "../Card";
 import { Table } from "../Table";
 import { Button } from "../Button";
+import type { OpenPosition } from "../../types";
 
-const STATUS_STYLES = {
+const STATUS_STYLES: Record<string, string> = {
   Open: "status-success",
   "On Hold": "status-warning",
   Closed: "status-danger",
 };
 
-export const OpenPositionsTable = ({ positions }) => {
+export const OpenPositionsTable = ({
+  positions,
+}: {
+  positions: OpenPosition[];
+}) => {
   const columns = [
     { key: "role", label: "Role" },
     { key: "department", label: "Department" },
@@ -18,7 +23,7 @@ export const OpenPositionsTable = ({ positions }) => {
     {
       key: "status",
       label: "Status",
-      render: (row) => (
+      render: (row: OpenPosition) => (
         <span className={STATUS_STYLES[row.status] || "status-warning"}>
           {row.status}
         </span>

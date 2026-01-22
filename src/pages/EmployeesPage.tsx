@@ -12,11 +12,16 @@ import {
 } from "../components/employees";
 import { useEmployeeManagement } from "../hooks/useEmployeeManagement";
 import { departmentList } from "../utils/dummyData";
+import type { LayoutProps } from "../types/auth";
 
 /**
  * EmployeesPage - Employee management page with add/edit and employment type controls
  */
-export const EmployeesPage = ({ onLogout, userName, userRole }) => {
+export const EmployeesPage = ({
+  onLogout,
+  userName,
+  userRole,
+}: LayoutProps) => {
   const {
     employeeList,
     filteredEmployees,

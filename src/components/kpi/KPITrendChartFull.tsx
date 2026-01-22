@@ -9,13 +9,22 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { Card } from "../Card";
+import type { KPITrendData } from "../../types";
+
+interface KPITrendChartFullProps {
+  data: KPITrendData[];
+  title?: string;
+}
 
 /**
  * KPITrendChartFull - Full KPI trend line chart with legend
  * @param {Array} data - Array of KPI data objects with month and value keys
  * @param {string} title - Chart title
  */
-export const KPITrendChartFull = ({ data, title = "KPI Trend (6 Months)" }) => {
+export const KPITrendChartFull = ({
+  data,
+  title = "KPI Trend (6 Months)",
+}: KPITrendChartFullProps) => {
   return (
     <Card className="mb-8">
       <h2 className="text-lg font-bold text-white mb-4">{title}</h2>

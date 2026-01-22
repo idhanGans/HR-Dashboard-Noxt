@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
+import type { Dispatch, SetStateAction } from "react";
 import { DashboardLayout } from "../components";
 import {
   CheckInCard,
@@ -21,17 +22,32 @@ import { useAttendanceSession } from "../hooks/useAttendanceSession";
 import { useEmployees } from "../hooks/useEmployees";
 import { useLeaveManagement } from "../hooks/useLeaveManagement";
 import { Calendar, Filter } from "lucide-react";
+import type {
+  AttendanceRecord,
+  Employee,
+  LeaveBalance,
+  LeaveRecord,
+} from "../types";
+import type { LayoutProps } from "../types/auth";
 
 /**
  * ActionCardsGrid - Grid of check-in, check-out, and live session cards
  */
+interface ActionCardsGridProps {
+  isCheckedIn: boolean;
+  checkInTime: number | null;
+  elapsed: number;
+  onCheckInClick: () => void;
+  onCheckOutClick: () => void;
+}
+
 const ActionCardsGrid = ({
   isCheckedIn,
   checkInTime,
   elapsed,
   onCheckInClick,
   onCheckOutClick,
-}) => (
+}: ActionCardsGridProps) => (
   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
     <CheckInCard isCheckedIn={isCheckedIn} onClick={onCheckInClick} />
     <CheckOutCard isCheckedIn={isCheckedIn} onClick={onCheckOutClick} />
@@ -46,7 +62,7 @@ const ActionCardsGrid = ({
 /**
  * LeaveBalanceGrid - Grid of leave balance cards
  */
-const LeaveBalanceGrid = ({ balances }) => (
+const LeaveBalanceGrid = ({ balances }: { balances: LeaveBalance[] }) => (
   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
     {balances.map((leave) => (
       <LeaveBalanceCard key={leave.type} leave={leave} />
@@ -57,6 +73,20 @@ const LeaveBalanceGrid = ({ balances }) => (
 /**
  * AttendanceFilterSection - Filter controls for attendance records
  */
+interface AttendanceFilterSectionProps {
+  filterType: string;
+  setFilterType: Dispatch<SetStateAction<string>>;
+  dateFrom: string;
+  setDateFrom: Dispatch<SetStateAction<string>>;
+  dateTo: string;
+  setDateTo: Dispatch<SetStateAction<string>>;
+  statusFilter: string;
+  setStatusFilter: Dispatch<SetStateAction<string>>;
+  employeeFilter: string;
+  setEmployeeFilter: Dispatch<SetStateAction<string>>;
+  employees: Employee[];
+}
+
 const AttendanceFilterSection = ({
   filterType,
   setFilterType,
@@ -69,7 +99,7 @@ const AttendanceFilterSection = ({
   employeeFilter,
   setEmployeeFilter,
   employees,
-}) => (
+}: AttendanceFilterSectionProps) => (
   <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-6 mb-8">
     <div className="flex items-center gap-2 mb-6">
       <Filter size={20} className="text-blue-400" />
@@ -203,7 +233,11 @@ const AttendanceFilterSection = ({
 /**
  * TodayAttendanceSection - Displays only today's attendance record
  */
-const TodayAttendanceSection = ({ todayRecord }) => {
+const TodayAttendanceSection = ({
+  todayRecord,
+}: {
+  todayRecord?: AttendanceRecord;
+}) => {
   if (!todayRecord) {
     return (
       <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-6 mb-8">
@@ -218,7 +252,7 @@ const TodayAttendanceSection = ({ todayRecord }) => {
     );
   }
 
-  const getStatusColor = (status) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
       case "present":
         return "text-green-400 bg-green-400/10";
@@ -271,7 +305,11 @@ const TodayAttendanceSection = ({ todayRecord }) => {
 /**
  * AttendancePage - Combined attendance tracking and leave management page
  */
-export const AttendancePage = ({ onLogout, userName, userRole }) => {
+export const AttendancePage = ({
+  onLogout,
+  userName,
+  userRole,
+}: LayoutProps) => {
   const [activeTab, setActiveTab] = useState<"attendance" | "leave">(
     "attendance",
   );
@@ -316,6 +354,16 @@ export const AttendancePage = ({ onLogout, userName, userRole }) => {
     handleSubmitLeaveRequest,
     getAvailableBalance,
   } = useLeaveManagement();
+
+  const handleLeaveFormChange = (updates: Partial<LeaveRecord>) => {
+    setLeaveForm((prev) => {
+      const next = { ...prev, ...updates };
+      if (updates?.type) {
+        next.availableBalance = getAvailableBalance(updates.type);
+      }
+      return next;
+    });
+  };
 
   const onConfirmCheckIn = () => {
     handleCheckIn();
@@ -521,6 +569,7 @@ export const AttendancePage = ({ onLogout, userName, userRole }) => {
             onClose={() => setIsRequestModalOpen(false)}
             mode="request"
             leaveRequest={leaveForm}
+            onChange={handleLeaveFormChange}
             onApprove={handleSubmitLeaveRequest}
             onReject={() => setIsRequestModalOpen(false)}
           />
@@ -531,9 +580,18 @@ export const AttendancePage = ({ onLogout, userName, userRole }) => {
             onClose={() => setIsReviewModalOpen(false)}
             mode="review"
             leaveRequest={leaveForm}
+            onChange={handleLeaveFormChange}
             employeeName={selectedRequest?.employeeName}
-            onApprove={() => handleApproveRequest(selectedRequest)}
-            onReject={() => handleRejectRequest(selectedRequest)}
+            onApprove={() => {
+              if (selectedRequest) {
+                handleApproveRequest(selectedRequest);
+              }
+            }}
+            onReject={() => {
+              if (selectedRequest) {
+                handleRejectRequest(selectedRequest);
+              }
+            }}
           />
         </>
       )}

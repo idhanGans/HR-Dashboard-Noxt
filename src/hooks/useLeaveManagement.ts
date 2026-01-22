@@ -1,6 +1,9 @@
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
+import type { LeaveRecord } from "../types";
 
-const EMPTY_LEAVE_REQUEST = {
+type LeaveBalanceMap = Record<string, { total: number; used: number }>;
+
+const EMPTY_LEAVE_REQUEST: LeaveRecord = {
   id: null,
   employeeId: null,
   type: "",
@@ -11,9 +14,10 @@ const EMPTY_LEAVE_REQUEST = {
   requestedDate: new Date().toISOString().split("T")[0],
   approvalDate: null,
   approvedBy: null,
+  availableBalance: 0,
 };
 
-const INITIAL_LEAVE_RECORDS = [
+const INITIAL_LEAVE_RECORDS: LeaveRecord[] = [
   {
     id: 1,
     employeeId: 1,
@@ -72,14 +76,18 @@ const INITIAL_LEAVE_RECORDS = [
  * useLeaveManagement - Custom hook for leave request management
  */
 export const useLeaveManagement = () => {
-  const [leaveRecords, setLeaveRecords] = useState(INITIAL_LEAVE_RECORDS);
+  const [leaveRecords, setLeaveRecords] = useState<LeaveRecord[]>(
+    INITIAL_LEAVE_RECORDS,
+  );
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
-  const [selectedRequest, setSelectedRequest] = useState(null);
-  const [leaveForm, setLeaveForm] = useState(EMPTY_LEAVE_REQUEST);
+  const [selectedRequest, setSelectedRequest] = useState<LeaveRecord | null>(
+    null,
+  );
+  const [leaveForm, setLeaveForm] = useState<LeaveRecord>(EMPTY_LEAVE_REQUEST);
 
   // Leave balances by type
-  const [leaveBalance] = useState({
+  const [leaveBalance] = useState<LeaveBalanceMap>({
     "Paid Leave": { total: 12, used: 4 },
     "Sick Leave": { total: 8, used: 3 },
     Vacation: { total: 10, used: 4 },
@@ -87,7 +95,7 @@ export const useLeaveManagement = () => {
   });
 
   // Calculate available balance for a specific leave type
-  const getAvailableBalance = (leaveType) => {
+  const getAvailableBalance = (leaveType: string) => {
     const balance = leaveBalance[leaveType];
     if (!balance) return 0;
     if (leaveType === "Unpaid Leave") return 999; // Unlimited
@@ -95,7 +103,7 @@ export const useLeaveManagement = () => {
   };
 
   // Calculate days between two dates
-  const calculateDays = (startDate, endDate) => {
+  const calculateDays = (startDate?: string, endDate?: string) => {
     if (!startDate || !endDate) return 0;
     const start = new Date(startDate);
     const end = new Date(endDate);
@@ -114,7 +122,7 @@ export const useLeaveManagement = () => {
   };
 
   // Handle review leave request
-  const handleReviewRequest = (record) => {
+  const handleReviewRequest = (record: LeaveRecord) => {
     setSelectedRequest(record);
     setLeaveForm({
       ...record,
@@ -124,7 +132,7 @@ export const useLeaveManagement = () => {
   };
 
   // Handle approve leave request
-  const handleApproveRequest = (record) => {
+  const handleApproveRequest = (record: LeaveRecord) => {
     setLeaveRecords((prev) =>
       prev.map((r) =>
         r.id === record.id
@@ -141,7 +149,7 @@ export const useLeaveManagement = () => {
   };
 
   // Handle reject leave request
-  const handleRejectRequest = (record) => {
+  const handleRejectRequest = (record: LeaveRecord) => {
     setLeaveRecords((prev) =>
       prev.map((r) =>
         r.id === record.id
@@ -174,8 +182,8 @@ export const useLeaveManagement = () => {
       return;
     }
 
-    const newRequest = {
-      id: Math.max(...leaveRecords.map((r) => r.id), 0) + 1,
+    const newRequest: LeaveRecord = {
+      id: Math.max(...leaveRecords.map((r) => r.id ?? 0), 0) + 1,
       employeeId: 1, // Assuming current user
       employeeName: "You",
       date: `${leaveForm.startDate} to ${leaveForm.endDate}`,
@@ -187,6 +195,7 @@ export const useLeaveManagement = () => {
       days,
       requestedDate: new Date().toISOString().split("T")[0],
       approvalDate: null,
+      approvedBy: null,
     };
 
     setLeaveRecords((prev) => [newRequest, ...prev]);

@@ -2,6 +2,14 @@ import { Card } from "../Card";
 import { Table } from "../Table";
 import { StatusBadge } from "../StatusBadge";
 import { Eye, Check, X } from "lucide-react";
+import type { LeaveRecord } from "../../types";
+
+interface LeaveRequestsTableProps {
+  records: LeaveRecord[];
+  onReview?: (record: LeaveRecord) => void;
+  onApprove?: (record: LeaveRecord) => void;
+  onReject?: (record: LeaveRecord) => void;
+}
 
 /**
  * LeaveRequestsTable - Displays leave request records in a table with action buttons
@@ -15,7 +23,7 @@ export const LeaveRequestsTable = ({
   onReview,
   onApprove,
   onReject,
-}) => {
+}: LeaveRequestsTableProps) => {
   const columns = [
     { key: "employeeName", label: "Employee Name" },
     { key: "date", label: "Date Range" },
@@ -24,12 +32,12 @@ export const LeaveRequestsTable = ({
     {
       key: "status",
       label: "Status",
-      render: (row) => <StatusBadge status={row.status} />,
+      render: (row: LeaveRecord) => <StatusBadge status={row.status} />,
     },
     {
       key: "actions",
       label: "Actions",
-      render: (row) => (
+      render: (row: LeaveRecord) => (
         <div className="flex items-center gap-2">
           {row.status === "pending" && (
             <>

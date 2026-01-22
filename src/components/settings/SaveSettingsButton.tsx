@@ -5,7 +5,7 @@ import { Save } from "lucide-react";
  * SaveSettingsButton - Button to save settings
  * @param {Function} onSave - Callback when button is clicked
  */
-export const SaveSettingsButton = ({ onSave }) => {
+export const SaveSettingsButton = ({ onSave }: { onSave: () => void }) => {
   return (
     <Button
       onClick={onSave}

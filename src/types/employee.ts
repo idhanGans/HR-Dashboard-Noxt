@@ -1,14 +1,5 @@
-import { Employee } from "./index";
-
-export interface PayrollHistoryRecord {
-  month: number;
-  year: number;
-  basic: number;
-  allowance: number;
-  bonus: number;
-  deductions: number;
-  netSalary: number;
-}
+import type { Dispatch, SetStateAction } from "react";
+import { Employee, EmployeeStatus, PayrollHistoryRecord } from "./index";
 
 export interface DepartmentKPIStats {
   department: string;
@@ -34,9 +25,9 @@ export interface PerformanceInsights {
 
 export interface EmployeeContextValue {
   employees: Employee[];
-  setEmployees: React.Dispatch<React.SetStateAction<Employee[]>>;
+  setEmployees: Dispatch<SetStateAction<Employee[]>>;
   updateEmployee: (id: number, updates: Partial<Employee>) => void;
-  updateEmployeeStatus: (id: number, status: string) => void;
+  updateEmployeeStatus: (id: number, status: EmployeeStatus) => void;
   addEmployee: (employee: Employee) => void;
   deleteEmployee: (id: number) => void;
   updateEmployeeKPI: (id: number, kpiData: any) => void;

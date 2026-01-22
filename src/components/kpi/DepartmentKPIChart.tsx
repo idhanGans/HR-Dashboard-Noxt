@@ -10,11 +10,15 @@ import {
 } from "recharts";
 import { Card } from "../Card";
 
+interface DepartmentKPIChartProps {
+  data: { name: string; score: number; target: number }[];
+}
+
 /**
  * DepartmentKPIChart - Bar chart comparing department KPIs vs targets
  * @param {Array} data - Array of department data objects
  */
-export const DepartmentKPIChart = ({ data }) => {
+export const DepartmentKPIChart = ({ data }: DepartmentKPIChartProps) => {
   return (
     <Card>
       <h2 className="text-lg font-bold text-white mb-4">

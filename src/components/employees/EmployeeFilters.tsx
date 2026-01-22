@@ -3,7 +3,13 @@
  * @param {string} filter - Current active filter
  * @param {Function} onFilterChange - Callback when filter changes
  */
-export const EmployeeFilters = ({ filter, onFilterChange }) => {
+export const EmployeeFilters = ({
+  filter,
+  onFilterChange,
+}: {
+  filter: string;
+  onFilterChange: (value: string) => void;
+}) => {
   const filters = [
     { id: "all", label: "All" },
     { id: "permanent", label: "Permanent" },
