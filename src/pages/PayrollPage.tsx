@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { DashboardLayout } from "../components";
 import {
   PayslipCard,
@@ -9,8 +9,17 @@ import {
 } from "../components/payroll";
 import { PayrollFormModal } from "../components/employees";
 import { Card } from "../components";
-import { useEmployees } from "../hooks/useEmployees";
 import { useMediaQuery } from "../hooks/useMediaQuery";
+import { usePayrollData } from "../hooks/usePayrollData";
+import { useAuthorizedRequest } from "../hooks/useAuthorizedRequest";
+import { useAuth } from "../contexts/AuthContext";
+import { ApiError } from "../services/api";
+import {
+  PAYROLL_CREATE,
+  PAYROLL_UPDATE,
+} from "../services/endpoints";
+import { downloadPayslip } from "../services/payroll";
+import { getErrorMessage } from "../utils/errors";
 import type {
   Employee,
   PayrollFormData,
@@ -18,6 +27,7 @@ import type {
   PayrollInfo,
   SalaryBreakdown,
 } from "../types";
+import type { PayrollApiResponse } from "../types/api";
 import type { LayoutProps } from "../types/auth";
 
 /**
@@ -28,36 +38,54 @@ const EmployeeSelector = ({
   selectedId,
   onChange,
   isCompactLabel,
+  isLoading,
+  error,
 }: {
   employees: Employee[];
   selectedId: number | null;
   onChange: (id: number | null) => void;
   isCompactLabel: boolean;
-}) => (
-  <Card className="mb-6">
-    <label className="block text-sm font-medium text-gray-300 mb-2">
-      Select Employee
-    </label>
-    <select
-      value={selectedId || ""}
-      onChange={(e) =>
-        onChange(e.target.value ? Number(e.target.value) : null)
-      }
-      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors"
-    >
-      <option value="">Choose an employee</option>
-      {employees
-        .filter((emp) => emp.employmentType !== "former")
-        .map((emp) => (
-          <option key={emp.id} value={emp.id}>
-            {isCompactLabel
-              ? `${emp.name} - ${emp.department}`
-              : `${emp.name} - ${emp.department} (${emp.role})`}
-          </option>
-        ))}
-    </select>
-  </Card>
-);
+  isLoading?: boolean;
+  error?: string | null;
+}) => {
+  const isDisabled = Boolean(isLoading) || (!employees.length && Boolean(error));
+  const placeholder = isLoading
+    ? "Loading employees..."
+    : error
+      ? "Unable to load employees"
+      : "Choose an employee";
+
+  return (
+    <Card className="mb-6">
+      <label className="block text-sm font-medium text-gray-300 mb-2">
+        Select Employee
+      </label>
+      <select
+        value={selectedId || ""}
+        onChange={(e) =>
+          onChange(e.target.value ? Number(e.target.value) : null)
+        }
+        disabled={isDisabled}
+        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors disabled:opacity-60"
+      >
+        <option value="">{placeholder}</option>
+        {!isLoading &&
+          employees
+            .filter((emp) => emp.employmentType !== "former")
+            .map((emp) => (
+              <option key={emp.id} value={emp.id}>
+                {isCompactLabel
+                  ? `${emp.name} - ${emp.department}`
+                  : `${emp.name} - ${emp.department} (${emp.role})`}
+              </option>
+            ))}
+      </select>
+      {error && !employees.length && (
+        <p className="text-xs text-red-400 mt-2">{error}</p>
+      )}
+    </Card>
+  );
+};
 
 /**
  * MonthYearFilter - Dropdown to filter by month and year
@@ -160,37 +188,50 @@ const SidebarSection = ({
   employee,
   onDownload,
   onEdit,
+  isDownloading,
+  canManagePayroll,
+  canDownloadPayslip,
 }: {
   salaryBreakdown: SalaryBreakdown;
   employee?: Employee;
   onDownload: () => void;
   onEdit: () => void;
+  isDownloading: boolean;
+  canManagePayroll: boolean;
+  canDownloadPayslip: boolean;
 }) => (
   <div className="space-y-6">
     <PayrollSummary salaryBreakdown={salaryBreakdown} />
 
     {/* Edit Payroll Button */}
-    <button
-      onClick={onEdit}
-      className="w-full px-4 py-3 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 rounded-xl text-white font-semibold transition-all flex items-center justify-center gap-2"
-    >
-      <svg
-        className="w-5 h-5"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
+    {canManagePayroll && (
+      <button
+        onClick={onEdit}
+        className="w-full px-4 py-3 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 rounded-xl text-white font-semibold transition-all flex items-center justify-center gap-2"
       >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-        />
-      </svg>
-      Edit Payroll
-    </button>
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+          />
+        </svg>
+        Edit Payroll
+      </button>
+    )}
 
-    <DownloadPayslipButton onDownload={onDownload} />
+    {canDownloadPayslip && (
+      <DownloadPayslipButton
+        onDownload={onDownload}
+        isLoading={isDownloading}
+      />
+    )}
     <PaymentInfoCard employee={employee} />
   </div>
 );
@@ -200,18 +241,31 @@ const SidebarSection = ({
  */
 
 export const PayrollPage = ({ onLogout, userName, userRole }: LayoutProps) => {
+  const { ensureValidAccessToken, refreshAccessToken } = useAuth();
+  const { request } = useAuthorizedRequest();
+  const requestRef = useRef(request);
+  requestRef.current = request;
   const {
     employees,
-    addPayrollHistory,
-    getPayrollHistory,
-    updateEmployeePayroll,
-  } = useEmployees();
-  const [selectedEmployeeId, setSelectedEmployeeId] = useState<number | null>(
-    null,
-  );
-  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+    employeesLoading,
+    employeesError,
+    selectedEmployeeId,
+    setSelectedEmployeeId,
+    selectedMonth,
+    setSelectedMonth,
+    selectedYear,
+    setSelectedYear,
+    payrollData,
+    payrollLoading,
+    payrollError,
+    canManagePayroll,
+    isSelfPayrollView,
+    canDownloadPayslip,
+    applyPayrollResponse,
+  } = usePayrollData();
   const [isPayrollModalOpen, setIsPayrollModalOpen] = useState(false);
+  const [isSavingPayroll, setIsSavingPayroll] = useState(false);
+  const [isDownloadingPayslip, setIsDownloadingPayslip] = useState(false);
   const [payrollFormData, setPayrollFormData] = useState<PayrollFormData>({
     basicSalary: 0,
     allowances: 0,
@@ -230,66 +284,50 @@ export const PayrollPage = ({ onLogout, userName, userRole }: LayoutProps) => {
   const isCompactLabel = useMediaQuery("(max-width: 639px)");
 
   const selectedEmployee = employees.find(
-    (emp) => emp.id === selectedEmployeeId
+    (emp) => emp.id === selectedEmployeeId,
   );
 
-  // Get payroll data for selected month/year
-  const getPayrollForPeriod = (): PayrollInfo | PayrollHistoryRecord | null => {
-    if (!selectedEmployee || selectedEmployeeId === null) return null;
 
-    // Try to get from history first
-    const historyRecord = getPayrollHistory(
-      selectedEmployeeId,
-      selectedMonth,
-      selectedYear,
-    );
-
-    if (historyRecord && !Array.isArray(historyRecord)) {
-      return historyRecord;
-    }
-
-    // Fall back to current payroll if viewing current month
-    const currentDate = new Date();
-    if (
-      selectedMonth === currentDate.getMonth() + 1 &&
-      selectedYear === currentDate.getFullYear()
-    ) {
-      return selectedEmployee.payroll ?? null;
-    }
-
-    return null;
-  };
-
-  const payrollData = getPayrollForPeriod();
-
-  const handleDownloadPayslip = () => {
-    if (!selectedEmployee) {
+  const handleDownloadPayslip = async () => {
+    if (!selectedEmployee || selectedEmployeeId === null) {
       alert("Please select an employee first");
       return;
     }
-    const monthNames = [
-      "January",
-      "February",
-      "March",
-      "April",
-      "May",
-      "June",
-      "July",
-      "August",
-      "September",
-      "October",
-      "November",
-      "December",
-    ];
-    alert(
-      `✓ Payslip for ${selectedEmployee.name} (${
-        monthNames[selectedMonth - 1]
-      } ${selectedYear}) downloaded successfully!`
-    );
+    if (!canDownloadPayslip) {
+      alert("You do not have permission to download payslips");
+      return;
+    }
+    if (isDownloadingPayslip) return;
+
+    const token = await ensureValidAccessToken();
+    if (!token) {
+      alert("Please sign in again to download the payslip");
+      return;
+    }
+
+    setIsDownloadingPayslip(true);
+    try {
+      await downloadPayslip({
+        userId: selectedEmployeeId,
+        month: selectedMonth,
+        year: selectedYear,
+        employeeName: selectedEmployee.name,
+        accessToken: token,
+        refreshAccessToken,
+      });
+    } catch (error) {
+      alert(getErrorMessage(error, "Failed to download payslip"));
+    } finally {
+      setIsDownloadingPayslip(false);
+    }
   };
 
   const handleEditPayroll = () => {
     if (!selectedEmployee) return;
+    if (!canManagePayroll) {
+      alert("You do not have permission to manage payroll");
+      return;
+    }
 
     // Populate form with current payroll data or defaults
     setPayrollFormData({
@@ -318,50 +356,69 @@ export const PayrollPage = ({ onLogout, userName, userRole }: LayoutProps) => {
     setIsPayrollModalOpen(true);
   };
 
-  const handleSavePayroll = () => {
-    if (!selectedEmployee || selectedEmployeeId === null) return;
+  const handleSavePayroll = async () => {
+    if (!selectedEmployee || selectedEmployeeId === null || isSavingPayroll) {
+      return;
+    }
+    if (!canManagePayroll) {
+      alert("You do not have permission to manage payroll");
+      return;
+    }
 
-    // Create history record
-    const historyRecord = {
+    setIsSavingPayroll(true);
+    const payload = {
       month: payrollFormData.month,
       year: payrollFormData.year,
-      basicSalary: payrollFormData.basicSalary,
-      allowances: payrollFormData.allowances,
-      bonus: payrollFormData.bonus,
+      baseSalary: payrollFormData.basicSalary,
+      allowance: payrollFormData.allowances,
+      bonuses: payrollFormData.bonus,
       tax: payrollFormData.tax,
       insurance: payrollFormData.insurance,
-      pension: payrollFormData.pension,
+      pensionFund: payrollFormData.pension,
       otherDeductions: payrollFormData.otherDeductions,
-      deductions: payrollFormData.deductions,
-      netSalary: payrollFormData.netSalary,
     };
 
-    // Add to history
-    addPayrollHistory(selectedEmployeeId, historyRecord);
+    try {
+      let response: PayrollApiResponse;
+      const createPath = PAYROLL_CREATE.replace(
+        ":userId",
+        String(selectedEmployeeId),
+      );
 
-    // If this is the current month, also update the main payroll
-    const currentDate = new Date();
-    if (
-      payrollFormData.month === currentDate.getMonth() + 1 &&
-      payrollFormData.year === currentDate.getFullYear()
-    ) {
-      updateEmployeePayroll(selectedEmployeeId, {
-        basicSalary: payrollFormData.basicSalary,
-        allowances: payrollFormData.allowances,
-        bonus: payrollFormData.bonus,
-        tax: payrollFormData.tax,
-        insurance: payrollFormData.insurance,
-        pension: payrollFormData.pension,
-        otherDeductions: payrollFormData.otherDeductions,
-        deductions: payrollFormData.deductions,
-        netSalary: payrollFormData.netSalary,
+      try {
+        response = await requestRef.current<PayrollApiResponse>(createPath, {
+          method: "POST",
+          body: JSON.stringify(payload),
+        });
+      } catch (error) {
+        if (error instanceof ApiError && error.status === 409) {
+          const updatePath = `${PAYROLL_UPDATE.replace(
+            ":userId",
+            String(selectedEmployeeId),
+          )}?month=${payload.month}&year=${payload.year}`;
+          response = await requestRef.current<PayrollApiResponse>(updatePath, {
+            method: "PUT",
+            body: JSON.stringify(payload),
+          });
+        } else {
+          throw error;
+        }
+      }
+
+      applyPayrollResponse(selectedEmployeeId, response, {
         bankName: payrollFormData.bankName,
         bankAccount: payrollFormData.bankAccount,
       });
-    }
+      setSelectedMonth(payload.month);
+      setSelectedYear(payload.year);
 
-    setIsPayrollModalOpen(false);
-    alert("✓ Payroll updated successfully!");
+      setIsPayrollModalOpen(false);
+      alert("✓ Payroll updated successfully!");
+    } catch (error) {
+      alert(getErrorMessage(error, "Failed to save payroll"));
+    } finally {
+      setIsSavingPayroll(false);
+    }
   };
 
   const handleMonthYearChange = (month: number, year: number) => {
@@ -377,6 +434,7 @@ export const PayrollPage = ({ onLogout, userName, userRole }: LayoutProps) => {
         bonus: payrollData.bonus,
         deductions: payrollData.deductions ?? 0,
         totalSalary: payrollData.netSalary ?? 0,
+        totalEarnings: payrollData.totalEarnings ?? 0,
       }
     : {
         basicSalary: 0,
@@ -384,6 +442,7 @@ export const PayrollPage = ({ onLogout, userName, userRole }: LayoutProps) => {
         bonus: 0,
         deductions: 0,
         totalSalary: 0,
+        totalEarnings: 0,
       };
 
   return (
@@ -394,12 +453,16 @@ export const PayrollPage = ({ onLogout, userName, userRole }: LayoutProps) => {
     >
       <PayrollHeader />
 
-      <EmployeeSelector
-        employees={employees}
-        selectedId={selectedEmployeeId}
-        onChange={setSelectedEmployeeId}
-        isCompactLabel={isCompactLabel}
-      />
+      {!isSelfPayrollView && (
+        <EmployeeSelector
+          employees={employees}
+          selectedId={selectedEmployeeId}
+          onChange={setSelectedEmployeeId}
+          isCompactLabel={isCompactLabel}
+          isLoading={employeesLoading}
+          error={employeesError}
+        />
+      )}
 
       {selectedEmployee && (
         <MonthYearFilter
@@ -410,7 +473,19 @@ export const PayrollPage = ({ onLogout, userName, userRole }: LayoutProps) => {
         />
       )}
 
-      {selectedEmployee && salaryBreakdown ? (
+      {selectedEmployee && payrollLoading ? (
+        <Card>
+          <div className="text-center py-12">
+            <p className="text-gray-400 text-lg">Loading payroll data...</p>
+          </div>
+        </Card>
+      ) : selectedEmployee && payrollError ? (
+        <Card>
+          <div className="text-center py-12">
+            <p className="text-red-400 text-lg">{payrollError}</p>
+          </div>
+        </Card>
+      ) : selectedEmployee && payrollData ? (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <MainPayslipSection
             salaryBreakdown={salaryBreakdown}
@@ -422,6 +497,9 @@ export const PayrollPage = ({ onLogout, userName, userRole }: LayoutProps) => {
             employee={selectedEmployee}
             onDownload={handleDownloadPayslip}
             onEdit={handleEditPayroll}
+            isDownloading={isDownloadingPayslip}
+            canManagePayroll={canManagePayroll}
+            canDownloadPayslip={canDownloadPayslip}
           />
         </div>
       ) : selectedEmployee ? (
@@ -430,21 +508,31 @@ export const PayrollPage = ({ onLogout, userName, userRole }: LayoutProps) => {
             <p className="text-gray-400 text-lg mb-4">
               No payroll data available for this period
             </p>
-            <button
-              onClick={handleEditPayroll}
-              className="px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 rounded-xl text-white font-semibold transition-all"
-            >
-              Create Payroll Record
-            </button>
+            {canManagePayroll ? (
+              <button
+                onClick={handleEditPayroll}
+                className="px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 rounded-xl text-white font-semibold transition-all"
+              >
+                Create Payroll Record
+              </button>
+            ) : (
+              <p className="text-sm text-gray-500">
+                You do not have permission to create payroll records
+              </p>
+            )}
           </div>
         </Card>
       ) : (
         <Card>
           <div className="text-center py-12">
             <p className="text-gray-400 text-lg">
-              {employees.filter((e) => e.employmentType !== "former").length > 0
-                ? "Please select an employee to view their payroll details"
-                : "No active employees found"}
+              {employeesLoading
+                ? "Loading employees..."
+                : employees.filter((e) => e.employmentType !== "former").length > 0
+                  ? "Please select an employee to view their payroll details"
+                  : employeesError
+                    ? "Unable to load employees"
+                    : "No active employees found"}
             </p>
           </div>
         </Card>

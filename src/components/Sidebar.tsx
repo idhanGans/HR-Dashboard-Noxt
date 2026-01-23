@@ -9,6 +9,7 @@ import {
   LogOut,
   Settings,
 } from "lucide-react";
+import { hasRequiredRole } from "../utils/roles";
 
 // Sidebar navigation component
 export const Sidebar = ({
@@ -28,9 +29,24 @@ export const Sidebar = ({
     { label: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
     { label: "Attendance", path: "/attendance", icon: Clock },
     { label: "Payroll", path: "/payroll", icon: DollarSign },
-    { label: "KPI Tracker", path: "/kpi", icon: TrendingUp },
-    { label: "Employees", path: "/employees", icon: Users },
-    { label: "Hiring", path: "/hiring", icon: UserPlus },
+    {
+      label: "KPI Tracker",
+      path: "/kpi",
+      icon: TrendingUp,
+      requiredRoles: ["SUPERVISOR"],
+    },
+    {
+      label: "Employees",
+      path: "/employees",
+      icon: Users,
+      requiredRoles: ["SUPERVISOR"],
+    },
+    {
+      label: "Hiring",
+      path: "/hiring",
+      icon: UserPlus,
+      requiredRoles: ["SUPERVISOR"],
+    },
     { label: "Settings", path: "/settings", icon: Settings },
   ];
 
@@ -69,18 +85,23 @@ export const Sidebar = ({
 
         {/* Navigation Menu */}
         <nav className="flex-1 space-y-2">
-          {menuItems.map(({ label, path, icon: Icon }) => (
-            <Link
-              key={path}
-              to={path}
-              className={`sidebar-item ${
-                location.pathname === path ? "bg-white/20 text-white" : ""
-              }`}
-            >
-              <Icon size={20} />
-              <span className="text-sm font-medium">{label}</span>
-            </Link>
-          ))}
+          {menuItems
+            .filter(
+              ({ requiredRoles }) =>
+                !requiredRoles || hasRequiredRole(userRole, requiredRoles),
+            )
+            .map(({ label, path, icon: Icon }) => (
+              <Link
+                key={path}
+                to={path}
+                className={`sidebar-item ${
+                  location.pathname === path ? "bg-white/20 text-white" : ""
+                }`}
+              >
+                <Icon size={20} />
+                <span className="text-sm font-medium">{label}</span>
+              </Link>
+            ))}
         </nav>
 
         {/* Logout Button */}

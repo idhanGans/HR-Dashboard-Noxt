@@ -36,6 +36,8 @@ export interface PayrollInfo {
   bonus: number;
   deductions: number;
   netSalary: number;
+  totalEarnings?: number;
+  totalDeductions?: number;
   tax?: number;
   insurance?: number;
   pension?: number;
@@ -129,6 +131,7 @@ export interface SalaryBreakdown {
   netSalary?: number;
   basicSalary?: number;
   allowances?: number;
+  totalEarnings?: number;
   totalSalary?: number;
 }
 
@@ -219,6 +222,8 @@ export interface PayrollHistoryRecord {
   bonus?: number;
   deductions?: number;
   netSalary?: number;
+  totalEarnings?: number;
+  totalDeductions?: number;
   basicSalary?: number;
   allowances?: number;
   tax?: number;

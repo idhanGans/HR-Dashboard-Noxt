@@ -143,6 +143,7 @@ export const salaryBreakdown: SalaryBreakdown = {
   bonus: 2000000,
   deductions: 1750000,
   totalSalary: 18750000,
+  totalEarnings: 20500000,
 };
 
 export const employees: Employee[] = [

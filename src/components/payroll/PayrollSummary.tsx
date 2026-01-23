@@ -11,10 +11,7 @@ export const PayrollSummary = ({
 }: {
   salaryBreakdown: SalaryBreakdown;
 }) => {
-  const totalEarnings =
-    (salaryBreakdown.basicSalary ?? 0) +
-    (salaryBreakdown.allowances ?? 0) +
-    (salaryBreakdown.bonus ?? 0);
+  const totalEarnings = salaryBreakdown.totalEarnings ?? 0;
 
   return (
     <Card>

@@ -3,6 +3,7 @@ import { Download } from "lucide-react";
 
 interface DownloadPayslipButtonProps {
   onDownload: () => void;
+  isLoading?: boolean;
 }
 
 /**
@@ -11,14 +12,16 @@ interface DownloadPayslipButtonProps {
  */
 export const DownloadPayslipButton = ({
   onDownload,
+  isLoading = false,
 }: DownloadPayslipButtonProps) => {
   return (
     <Button
       onClick={onDownload}
       className="w-full flex items-center justify-center gap-2"
+      disabled={isLoading}
     >
       <Download size={18} />
-      Download Payslip
+      {isLoading ? "Downloading..." : "Download Payslip"}
     </Button>
   );
 };

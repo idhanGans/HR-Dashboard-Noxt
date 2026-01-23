@@ -12,6 +12,7 @@ import {
 } from "./pages";
 import { EmployeeProvider } from "./contexts/EmployeeContext";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { hasRequiredRole } from "./utils/roles";
 import type { ProtectedRouteProps, PublicRouteProps } from "./types/auth";
 
 const ProtectedRoute = ({
@@ -21,7 +22,7 @@ const ProtectedRoute = ({
   userRole,
 }: ProtectedRouteProps) => {
   if (!isAuthenticated) return <Navigate to="/login" replace />;
-  if (allowedRoles && (!userRole || !allowedRoles.includes(userRole))) {
+  if (allowedRoles && !hasRequiredRole(userRole, allowedRoles)) {
     return <Navigate to="/dashboard" replace />;
   }
   return <>{children}</>;
@@ -94,6 +95,7 @@ const AppRoutes = () => {
           <ProtectedRoute
             isAuthenticated={auth.isAuthenticated}
             userRole={auth.role}
+            allowedRoles={["SUPERVISOR"]}
           >
             <KPIPage {...layoutProps} />
           </ProtectedRoute>
@@ -106,6 +108,7 @@ const AppRoutes = () => {
           <ProtectedRoute
             isAuthenticated={auth.isAuthenticated}
             userRole={auth.role}
+            allowedRoles={["SUPERVISOR"]}
           >
             <EmployeesPage {...layoutProps} />
           </ProtectedRoute>
@@ -118,6 +121,7 @@ const AppRoutes = () => {
           <ProtectedRoute
             isAuthenticated={auth.isAuthenticated}
             userRole={auth.role}
+            allowedRoles={["SUPERVISOR"]}
           >
             <HiringPage {...layoutProps} />
           </ProtectedRoute>

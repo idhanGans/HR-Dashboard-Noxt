@@ -24,10 +24,7 @@ export const PayslipCard = ({
   employee,
   payrollData,
 }: PayslipCardProps) => {
-  const totalEarnings =
-    (salaryBreakdown.basicSalary ?? 0) +
-    (salaryBreakdown.allowances ?? 0) +
-    (salaryBreakdown.bonus ?? 0);
+  const totalEarnings = salaryBreakdown.totalEarnings ?? 0;
 
   return (
     <Card className="p-4 sm:p-8">
@@ -206,20 +203,6 @@ const DeductionsSection = ({
   return (
     <div className="mb-8">
       <h3 className="text-lg font-semibold text-white mb-4">Deductions</h3>
-      <div className="space-y-3">
-        <div className="flex justify-between">
-          <span className="text-lightGrey">Tax</span>
-          <span className="text-white font-semibold">
-            {formatIDR(deductions * 0.6)}
-          </span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-lightGrey">Insurance</span>
-          <span className="text-white font-semibold">
-            {formatIDR(deductions * 0.4)}
-          </span>
-        </div>
-      </div>
       <div className="border-t border-white/10 mt-4 pt-4 flex justify-between">
         <span className="text-white font-semibold">Total Deductions</span>
         <span className="text-red-400 font-bold text-lg">

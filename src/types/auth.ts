@@ -5,6 +5,7 @@ export interface AuthState {
   isAuthenticated: boolean;
   userRole: string;
   userName: string;
+  userId: number | null;
   role: string | null;
   accessToken: string | null;
   refreshToken: string | null;
@@ -15,6 +16,7 @@ export interface AuthPayload {
   refreshToken: string;
   userRole: string;
   userName: string;
+  userId: number;
   role: string;
 }
 

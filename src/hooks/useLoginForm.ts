@@ -36,6 +36,7 @@ export const useLoginForm = (
         refreshToken: tokens.refreshToken,
         userName: profile.fullName || profile.email,
         userRole: roleLabels[profile.role] ?? profile.role,
+        userId: profile.id,
         role: profile.role,
       });
 
