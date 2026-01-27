@@ -1,5 +1,9 @@
 import { PrismaService } from "@/prisma/prisma.service";
-import { Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { execFile } from "node:child_process";
 import { existsSync } from "node:fs";
@@ -12,6 +16,24 @@ import PizZip from "pizzip";
 
 const execFileAsync = promisify(execFile);
 const PAYSLIP_TEMPLATE_NAME = "payslip-template.docx";
+type DocxtemplaterDelimiters = { start: string; end: string };
+type DocxtemplaterOptions = {
+  paragraphLoop?: boolean;
+  linebreaks?: boolean;
+  delimiters?: DocxtemplaterDelimiters;
+};
+type DocxtemplaterZip = {
+  generate: (options: { type: "nodebuffer" }) => Buffer;
+};
+type DocxtemplaterInstance = {
+  render: (data: Record<string, string | number>) => void;
+  getZip: () => DocxtemplaterZip;
+};
+type DocxtemplaterCtor = new (
+  zip: unknown,
+  options: DocxtemplaterOptions,
+) => DocxtemplaterInstance;
+type PizZipCtor = new (data: Buffer) => unknown;
 
 @Injectable()
 export class PayslipsService {
@@ -62,7 +84,10 @@ export class PayslipsService {
       updatedAt: this.formatDate(payroll.updatedAt),
     });
 
-    return this.convertDocxToPdf(docxBuffer, `payslip-${userId}-${year}-${month}`);
+    return this.convertDocxToPdf(
+      docxBuffer,
+      `payslip-${userId}-${year}-${month}`,
+    );
   }
 
   private toNumber(
@@ -104,8 +129,8 @@ export class PayslipsService {
     templateBuffer: Buffer,
     data: Record<string, string | number>,
   ): Buffer {
-    const zip = new PizZip(templateBuffer);
-    const doc = new Docxtemplater(zip, {
+    const zip = new (PizZip as unknown as PizZipCtor)(templateBuffer);
+    const doc = new (Docxtemplater as unknown as DocxtemplaterCtor)(zip, {
       paragraphLoop: true,
       linebreaks: true,
       delimiters: { start: "{", end: "}" },
@@ -132,8 +157,18 @@ export class PayslipsService {
     }
   }
 
-  private async runLibreOffice(docxPath: string, outDir: string): Promise<void> {
-    const args = ["--headless", "--convert-to", "pdf", "--outdir", outDir, docxPath];
+  private async runLibreOffice(
+    docxPath: string,
+    outDir: string,
+  ): Promise<void> {
+    const args = [
+      "--headless",
+      "--convert-to",
+      "pdf",
+      "--outdir",
+      outDir,
+      docxPath,
+    ];
 
     try {
       await execFileAsync("soffice", args);

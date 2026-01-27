@@ -12,9 +12,7 @@ import { Card } from "../components";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import { usePayrollData } from "../hooks/usePayrollData";
 import { interceptedAxios, handleAxiosError } from "../lib/axios";
-import { AxiosError } from "axios";
 import {
-  PAYROLL_CREATE,
   PAYROLL_UPDATE,
 } from "../services/endpoints";
 import { downloadPayslip } from "../services/payroll";
@@ -353,9 +351,9 @@ export const PayrollPage = ({ onLogout, userName, userRole }: LayoutProps) => {
     }
 
     setIsSavingPayroll(true);
+    const payloadMonth = payrollFormData.month;
+    const payloadYear = payrollFormData.year;
     const payload = {
-      month: payrollFormData.month,
-      year: payrollFormData.year,
       baseSalary: payrollFormData.basicSalary,
       allowance: payrollFormData.allowances,
       bonuses: payrollFormData.bonus,
@@ -367,34 +365,23 @@ export const PayrollPage = ({ onLogout, userName, userRole }: LayoutProps) => {
 
     try {
       let response: PayrollApiResponse;
-      const createPath = PAYROLL_CREATE.replace(
+      const updatePath = `${PAYROLL_UPDATE.replace(
         ":userId",
         String(selectedEmployeeId),
-      );
+      )}?month=${payloadMonth}&year=${payloadYear}`;
 
-      try {
-        const result = await interceptedAxios.post<PayrollApiResponse>(createPath, payload);
-        response = result.data;
-      } catch (error) {
-        const is409 = error instanceof AxiosError && error.response?.status === 409;
-        if (is409) {
-          const updatePath = `${PAYROLL_UPDATE.replace(
-            ":userId",
-            String(selectedEmployeeId),
-          )}?month=${payload.month}&year=${payload.year}`;
-          const result = await interceptedAxios.put<PayrollApiResponse>(updatePath, payload);
-          response = result.data;
-        } else {
-          throw error;
-        }
-      }
+      const result = await interceptedAxios.put<PayrollApiResponse>(
+        updatePath,
+        payload,
+      );
+      response = result.data;
 
       applyPayrollResponse(selectedEmployeeId, response, {
         bankName: payrollFormData.bankName,
         bankAccount: payrollFormData.bankAccount,
       });
-      setSelectedMonth(payload.month);
-      setSelectedYear(payload.year);
+      setSelectedMonth(payloadMonth);
+      setSelectedYear(payloadYear);
 
       setIsPayrollModalOpen(false);
       alert("✓ Payroll updated successfully!");

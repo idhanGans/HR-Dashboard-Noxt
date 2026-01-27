@@ -6,10 +6,7 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import { PayrollStatsService } from "@/payroll/stats/payroll-stats.service";
-import {
-  DepartmentPayrollTotalDto,
-  PayrollTotalDto,
-} from "@/payroll/dto";
+import { DepartmentPayrollTotalDto, PayrollTotalDto } from "@/payroll/dto";
 import { JwtAuthGuard } from "@/auth/guards/jwt-auth.guard";
 import { RolesGuard } from "@/auth/guards/roles.guard";
 import { Roles } from "@/auth/decorators/roles.decorator";
@@ -24,7 +21,9 @@ export class PayrollStatsController {
 
   @Get("department")
   @Roles(Role.SUPERADMIN)
-  @ApiOperation({ summary: "Get total payroll by department for the current month" })
+  @ApiOperation({
+    summary: "Get total payroll by department for the current month",
+  })
   @ApiResponse({
     status: 200,
     description: "Totals by department",

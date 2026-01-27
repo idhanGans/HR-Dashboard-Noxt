@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { interceptedAxios } from "../lib/axios";
-import { ApiError } from "../types/api";
-import { AxiosError } from "axios";
 import {
   PAYROLL_BY_PERIOD,
   PAYROLL_EMPLOYEE_LIST,
@@ -235,8 +233,13 @@ export const usePayrollData = () => {
           ":userId",
           String(selectedEmployeeId),
         )}?month=${selectedMonth}&year=${selectedYear}`;
-        const response = await interceptedAxios.get<PayrollApiResponse>(path);
+        const response =
+          await interceptedAxios.get<PayrollApiResponse | null>(path);
         if (!isActive) return;
+        if (!response.data) {
+          setPayrollData(null);
+          return;
+        }
         const mapped = mapPayrollResponse(response.data);
         setPayrollData(mapped);
         setEmployees((prev) =>
@@ -251,15 +254,8 @@ export const usePayrollData = () => {
         );
       } catch (error) {
         if (!isActive) return;
-        const is404 =
-          (error instanceof ApiError && error.status === 404) ||
-          (error instanceof AxiosError && error.response?.status === 404);
-        if (is404) {
-          setPayrollData(null);
-        } else {
-          setPayrollError(getErrorMessage(error, "Unable to load payroll data"));
-          setPayrollData(null);
-        }
+        setPayrollError(getErrorMessage(error, "Unable to load payroll data"));
+        setPayrollData(null);
       } finally {
         if (isActive) {
           setPayrollLoading(false);

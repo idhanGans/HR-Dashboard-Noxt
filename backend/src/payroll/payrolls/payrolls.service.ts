@@ -1,66 +1,44 @@
 import { PrismaService } from "@/prisma/prisma.service";
-import {
-  BadRequestException,
-  ConflictException,
-  Injectable,
-  NotFoundException,
-} from "@nestjs/common";
-import {
-  CreatePayrollDto,
-  PayrollResponseDto,
-  UpdatePayrollDto,
-} from "@/payroll/dto";
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { PayrollResponseDto, UpsertPayrollDto } from "@/payroll/dto";
 import { Payroll, Prisma } from "@prisma/client";
 
 @Injectable()
 export class PayrollsService {
   constructor(private prisma: PrismaService) {}
 
-  async create(
-    userId: number,
-    createPayrollDto: CreatePayrollDto,
-  ): Promise<PayrollResponseDto> {
-    await this.ensureUserExists(userId);
-
-    try {
-      const payroll = await this.prisma.payroll.create({
-        data: {
-          userId,
-          month: createPayrollDto.month,
-          year: createPayrollDto.year,
-          baseSalary: createPayrollDto.baseSalary,
-          allowance: createPayrollDto.allowance ?? 0,
-          bonuses: createPayrollDto.bonuses ?? 0,
-          tax: createPayrollDto.tax ?? 0,
-          insurance: createPayrollDto.insurance ?? 0,
-          pensionFund: createPayrollDto.pensionFund ?? 0,
-          otherDeductions: createPayrollDto.otherDeductions ?? 0,
-        },
-      });
-
-      return this.toPayrollResponse(payroll);
-    } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === "P2002"
-      ) {
-        throw new ConflictException(
-          `Payroll for user ${userId} in ${createPayrollDto.month}/${createPayrollDto.year} already exists`,
-        );
-      }
-      throw error;
-    }
-  }
-
-  async updateByPeriod(
+  async upsertByPeriod(
     userId: number,
     month: number,
     year: number,
-    updatePayrollDto: UpdatePayrollDto,
+    upsertPayrollDto: UpsertPayrollDto,
   ): Promise<PayrollResponseDto> {
     await this.ensureUserExists(userId);
 
-    const existing = await this.prisma.payroll.findUnique({
+    const updateData: Prisma.PayrollUpdateInput = {
+      baseSalary: upsertPayrollDto.baseSalary,
+    };
+
+    if (upsertPayrollDto.allowance !== undefined) {
+      updateData.allowance = upsertPayrollDto.allowance;
+    }
+    if (upsertPayrollDto.bonuses !== undefined) {
+      updateData.bonuses = upsertPayrollDto.bonuses;
+    }
+    if (upsertPayrollDto.tax !== undefined) {
+      updateData.tax = upsertPayrollDto.tax;
+    }
+    if (upsertPayrollDto.insurance !== undefined) {
+      updateData.insurance = upsertPayrollDto.insurance;
+    }
+    if (upsertPayrollDto.pensionFund !== undefined) {
+      updateData.pensionFund = upsertPayrollDto.pensionFund;
+    }
+    if (upsertPayrollDto.otherDeductions !== undefined) {
+      updateData.otherDeductions = upsertPayrollDto.otherDeductions;
+    }
+
+    const payroll = await this.prisma.payroll.upsert({
       where: {
         userId_month_year: {
           userId,
@@ -68,45 +46,19 @@ export class PayrollsService {
           year,
         },
       },
-    });
-
-    if (!existing) {
-      throw new NotFoundException(
-        `Payroll for user ${userId} in ${month}/${year} not found`,
-      );
-    }
-
-    const updateData: Prisma.PayrollUpdateInput = {};
-
-    if (updatePayrollDto.baseSalary !== undefined) {
-      updateData.baseSalary = updatePayrollDto.baseSalary;
-    }
-    if (updatePayrollDto.allowance !== undefined) {
-      updateData.allowance = updatePayrollDto.allowance;
-    }
-    if (updatePayrollDto.bonuses !== undefined) {
-      updateData.bonuses = updatePayrollDto.bonuses;
-    }
-    if (updatePayrollDto.tax !== undefined) {
-      updateData.tax = updatePayrollDto.tax;
-    }
-    if (updatePayrollDto.insurance !== undefined) {
-      updateData.insurance = updatePayrollDto.insurance;
-    }
-    if (updatePayrollDto.pensionFund !== undefined) {
-      updateData.pensionFund = updatePayrollDto.pensionFund;
-    }
-    if (updatePayrollDto.otherDeductions !== undefined) {
-      updateData.otherDeductions = updatePayrollDto.otherDeductions;
-    }
-
-    if (Object.keys(updateData).length === 0) {
-      throw new BadRequestException("No payroll fields provided for update");
-    }
-
-    const payroll = await this.prisma.payroll.update({
-      where: { id: existing.id },
-      data: updateData,
+      create: {
+        userId,
+        month,
+        year,
+        baseSalary: upsertPayrollDto.baseSalary,
+        allowance: upsertPayrollDto.allowance ?? 0,
+        bonuses: upsertPayrollDto.bonuses ?? 0,
+        tax: upsertPayrollDto.tax ?? 0,
+        insurance: upsertPayrollDto.insurance ?? 0,
+        pensionFund: upsertPayrollDto.pensionFund ?? 0,
+        otherDeductions: upsertPayrollDto.otherDeductions ?? 0,
+      },
+      update: updateData,
     });
 
     return this.toPayrollResponse(payroll);
@@ -116,7 +68,7 @@ export class PayrollsService {
     userId: number,
     month: number,
     year: number,
-  ): Promise<PayrollResponseDto> {
+  ): Promise<PayrollResponseDto | null> {
     const payroll = await this.prisma.payroll.findUnique({
       where: {
         userId_month_year: {
@@ -128,9 +80,7 @@ export class PayrollsService {
     });
 
     if (!payroll) {
-      throw new NotFoundException(
-        `Payroll for user ${userId} in ${month}/${year} not found`,
-      );
+      return null;
     }
 
     return this.toPayrollResponse(payroll);
