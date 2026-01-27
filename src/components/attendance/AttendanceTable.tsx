@@ -5,15 +5,19 @@ import type { AttendanceRecord } from "../../types";
 
 interface AttendanceTableProps {
   records: AttendanceRecord[];
+  showEmployeeColumn?: boolean;
 }
 
 /**
  * AttendanceTable - Displays attendance records table
  * @param {Array} records - Array of attendance record objects
  */
-export const AttendanceTable = ({ records }: AttendanceTableProps) => {
+export const AttendanceTable = ({
+  records,
+  showEmployeeColumn = true,
+}: AttendanceTableProps) => {
   const columns = [
-    { key: "employeeName", label: "Employee" },
+    ...(showEmployeeColumn ? [{ key: "employeeName", label: "Employee" }] : []),
     { key: "date", label: "Date" },
     { key: "checkIn", label: "Check-in" },
     { key: "checkOut", label: "Check-out" },

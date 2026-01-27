@@ -71,6 +71,12 @@ enum AttendanceCheckoutSource {
   AUTO
 }
 
+enum AttendanceStatus {
+  PRESENT
+  LATE
+  ABSENT
+}
+
 model User {
   id                      Int            @id @default(autoincrement())
   fullName                String
@@ -209,6 +215,7 @@ model AttendanceRecord {
   checkInAt      DateTime
   checkOutAt     DateTime?
   checkOutSource AttendanceCheckoutSource @default(MANUAL)
+  status         AttendanceStatus         @default(PRESENT)
   timezone       String?
   createdAt      DateTime                 @default(now())
   updatedAt      DateTime                 @updatedAt

@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { AttendanceCheckoutSource } from "@prisma/client";
+import { AttendanceCheckoutSource, AttendanceStatus } from "@prisma/client";
 
 export class AttendanceUserSummaryDto {
   @ApiProperty({ description: "User ID", example: 1 })
@@ -37,6 +37,13 @@ export class AttendanceRecordResponseDto {
     example: AttendanceCheckoutSource.MANUAL,
   })
   checkOutSource: AttendanceCheckoutSource;
+
+  @ApiProperty({
+    description: "Attendance status",
+    enum: AttendanceStatus,
+    example: AttendanceStatus.PRESENT,
+  })
+  status: AttendanceStatus;
 
   @ApiPropertyOptional({
     description: "Client IANA timezone (e.g., Asia/Jakarta)",

@@ -30,3 +30,18 @@ export const KPI_PERIODS_CURRENT = "/kpi/periods/current";
 
 // KPI Metrics
 export const KPI_METRICS_LIST = "/kpi/metrics";
+
+
+// Attendance
+export const ATTENDANCE_CHECK_IN = "/attendance/records/check-in";
+export const ATTENDANCE_CHECK_OUT = "/attendance/records/check-out";
+export const ATTENDANCE_RECORDS = "/attendance/records";
+export const ATTENDANCE_RECORDS_SELF = "/attendance/records/me";
+
+export const ATTENDANCE_LEAVES = "/attendance/leaves";
+export const ATTENDANCE_LEAVES_BALANCE = "/attendance/leaves/balance";
+export const ATTENDANCE_LEAVES_RECENT_APPROVALS = "/attendance/leaves/recent-approvals";
+export const ATTENDANCE_LEAVES_ENTITLEMENTS = "/attendance/leaves/entitlements";
+export const ATTENDANCE_LEAVES_SELF = "/attendance/leaves/me";
+export const ATTENDANCE_LEAVES_APPROVE = "/attendance/leaves/:id/approve";
+export const ATTENDANCE_LEAVES_REJECT = "/attendance/leaves/:id/reject";

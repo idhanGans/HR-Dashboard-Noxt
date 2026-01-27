@@ -21,6 +21,8 @@ import {
 import { useAttendanceSession } from "../hooks/useAttendanceSession";
 import { useEmployees } from "../hooks/useEmployees";
 import { useLeaveManagement } from "../hooks/useLeaveManagement";
+import { useAuth } from "../contexts/AuthContext";
+import { hasRequiredRole } from "../utils/roles";
 import { Calendar, Filter } from "lucide-react";
 import type {
   AttendanceRecord,
@@ -85,6 +87,7 @@ interface AttendanceFilterSectionProps {
   employeeFilter: string;
   setEmployeeFilter: Dispatch<SetStateAction<string>>;
   employees: Employee[];
+  showEmployeeFilter: boolean;
 }
 
 const AttendanceFilterSection = ({
@@ -99,6 +102,7 @@ const AttendanceFilterSection = ({
   employeeFilter,
   setEmployeeFilter,
   employees,
+  showEmployeeFilter,
 }: AttendanceFilterSectionProps) => (
   <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-6 mb-8">
     <div className="flex items-center gap-2 mb-6">
@@ -108,7 +112,11 @@ const AttendanceFilterSection = ({
       </h3>
     </div>
 
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+    <div
+      className={`grid grid-cols-1 sm:grid-cols-2 ${
+        showEmployeeFilter ? "lg:grid-cols-5" : "lg:grid-cols-4"
+      } gap-4`}
+    >
       {/* Filter Type */}
       <div>
         <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -117,7 +125,7 @@ const AttendanceFilterSection = ({
         <select
           value={filterType}
           onChange={(e) => setFilterType(e.target.value)}
-          className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors"
+          className="w-full h-11 px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors"
         >
           <option value="all" className="bg-gray-800">
             All Records
@@ -135,25 +143,31 @@ const AttendanceFilterSection = ({
       </div>
 
       {/* Employee Filter */}
-      <div>
-        <label className="block text-sm font-medium text-gray-300 mb-2">
-          Employee
-        </label>
-        <select
-          value={employeeFilter}
-          onChange={(e) => setEmployeeFilter(e.target.value)}
-          className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors"
-        >
-          <option value="all" className="bg-gray-800">
-            All Employees
-          </option>
-          {employees?.map((emp) => (
-            <option key={emp.id} value={String(emp.id)} className="bg-gray-800">
-              {emp.name}
+      {showEmployeeFilter && (
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">
+            Employee
+          </label>
+          <select
+            value={employeeFilter}
+            onChange={(e) => setEmployeeFilter(e.target.value)}
+            className="w-full h-11 px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors"
+          >
+            <option value="all" className="bg-gray-800">
+              All Employees
             </option>
-          ))}
-        </select>
-      </div>
+            {employees?.map((emp) => (
+              <option
+                key={emp.id}
+                value={String(emp.id)}
+                className="bg-gray-800"
+              >
+                {emp.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       {/* Date Range - From */}
       {(filterType === "date" || filterType === "all") && (
@@ -165,7 +179,7 @@ const AttendanceFilterSection = ({
             type="date"
             value={dateFrom}
             onChange={(e) => setDateFrom(e.target.value)}
-            className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors"
+            className="w-full h-11 px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors"
           />
         </div>
       )}
@@ -180,7 +194,7 @@ const AttendanceFilterSection = ({
             type="date"
             value={dateTo}
             onChange={(e) => setDateTo(e.target.value)}
-            className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors"
+            className="w-full h-11 px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors"
           />
         </div>
       )}
@@ -195,7 +209,7 @@ const AttendanceFilterSection = ({
             type="month"
             value={dateFrom}
             onChange={(e) => setDateFrom(e.target.value)}
-            className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors"
+            className="w-full h-11 px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors"
           />
         </div>
       )}
@@ -209,7 +223,7 @@ const AttendanceFilterSection = ({
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors"
+            className="w-full h-11 px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors"
           >
             <option value="all" className="bg-gray-800">
               All Status
@@ -310,6 +324,7 @@ export const AttendancePage = ({
   userName,
   userRole,
 }: LayoutProps) => {
+  const { auth } = useAuth();
   const [activeTab, setActiveTab] = useState<"attendance" | "leave">(
     "attendance",
   );
@@ -324,6 +339,7 @@ export const AttendancePage = ({
   const [employeeFilter, setEmployeeFilter] = useState("all");
 
   const { employees, updateEmployeeStatus } = useEmployees();
+  const canFilterEmployees = hasRequiredRole(auth.role, ["SUPERADMIN"]);
 
   const {
     records,
@@ -365,8 +381,12 @@ export const AttendancePage = ({
     });
   };
 
-  const onConfirmCheckIn = () => {
-    handleCheckIn();
+  const onConfirmCheckIn = async () => {
+    const errorMessage = await handleCheckIn();
+    if (errorMessage) {
+      alert(errorMessage);
+      return;
+    }
     // Update employee status in context (assuming first employee is logged-in user)
     if (employees.length > 0) {
       updateEmployeeStatus(employees[0].id, "present");
@@ -374,8 +394,12 @@ export const AttendancePage = ({
     setIsCheckInModalOpen(false);
   };
 
-  const onConfirmCheckOut = () => {
-    handleCheckOut();
+  const onConfirmCheckOut = async () => {
+    const errorMessage = await handleCheckOut();
+    if (errorMessage) {
+      alert(errorMessage);
+      return;
+    }
     // Status remains "present" after checkout
     setIsCheckOutModalOpen(false);
   };
@@ -414,16 +438,17 @@ export const AttendancePage = ({
     });
   }, [records, employees, employeeLookup]);
 
-  // Get today's date
-  const today = new Date().toISOString().slice(0, 10);
+  const today = new Date();
+  const todayKey = `${today.getFullYear()}-${String(
+    today.getMonth() + 1,
+  ).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 
   // Separate today's record from past records
-  const todayRecord = recordsWithEmployee.find((r) => r.date === today);
-  const pastRecords = recordsWithEmployee.filter((r) => r.date !== today);
+  const todayRecord = recordsWithEmployee.find((r) => r.date === todayKey);
 
-  // Filter past records based on selected filters
+  // Filter records based on selected filters
   const filteredRecords = useMemo(() => {
-    let filtered = [...pastRecords];
+    let filtered = [...recordsWithEmployee];
 
     if (filterType === "date" && dateFrom && dateTo) {
       filtered = filtered.filter((r) => r.date >= dateFrom && r.date <= dateTo);
@@ -449,7 +474,14 @@ export const AttendancePage = ({
     }
 
     return filtered;
-  }, [pastRecords, filterType, dateFrom, dateTo, statusFilter, employeeFilter]);
+  }, [
+    recordsWithEmployee,
+    filterType,
+    dateFrom,
+    dateTo,
+    statusFilter,
+    employeeFilter,
+  ]);
 
   // Get leave balances for display
   const leaveBalancesForDisplay = Object.keys(leaveBalanceData).map((type) => ({
@@ -518,6 +550,7 @@ export const AttendancePage = ({
             employeeFilter={employeeFilter}
             setEmployeeFilter={setEmployeeFilter}
             employees={employees}
+            showEmployeeFilter={canFilterEmployees}
           />
 
           {/* Past Attendance Records */}
@@ -527,7 +560,10 @@ export const AttendancePage = ({
               {filteredRecords.length > 0 &&
                 `(${filteredRecords.length} records)`}
             </h3>
-            <AttendanceTable records={filteredRecords} />
+            <AttendanceTable
+              records={filteredRecords}
+              showEmployeeColumn={canFilterEmployees}
+            />
           </div>
 
           <CheckInModal

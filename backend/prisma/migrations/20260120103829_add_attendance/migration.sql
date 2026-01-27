@@ -7,6 +7,9 @@ CREATE TYPE "LeaveType" AS ENUM ('PAID_LEAVE', 'UNPAID_LEAVE', 'SICK_LEAVE', 'UR
 -- CreateEnum
 CREATE TYPE "AttendanceCheckoutSource" AS ENUM ('MANUAL', 'AUTO');
 
+-- CreateEnum
+CREATE TYPE "AttendanceStatus" AS ENUM ('PRESENT', 'LATE', 'ABSENT');
+
 -- CreateTable
 CREATE TABLE "AttendanceRecord" (
     "id" SERIAL NOT NULL,
@@ -14,6 +17,7 @@ CREATE TABLE "AttendanceRecord" (
     "checkInAt" TIMESTAMP(3) NOT NULL,
     "checkOutAt" TIMESTAMP(3),
     "checkOutSource" "AttendanceCheckoutSource" NOT NULL DEFAULT 'MANUAL',
+    "status" "AttendanceStatus" NOT NULL DEFAULT 'PRESENT',
     "timezone" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
