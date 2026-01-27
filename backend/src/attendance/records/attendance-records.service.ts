@@ -7,7 +7,13 @@ import {
   AttendanceRecordsQueryDto,
   PaginatedAttendanceRecordsResponseDto,
 } from "@/attendance/dto";
-import { AttendanceCheckoutSource, Prisma } from "@prisma/client";
+import {
+  AttendanceCheckoutSource,
+  AttendanceStatus,
+  EmploymentType,
+  Prisma,
+  Role,
+} from "@prisma/client";
 
 @Injectable()
 export class AttendanceRecordsService {
@@ -48,10 +54,12 @@ export class AttendanceRecordsService {
       throw new BadRequestException("Attendance already recorded for today");
     }
 
+    const status = this.getCheckInStatus(now, zone);
     const record = await this.prisma.attendanceRecord.create({
       data: {
         userId,
         checkInAt: now,
+        status,
         timezone: zone,
       },
       include: {
@@ -193,6 +201,51 @@ export class AttendanceRecordsService {
     }
   }
 
+  @Cron("0 0 0 * * *")
+  async markAbsentRecords(): Promise<void> {
+    const zone = this.normalizeTimezone(DateTime.local().zoneName);
+    const targetDate = DateTime.local().minus({ days: 1 }).toJSDate();
+    const { startOfDay, endOfDay } = this.getDayBounds(targetDate, zone);
+
+    const users = await this.prisma.user.findMany({
+      where: {
+        role: Role.EMPLOYEE,
+        employmentType: { not: EmploymentType.FORMER },
+      },
+      select: { id: true },
+    });
+
+    if (!users.length) return;
+
+    const userIds = users.map((user) => user.id);
+    const existing = await this.prisma.attendanceRecord.findMany({
+      where: {
+        userId: { in: userIds },
+        checkInAt: {
+          gte: startOfDay,
+          lte: endOfDay,
+        },
+      },
+      select: { userId: true },
+    });
+
+    const existingUserIds = new Set(existing.map((record) => record.userId));
+    const absentUserIds = userIds.filter((id) => !existingUserIds.has(id));
+
+    if (!absentUserIds.length) return;
+
+    await this.prisma.attendanceRecord.createMany({
+      data: absentUserIds.map((userId) => ({
+        userId,
+        checkInAt: startOfDay,
+        checkOutAt: endOfDay,
+        checkOutSource: AttendanceCheckoutSource.AUTO,
+        status: AttendanceStatus.ABSENT,
+        timezone: zone,
+      })),
+    });
+  }
+
   private buildDateRangeFilter(
     startDate?: string,
     endDate?: string,
@@ -238,5 +291,12 @@ export class AttendanceRecordsService {
 
     const candidate = DateTime.now().setZone(timezone);
     return candidate.isValid ? timezone : "UTC";
+  }
+
+  private getCheckInStatus(date: Date, timezone: string): AttendanceStatus {
+    const local = DateTime.fromJSDate(date, { zone: timezone });
+    //TODO: Temporary logic, needs to make sure what "LATE" means
+    const isLate = local.hour > 10 || (local.hour === 10 && local.minute > 0);
+    return isLate ? AttendanceStatus.LATE : AttendanceStatus.PRESENT;
   }
 }
