@@ -29,16 +29,11 @@ export const useLoginForm = (
       setAccessToken(tokens.accessToken);
 
       const profile = await getProfile();
-      const roleLabels: Record<string, string> = {
-        SUPERADMIN: "Administrator",
-        SUPERVISOR: "Supervisor",
-        EMPLOYEE: "Employee",
-      };
 
       onLogin({
         refreshToken: tokens.refreshToken,
         userName: profile.fullName || profile.email,
-        userRole: roleLabels[profile.role] ?? profile.role,
+        userRole: profile.role,
         userId: profile.id,
         role: profile.role,
       });
