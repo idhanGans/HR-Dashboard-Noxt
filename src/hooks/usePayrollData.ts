@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useAuthorizedRequest } from "./useAuthorizedRequest";
+import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
-import { ApiError } from "../services/api";
+import { interceptedAxios } from "../lib/axios";
+import { ApiError } from "../types/api";
+import { AxiosError } from "axios";
 import {
   PAYROLL_BY_PERIOD,
   PAYROLL_EMPLOYEE_LIST,
@@ -118,8 +119,6 @@ const extractUsers = (response: PayrollUsersResponse) => {
 
 export const usePayrollData = () => {
   const { auth } = useAuth();
-  const { request } = useAuthorizedRequest();
-  const requestRef = useRef(request);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [employeesLoading, setEmployeesLoading] = useState(true);
   const [employeesError, setEmployeesError] = useState<string | null>(null);
@@ -137,10 +136,6 @@ export const usePayrollData = () => {
   const canManagePayroll = hasRequiredRole(auth.role, ["SUPERADMIN"]);
   const isSelfPayrollView = !canManagePayroll;
   const canDownloadPayslip = canManagePayroll || isSelfPayrollView;
-
-  useEffect(() => {
-    requestRef.current = request;
-  }, [request]);
 
   useEffect(() => {
     let isActive = true;
@@ -186,21 +181,21 @@ export const usePayrollData = () => {
       setEmployeesLoading(true);
       setEmployeesError(null);
       try {
-        const first = await requestRef.current<PayrollUsersResponse>(
+        const firstResponse = await interceptedAxios.get<PayrollUsersResponse>(
           `${PAYROLL_EMPLOYEE_LIST}?page=1&limit=${EMPLOYEE_PAGE_SIZE}`,
         );
-        const { users, totalPages } = extractUsers(first);
+        const { users, totalPages } = extractUsers(firstResponse.data);
 
         let allUsers = users;
         if (totalPages > 1) {
           const pages = await Promise.all(
             Array.from({ length: totalPages - 1 }, (_, index) =>
-              requestRef.current<PayrollUsersResponse>(
+              interceptedAxios.get<PayrollUsersResponse>(
                 `${PAYROLL_EMPLOYEE_LIST}?page=${index + 2}&limit=${EMPLOYEE_PAGE_SIZE}`,
               ),
             ),
           );
-          const rest = pages.flatMap((page) => extractUsers(page).users);
+          const rest = pages.flatMap((page) => extractUsers(page.data).users);
           allUsers = [...users, ...rest];
         }
 
@@ -240,11 +235,9 @@ export const usePayrollData = () => {
           ":userId",
           String(selectedEmployeeId),
         )}?month=${selectedMonth}&year=${selectedYear}`;
-        const response = await requestRef.current<PayrollApiResponse>(path, {
-          method: "GET",
-        });
+        const response = await interceptedAxios.get<PayrollApiResponse>(path);
         if (!isActive) return;
-        const mapped = mapPayrollResponse(response);
+        const mapped = mapPayrollResponse(response.data);
         setPayrollData(mapped);
         setEmployees((prev) =>
           prev.map((emp) =>
@@ -258,7 +251,10 @@ export const usePayrollData = () => {
         );
       } catch (error) {
         if (!isActive) return;
-        if (error instanceof ApiError && error.status === 404) {
+        const is404 =
+          (error instanceof ApiError && error.status === 404) ||
+          (error instanceof AxiosError && error.response?.status === 404);
+        if (is404) {
           setPayrollData(null);
         } else {
           setPayrollError(getErrorMessage(error, "Unable to load payroll data"));

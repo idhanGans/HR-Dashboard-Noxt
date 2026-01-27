@@ -1,6 +1,8 @@
 import { useState, FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { login, getProfile } from "../services/auth";
+import { setAccessToken } from "../lib/axios";
+import { handleAxiosError } from "../lib/axios";
 import type { AuthPayload } from "../types/auth";
 
 /**
@@ -24,7 +26,9 @@ export const useLoginForm = (
 
     try {
       const tokens = await login(email.trim(), password);
-      const profile = await getProfile(tokens.accessToken);
+      setAccessToken(tokens.accessToken);
+
+      const profile = await getProfile();
       const roleLabels: Record<string, string> = {
         SUPERADMIN: "Administrator",
         SUPERVISOR: "Supervisor",
@@ -32,7 +36,6 @@ export const useLoginForm = (
       };
 
       onLogin({
-        accessToken: tokens.accessToken,
         refreshToken: tokens.refreshToken,
         userName: profile.fullName || profile.email,
         userRole: roleLabels[profile.role] ?? profile.role,
@@ -42,8 +45,7 @@ export const useLoginForm = (
 
       navigate("/dashboard");
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Unable to sign in.";
+      const message = handleAxiosError(err);
       setError(message);
     } finally {
       setIsSubmitting(false);

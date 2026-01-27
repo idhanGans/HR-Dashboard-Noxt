@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { DashboardLayout } from "../components";
 import {
   PayslipCard,
@@ -11,9 +11,8 @@ import { PayrollFormModal } from "../components/employees";
 import { Card } from "../components";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import { usePayrollData } from "../hooks/usePayrollData";
-import { useAuthorizedRequest } from "../hooks/useAuthorizedRequest";
-import { useAuth } from "../contexts/AuthContext";
-import { ApiError } from "../services/api";
+import { interceptedAxios, handleAxiosError } from "../lib/axios";
+import { AxiosError } from "axios";
 import {
   PAYROLL_CREATE,
   PAYROLL_UPDATE,
@@ -241,10 +240,6 @@ const SidebarSection = ({
  */
 
 export const PayrollPage = ({ onLogout, userName, userRole }: LayoutProps) => {
-  const { ensureValidAccessToken, refreshAccessToken } = useAuth();
-  const { request } = useAuthorizedRequest();
-  const requestRef = useRef(request);
-  requestRef.current = request;
   const {
     employees,
     employeesLoading,
@@ -299,12 +294,6 @@ export const PayrollPage = ({ onLogout, userName, userRole }: LayoutProps) => {
     }
     if (isDownloadingPayslip) return;
 
-    const token = await ensureValidAccessToken();
-    if (!token) {
-      alert("Please sign in again to download the payslip");
-      return;
-    }
-
     setIsDownloadingPayslip(true);
     try {
       await downloadPayslip({
@@ -312,8 +301,6 @@ export const PayrollPage = ({ onLogout, userName, userRole }: LayoutProps) => {
         month: selectedMonth,
         year: selectedYear,
         employeeName: selectedEmployee.name,
-        accessToken: token,
-        refreshAccessToken,
       });
     } catch (error) {
       alert(getErrorMessage(error, "Failed to download payslip"));
@@ -386,20 +373,17 @@ export const PayrollPage = ({ onLogout, userName, userRole }: LayoutProps) => {
       );
 
       try {
-        response = await requestRef.current<PayrollApiResponse>(createPath, {
-          method: "POST",
-          body: JSON.stringify(payload),
-        });
+        const result = await interceptedAxios.post<PayrollApiResponse>(createPath, payload);
+        response = result.data;
       } catch (error) {
-        if (error instanceof ApiError && error.status === 409) {
+        const is409 = error instanceof AxiosError && error.response?.status === 409;
+        if (is409) {
           const updatePath = `${PAYROLL_UPDATE.replace(
             ":userId",
             String(selectedEmployeeId),
           )}?month=${payload.month}&year=${payload.year}`;
-          response = await requestRef.current<PayrollApiResponse>(updatePath, {
-            method: "PUT",
-            body: JSON.stringify(payload),
-          });
+          const result = await interceptedAxios.put<PayrollApiResponse>(updatePath, payload);
+          response = result.data;
         } else {
           throw error;
         }
@@ -415,7 +399,7 @@ export const PayrollPage = ({ onLogout, userName, userRole }: LayoutProps) => {
       setIsPayrollModalOpen(false);
       alert("✓ Payroll updated successfully!");
     } catch (error) {
-      alert(getErrorMessage(error, "Failed to save payroll"));
+      alert(handleAxiosError(error));
     } finally {
       setIsSavingPayroll(false);
     }

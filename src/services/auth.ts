@@ -1,13 +1,9 @@
-import { apiRequest } from "./api";
-import { AUTH_LOGIN, AUTH_PROFILE, AUTH_REFRESH } from "./endpoints";
+import { interceptedAxios } from "../lib/axios";
+import { AUTH_LOGIN, AUTH_PROFILE } from "./endpoints";
 
 export interface AuthTokens {
   accessToken: string;
   refreshToken: string;
-}
-
-export interface RefreshResponse {
-  accessToken: string;
 }
 
 export interface UserProfile {
@@ -18,17 +14,15 @@ export interface UserProfile {
   roleName?: string;
 }
 
-export const login = (email: string, password: string) =>
-  apiRequest<AuthTokens>(AUTH_LOGIN, {
-    method: "POST",
-    body: JSON.stringify({ email, password }),
+export const login = async (email: string, password: string): Promise<AuthTokens> => {
+  const response = await interceptedAxios.post<AuthTokens>(AUTH_LOGIN, {
+    email,
+    password,
   });
+  return response.data;
+};
 
-export const getProfile = (accessToken: string) =>
-  apiRequest<UserProfile>(AUTH_PROFILE, { method: "GET" }, accessToken);
-
-export const refreshAccessToken = (refreshToken: string) =>
-  apiRequest<RefreshResponse>(AUTH_REFRESH, {
-    method: "POST",
-    body: JSON.stringify({ refreshToken }),
-  });
+export const getProfile = async (): Promise<UserProfile> => {
+  const response = await interceptedAxios.get<UserProfile>(AUTH_PROFILE);
+  return response.data;
+};

@@ -15,12 +15,29 @@ import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { hasRequiredRole } from "./utils/roles";
 import type { ProtectedRouteProps, PublicRouteProps } from "./types/auth";
 
+const LoadingScreen = () => (
+  <div
+    className="min-h-screen flex items-center justify-center"
+    style={{
+      background:
+        "linear-gradient(135deg, #0f0f0f 0%, #2a2a2a 50%, #c0c0c0 100%)",
+    }}
+  >
+    <div className="text-center">
+      <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+      <p className="text-gray-400">Loading...</p>
+    </div>
+  </div>
+);
+
 const ProtectedRoute = ({
   isAuthenticated,
+  isInitializing,
   children,
   allowedRoles,
   userRole,
 }: ProtectedRouteProps) => {
+  if (isInitializing) return <LoadingScreen />;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   if (allowedRoles && !hasRequiredRole(userRole, allowedRoles)) {
     return <Navigate to="/dashboard" replace />;
@@ -28,13 +45,18 @@ const ProtectedRoute = ({
   return <>{children}</>;
 };
 
-const PublicRoute = ({ isAuthenticated, children }: PublicRouteProps) => {
+const PublicRoute = ({ isAuthenticated, isInitializing, children }: PublicRouteProps) => {
+  if (isInitializing) return <LoadingScreen />;
   if (isAuthenticated) return <Navigate to="/dashboard" replace />;
   return <>{children}</>;
 };
 
 const AppRoutes = () => {
   const { auth, signIn, signOut } = useAuth();
+
+  if (auth.isInitializing) {
+    return <LoadingScreen />;
+  }
 
   const layoutProps = {
     onLogout: signOut,
@@ -47,7 +69,10 @@ const AppRoutes = () => {
       <Route
         path="/login"
         element={
-          <PublicRoute isAuthenticated={auth.isAuthenticated}>
+          <PublicRoute 
+            isAuthenticated={auth.isAuthenticated}
+            isInitializing={auth.isInitializing}
+          >
             <LoginPage onLogin={signIn} />
           </PublicRoute>
         }
@@ -58,6 +83,7 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute
             isAuthenticated={auth.isAuthenticated}
+            isInitializing={auth.isInitializing}
             userRole={auth.role}
           >
             <DashboardPage {...layoutProps} />
@@ -70,6 +96,7 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute
             isAuthenticated={auth.isAuthenticated}
+            isInitializing={auth.isInitializing}
             userRole={auth.role}
           >
             <AttendancePage {...layoutProps} />
@@ -82,6 +109,7 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute
             isAuthenticated={auth.isAuthenticated}
+            isInitializing={auth.isInitializing}
             userRole={auth.role}
           >
             <PayrollPage {...layoutProps} />
@@ -94,6 +122,7 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute
             isAuthenticated={auth.isAuthenticated}
+            isInitializing={auth.isInitializing}
             userRole={auth.role}
             allowedRoles={["SUPERVISOR"]}
           >
@@ -107,6 +136,7 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute
             isAuthenticated={auth.isAuthenticated}
+            isInitializing={auth.isInitializing}
             userRole={auth.role}
             allowedRoles={["SUPERVISOR"]}
           >
@@ -120,6 +150,7 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute
             isAuthenticated={auth.isAuthenticated}
+            isInitializing={auth.isInitializing}
             userRole={auth.role}
             allowedRoles={["SUPERVISOR"]}
           >
@@ -133,6 +164,7 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute
             isAuthenticated={auth.isAuthenticated}
+            isInitializing={auth.isInitializing}
             userRole={auth.role}
           >
             <SettingsPage {...layoutProps} />

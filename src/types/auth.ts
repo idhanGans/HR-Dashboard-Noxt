@@ -3,16 +3,14 @@ import type { ReactNode } from "react";
 // Auth types
 export interface AuthState {
   isAuthenticated: boolean;
+  isInitializing: boolean;
   userRole: string;
   userName: string;
   userId: number | null;
   role: string | null;
-  accessToken: string | null;
-  refreshToken: string | null;
 }
 
 export interface AuthPayload {
-  accessToken: string;
   refreshToken: string;
   userRole: string;
   userName: string;
@@ -24,8 +22,6 @@ export interface AuthContextValue {
   auth: AuthState;
   signIn: (payload: AuthPayload) => void;
   signOut: () => void;
-  ensureValidAccessToken: () => Promise<string | null>;
-  refreshAccessToken: () => Promise<string | null>;
 }
 
 // Layout props
@@ -38,6 +34,7 @@ export interface LayoutProps {
 // Route component props
 export interface ProtectedRouteProps {
   isAuthenticated: boolean;
+  isInitializing: boolean;
   allowedRoles?: string[];
   userRole?: string | null;
   children: ReactNode;
@@ -45,6 +42,7 @@ export interface ProtectedRouteProps {
 
 export interface PublicRouteProps {
   isAuthenticated: boolean;
+  isInitializing: boolean;
   children: ReactNode;
 }
 
