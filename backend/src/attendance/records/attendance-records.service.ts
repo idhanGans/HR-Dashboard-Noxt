@@ -29,7 +29,9 @@ export class AttendanceRecordsService {
     });
 
     if (existingOpen) {
-      throw new BadRequestException("You already have an open attendance record");
+      throw new BadRequestException(
+        "You already have an open attendance record",
+      );
     }
 
     const existingToday = await this.prisma.attendanceRecord.findFirst({

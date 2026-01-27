@@ -102,7 +102,9 @@ export class LeaveRequestsController {
     description: "Returns leave balances by type",
     type: [LeaveBalanceDto],
   })
-  async getBalance(@CurrentUser() user: UserPayload): Promise<LeaveBalanceDto[]> {
+  async getBalance(
+    @CurrentUser() user: UserPayload,
+  ): Promise<LeaveBalanceDto[]> {
     return this.leaveRequestsService.getLeaveBalances(user.id);
   }
 

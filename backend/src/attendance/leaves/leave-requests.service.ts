@@ -249,7 +249,9 @@ export class LeaveRequestsService {
       },
     });
 
-    const entitledPerYearByType = entitlements.reduce<Record<LeaveType, number>>(
+    const entitledPerYearByType = entitlements.reduce<
+      Record<LeaveType, number>
+    >(
       (acc, entitlement) => {
         acc[entitlement.type] = entitlement.entitledDays;
         return acc;
@@ -435,5 +437,4 @@ export class LeaveRequestsService {
     const currentYear = new Date().getUTCFullYear();
     return Math.max(currentYear - startYear + 1, 1);
   }
-
 }

@@ -6,7 +6,7 @@ import { LeaveStatus } from "@prisma/client";
 
 export class LeaveRequestsQueryDto extends OmitType(PaginationQueryDto, [
   "search",
-] as const ) {
+] as const) {
   @ApiPropertyOptional({ description: "Filter by user ID", example: 1 })
   @IsOptional()
   @Type(() => Number)
