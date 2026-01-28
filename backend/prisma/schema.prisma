@@ -92,60 +92,73 @@ model User {
 }
 
 model Organization {
-  id           Int      @id @default(autoincrement())
+  id           Int         @id @default(autoincrement())
   name         String
   supervisorId Int
-  supervisor   User     @relation("OrganizationSupervisor", fields: [supervisorId], references: [id], onDelete: Restrict)
+  supervisor   User         @relation("OrganizationSupervisor", fields: [supervisorId], references: [id], onDelete: Restrict)
   members      User[]
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  metrics      KpiMetric[]
+  periods      KpiPeriod[]
+  targets      KpiTarget[]
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
 
   @@index([supervisorId])
 }
 
 
 model KpiMetric {
-  id          Int       @id @default(autoincrement())
-  name        String
-  description String?
-  isActive    Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  targets     KpiTarget[]
-  scores      KpiScore[]
+  id             Int          @id @default(autoincrement())
+  name           String
+  description    String?
+  organizationId Int
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  targets        KpiTarget[]
+  scores         KpiScore[]
 
+  @@unique([organizationId, name])
   @@index([isActive])
+  @@index([organizationId])
 }
 
 model KpiPeriod {
-  id        Int        @id @default(autoincrement())
-  name      String
-  startDate DateTime
-  endDate   DateTime
-  isActive  Boolean    @default(true)
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  targets   KpiTarget[]
-  scores    KpiScore[]
+  id             Int          @id @default(autoincrement())
+  name           String
+  startDate      DateTime
+  endDate        DateTime
+  organizationId Int
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  targets        KpiTarget[]
+  scores         KpiScore[]
 
-  @@unique([startDate, endDate])
+  @@unique([organizationId, name, startDate, endDate])
   @@index([isActive])
   @@index([startDate, endDate])
+  @@index([organizationId])
 }
 
 model KpiTarget {
-  id        Int      @id @default(autoincrement())
-  metricId  Int
-  periodId  Int
-  target    Decimal  @db.Decimal(3, 1)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  metric    KpiMetric @relation(fields: [metricId], references: [id], onDelete: Restrict)
-  period    KpiPeriod @relation(fields: [periodId], references: [id], onDelete: Restrict)
+  id             Int          @id @default(autoincrement())
+  metricId       Int
+  periodId       Int
+  organizationId Int
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  target         Decimal      @db.Decimal(3, 1)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  metric         KpiMetric   @relation(fields: [metricId], references: [id], onDelete: Restrict)
+  period         KpiPeriod    @relation(fields: [periodId], references: [id], onDelete: Restrict)
 
   @@unique([metricId, periodId])
   @@index([periodId])
   @@index([metricId])
+  @@index([organizationId])
 }
 
 model KpiScore {

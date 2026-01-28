@@ -57,6 +57,31 @@ async function main() {
 
   console.log("✅ Created supervisor:", supervisor.email);
 
+  // Create Organization
+  let organization = await prisma.organization.findFirst({
+    where: {
+      supervisorId: supervisor.id,
+    },
+  });
+
+  if (!organization) {
+    organization = await prisma.organization.create({
+      data: {
+        name: "Engineering Department",
+        supervisorId: supervisor.id,
+      },
+    });
+    console.log("✅ Created organization:", organization.name);
+  } else {
+    console.log("✅ Found existing organization:", organization.name);
+  }
+
+  // Assign supervisor to organization
+  await prisma.user.update({
+    where: { id: supervisor.id },
+    data: { organizationId: organization.id },
+  });
+
   // Create Employee
   const employee = await prisma.user.upsert({
     where: { email: "employee@example.com" },
@@ -80,6 +105,93 @@ async function main() {
   });
 
   console.log("✅ Created employee:", employee.email);
+
+  // Create KPI Period for January 2026
+  const january2026Period = await prisma.kpiPeriod.upsert({
+    where: {
+      organizationId_name_startDate_endDate: {
+        organizationId: organization.id,
+        name: "January 2026",
+        startDate: new Date("2026-01-01"),
+        endDate: new Date("2026-01-31"),
+      },
+    },
+    update: {},
+    create: {
+      name: "January 2026",
+      startDate: new Date("2026-01-01"),
+      endDate: new Date("2026-01-31"),
+      organizationId: organization.id,
+      isActive: true,
+    },
+  });
+
+  console.log("✅ Created KPI period:", january2026Period.name);
+
+  // Create KPI Metrics
+  const metrics = [
+    {
+      name: "Customer Satisfaction",
+      description: "Overall customer satisfaction rating",
+      target: 9.0,
+    },
+    {
+      name: "Project Completion Rate",
+      description: "Percentage of projects completed on time",
+      target: 8.5,
+    },
+    {
+      name: "Code Quality Score",
+      description: "Average code quality assessment score",
+      target: 9.5,
+    },
+    {
+      name: "Team Collaboration",
+      description: "Team collaboration and communication effectiveness",
+      target: 8.8,
+    },
+  ];
+
+  for (const metricData of metrics) {
+    const metric = await prisma.kpiMetric.upsert({
+      where: {
+        organizationId_name: {
+          organizationId: organization.id,
+          name: metricData.name,
+        },
+      },
+      update: {},
+      create: {
+        name: metricData.name,
+        description: metricData.description,
+        organizationId: organization.id,
+        isActive: true,
+      },
+    });
+
+    // Create target for January 2026 period
+    await prisma.kpiTarget.upsert({
+      where: {
+        metricId_periodId: {
+          metricId: metric.id,
+          periodId: january2026Period.id,
+        },
+      },
+      update: {
+        target: metricData.target,
+      },
+      create: {
+        metricId: metric.id,
+        periodId: january2026Period.id,
+        organizationId: organization.id,
+        target: metricData.target,
+      },
+    });
+
+    console.log(
+      `✅ Created metric "${metric.name}" with target ${metricData.target}`,
+    );
+  }
 
   console.log("\n🎉 Seed completed successfully!");
   console.log("\n📝 Test credentials (all use password: password123):");
