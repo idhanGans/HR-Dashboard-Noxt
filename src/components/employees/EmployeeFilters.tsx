@@ -12,9 +12,9 @@ export const EmployeeFilters = ({
 }) => {
   const filters = [
     { id: "all", label: "All" },
-    { id: "permanent", label: "Permanent" },
-    { id: "temporary", label: "Temporary" },
-    { id: "former", label: "Former" },
+    { id: "PERMANENT", label: "Permanent" },
+    { id: "TEMPORARY", label: "Temporary" },
+    { id: "FORMER", label: "Former" },
   ];
 
   return (

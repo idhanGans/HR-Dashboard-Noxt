@@ -298,7 +298,7 @@ export class StatisticsService {
           userId,
           userName: data.user.fullName,
           departmentName: data.user.organization?.name,
-          role: data.user.roleName || undefined,
+          role: data.user.position || undefined,
           averageScore: parseFloat(avgScore.toFixed(1)),
           trend: undefined, // Could calculate trend if previous period data available
         };

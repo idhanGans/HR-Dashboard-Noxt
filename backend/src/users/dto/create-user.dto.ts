@@ -22,6 +22,34 @@ export enum EmploymentType {
   FORMER = "FORMER",
 }
 
+export enum TypeOfWork {
+  FULL_TIME = "FULL_TIME",
+  PART_TIME = "PART_TIME",
+  CONTRACT = "CONTRACT",
+  FREELANCE = "FREELANCE",
+}
+
+export enum Level {
+  JUNIOR = "JUNIOR",
+  MID = "MID",
+  SENIOR = "SENIOR",
+  LEAD = "LEAD",
+  MANAGER = "MANAGER",
+  DIRECTOR = "DIRECTOR",
+}
+
+export enum Gender {
+  MALE = "MALE",
+  FEMALE = "FEMALE",
+}
+
+export enum WorkStatus {
+  ACTIVE = "ACTIVE",
+  INACTIVE = "INACTIVE",
+  ON_LEAVE = "ON_LEAVE",
+  TERMINATED = "TERMINATED",
+}
+
 export class CreateUserDto {
   @ApiProperty({
     description: "User's full name",
@@ -59,12 +87,12 @@ export class CreateUserDto {
   phoneNumber?: string;
 
   @ApiPropertyOptional({
-    description: "Role name/job title",
+    description: "Position/job title",
     example: "Senior Developer",
   })
   @IsOptional()
   @IsString()
-  roleName?: string;
+  position?: string;
 
   @ApiProperty({
     description: "User role permission",
@@ -163,4 +191,64 @@ export class CreateUserDto {
   @IsOptional()
   @IsInt()
   organizationId?: number;
+
+  @ApiPropertyOptional({
+    description: "Nickname",
+    example: "Johnny",
+  })
+  @IsOptional()
+  @IsString()
+  nickname?: string;
+
+  @ApiPropertyOptional({
+    description: "Gender",
+    enum: Gender,
+    example: Gender.MALE,
+  })
+  @IsOptional()
+  @IsEnum(Gender)
+  gender?: Gender;
+
+  @ApiPropertyOptional({
+    description: "Date of birth",
+    example: "1990-01-15T00:00:00Z",
+  })
+  @IsOptional()
+  @IsDateString()
+  dateOfBirth?: string;
+
+  @ApiPropertyOptional({
+    description: "Type of work",
+    enum: TypeOfWork,
+    example: TypeOfWork.FULL_TIME,
+  })
+  @IsOptional()
+  @IsEnum(TypeOfWork)
+  typeOfWork?: TypeOfWork;
+
+  @ApiPropertyOptional({
+    description: "Work status",
+    enum: WorkStatus,
+    example: WorkStatus.ACTIVE,
+  })
+  @IsOptional()
+  @IsEnum(WorkStatus)
+  workStatus?: WorkStatus;
+
+  @ApiPropertyOptional({
+    description: "Division",
+    example: "Engineering",
+  })
+  @IsOptional()
+  @IsString()
+  division?: string;
+
+  @ApiPropertyOptional({
+    description: "Level",
+    enum: Level,
+    example: Level.SENIOR,
+  })
+  @IsOptional()
+  @IsEnum(Level)
+  level?: Level;
 }

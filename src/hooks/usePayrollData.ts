@@ -7,6 +7,7 @@ import {
 } from "../services/endpoints";
 import { hasRequiredRole } from "../utils/roles";
 import { getErrorMessage } from "../utils/errors";
+import { getInitials } from "../utils/utils";
 import type {
   Employee,
   PayrollHistoryRecord,
@@ -20,24 +21,15 @@ import type {
 
 const EMPLOYEE_PAGE_SIZE = 50;
 
-const getInitials = (name: string) =>
-  name
-    .split(" ")
-    .filter(Boolean)
-    .map((part) => part[0]?.toUpperCase())
-    .join("")
-    .slice(0, 2);
-
 const normalizeEmploymentType = (
   value?: string,
 ): Employee["employmentType"] | undefined => {
-  const normalized = value?.toLowerCase();
   if (
-    normalized === "permanent" ||
-    normalized === "temporary" ||
-    normalized === "former"
+    value === "PERMANENT" ||
+    value === "TEMPORARY" ||
+    value === "FORMER"
   ) {
-    return normalized as Employee["employmentType"];
+    return value as Employee["employmentType"];
   }
   return undefined;
 };
@@ -49,7 +41,7 @@ const mapPayrollUser = (user: PayrollUser): Employee => {
     name,
     email: user.email,
     department: user.organization?.name ?? user.department ?? "General",
-    role: user.roleName ?? user.role ?? "",
+    role: user.position ?? user.role ?? "",
     employmentType: normalizeEmploymentType(user.employmentType),
     avatar: getInitials(name),
     payroll: {
@@ -153,7 +145,7 @@ export const usePayrollData = () => {
         name: auth.userName,
         department: "General",
         role: auth.userRole,
-        employmentType: "permanent",
+        employmentType: "PERMANENT",
         avatar: getInitials(auth.userName),
         payroll: {
           basicSalary: 0,

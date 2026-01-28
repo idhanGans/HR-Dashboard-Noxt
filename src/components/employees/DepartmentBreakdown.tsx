@@ -1,49 +1,48 @@
 import { Card } from "../Card";
-import type { Employee } from "../../types";
-
-const DEFAULT_DEPARTMENTS = [
-  "Engineering",
-  "Sales",
-  "Marketing",
-  "HR",
-  "Product",
-  "Operations",
-  "Finance",
-  "Customer Success",
-];
+import type { OrganizationCount } from "../../types/api";
 
 interface DepartmentBreakdownProps {
-  employees: Employee[];
-  departments?: string[];
+  organizationBreakdown: OrganizationCount[];
+  totalEmployees: number;
 }
 
 /**
- * DepartmentBreakdown - Shows employee distribution by department
- * @param {Array} employees - Array of employee objects
- * @param {Array} departments - Array of department names
+ * DepartmentBreakdown - Shows employee distribution by organization/department
+ * @param {Array} organizationBreakdown - Array of organization counts from statistics
+ * @param {number} totalEmployees - Total number of employees for percentage calculation
  */
 export const DepartmentBreakdown = ({
-  employees,
-  departments = DEFAULT_DEPARTMENTS,
+  organizationBreakdown,
+  totalEmployees,
 }: DepartmentBreakdownProps) => {
+  if (organizationBreakdown.length === 0) {
+    return (
+      <Card>
+        <h2 className="text-lg font-bold text-white mb-4">
+          Department Breakdown
+        </h2>
+        <p className="text-lightGrey text-sm">No departments available</p>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <h2 className="text-lg font-bold text-white mb-4">
         Department Breakdown
       </h2>
       <div className="space-y-4">
-        {departments.map((dept) => {
-          const count = employees.filter((e) => e.department === dept).length;
+        {organizationBreakdown.map(({ name, count }) => {
           const percentage =
-            employees.length > 0
-              ? Math.min((count / employees.length) * 100, 100)
+            totalEmployees > 0
+              ? Math.min((count / totalEmployees) * 100, 100)
               : 0;
 
           return (
-            <div key={dept} className="flex items-center gap-4">
+            <div key={name} className="flex items-center gap-4">
               <div className="flex-1">
                 <div className="flex justify-between mb-2">
-                  <span className="text-white font-medium">{dept}</span>
+                  <span className="text-white font-medium">{name}</span>
                   <span className="text-lightGrey text-sm">
                     {count} employees
                   </span>

@@ -61,7 +61,7 @@ const AppRoutes = () => {
   const layoutProps = {
     onLogout: signOut,
     userName: auth.userName,
-    userRole: auth.userRole,
+    userRole: auth.role ?? "EMPLOYEE",
   };
 
   return (

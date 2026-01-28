@@ -25,13 +25,41 @@ enum EmploymentType {
   FORMER
 }
 
+enum Gender {
+  MALE
+  FEMALE
+}
+
+enum TypeOfWork {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  FREELANCE
+}
+
+enum WorkStatus {
+  ACTIVE
+  INACTIVE
+  ON_LEAVE
+  TERMINATED
+}
+
+enum Level {
+  JUNIOR
+  MID
+  SENIOR
+  LEAD
+  MANAGER
+  DIRECTOR
+}
+
 model User {
   id                      Int            @id @default(autoincrement())
   fullName                String
   email                   String         @unique
   password                String
   phoneNumber             String?
-  roleName                String?
+  position                String?
   role                    Role
   employmentType          EmploymentType
   taxNumber               String?
@@ -43,6 +71,13 @@ model User {
   bankName                String?
   bankAccountHolderName   String?
   photoUrl                String?
+  nickname                String?
+  gender                  Gender?
+  dateOfBirth             DateTime?
+  typeOfWork              TypeOfWork?
+  workStatus              WorkStatus?
+  division                String?
+  level                   Level?
   organizationId          Int?
   organization            Organization?  @relation(fields: [organizationId], references: [id], onDelete: SetNull)
   supervisedOrganizations Organization[] @relation("OrganizationSupervisor")

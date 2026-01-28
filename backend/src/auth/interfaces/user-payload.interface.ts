@@ -5,7 +5,7 @@ export interface UserPayload {
   fullName: string;
   email: string;
   phoneNumber?: string;
-  roleName?: string;
+  position?: string;
   role: Role;
   employmentType: string;
   taxNumber?: string;

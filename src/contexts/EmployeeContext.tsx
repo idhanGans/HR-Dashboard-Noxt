@@ -170,7 +170,7 @@ export const EmployeeProvider = ({ children }: EmployeeProviderProps) => {
     > = {};
 
     employees.forEach((emp) => {
-      if ((emp as any).employmentType === "former") return;
+      if ((emp as any).employmentType === "FORMER") return;
 
       const dept = emp.department;
       if (!deptMap[dept]) {

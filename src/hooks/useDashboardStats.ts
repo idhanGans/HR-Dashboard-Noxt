@@ -41,7 +41,7 @@ export const useDashboardStats = () => {
     const deptMap: Record<string, { total: number; present: number }> = {};
 
     employees.forEach((emp) => {
-      if (emp.employmentType === "former") return;
+      if (emp.employmentType === "FORMER") return;
 
       const dept = emp.department;
       if (!deptMap[dept]) {
