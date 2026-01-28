@@ -28,11 +28,15 @@ import {
   MetricResponseDto,
   PaginatedMetricsResponseDto,
 } from "@/kpi/dto";
-import { PaginationQueryDto } from "@/common/dto";
+import { PaginationQueryDto, PaginatedResponseDto } from "@/common/dto";
 import { JwtAuthGuard } from "@/auth/guards/jwt-auth.guard";
 import { RolesGuard } from "@/auth/guards/roles.guard";
 import { Roles } from "@/auth/decorators/roles.decorator";
+import { CurrentUser } from "@/auth/decorators/current-user.decorator";
 import { Role } from "@/users/dto";
+import type { UserPayload } from "@/auth/interfaces/user-payload.interface";
+import { BadRequestException } from "@nestjs/common";
+import { KpiMetric } from "@prisma/client";
 
 @ApiTags("kpi-metrics")
 @Controller("kpi/metrics")
@@ -59,12 +63,23 @@ export class MetricsController {
   })
   async create(
     @Body() createMetricDto: CreateMetricDto,
-  ): Promise<MetricResponseDto> {
-    return this.metricsService.create(createMetricDto);
+    @CurrentUser() user: UserPayload,
+  ): Promise<KpiMetric> {
+    // For superadmins, allow override; for others, use their org
+    const organizationId =
+      user.role === Role.SUPERADMIN
+        ? (createMetricDto.organizationId ?? user.organizationId)
+        : user.organizationId;
+
+    if (!organizationId) {
+      throw new BadRequestException("User must belong to an organization");
+    }
+
+    return this.metricsService.create(createMetricDto, organizationId);
   }
 
   @Get()
-  @Roles(Role.SUPERADMIN)
+  @Roles(Role.SUPERADMIN, Role.SUPERVISOR)
   @ApiOperation({ summary: "Get all KPI metrics (paginated and searchable)" })
   @ApiQuery({ name: "page", required: false, type: Number, example: 1 })
   @ApiQuery({ name: "limit", required: false, type: Number, example: 10 })
@@ -82,12 +97,17 @@ export class MetricsController {
   })
   async findAll(
     @Query() paginationQuery: PaginationQueryDto,
-  ): Promise<PaginatedMetricsResponseDto> {
-    return this.metricsService.findAll(paginationQuery);
+    @CurrentUser() user: UserPayload,
+  ): Promise<PaginatedResponseDto<KpiMetric>> {
+    // For superadmins, don't filter by organization; for others, filter by their org
+    const organizationId =
+      user.role === Role.SUPERADMIN ? undefined : user.organizationId;
+
+    return this.metricsService.findAll(paginationQuery, organizationId);
   }
 
   @Get(":id")
-  @Roles(Role.SUPERADMIN)
+  @Roles(Role.SUPERADMIN, Role.SUPERVISOR)
   @ApiOperation({ summary: "Get a metric by ID" })
   @ApiParam({ name: "id", description: "Metric ID", example: 1, type: Number })
   @ApiResponse({
@@ -98,8 +118,13 @@ export class MetricsController {
   @ApiResponse({ status: 404, description: "Metric not found" })
   async findOne(
     @Param("id", ParseIntPipe) id: number,
-  ): Promise<MetricResponseDto> {
-    return this.metricsService.findOne(id);
+    @CurrentUser() user: UserPayload,
+  ): Promise<KpiMetric> {
+    // For superadmins, don't filter by organization; for others, filter by their org
+    const organizationId =
+      user.role === Role.SUPERADMIN ? undefined : user.organizationId;
+
+    return this.metricsService.findOne(id, organizationId);
   }
 
   @Put(":id")
@@ -116,8 +141,13 @@ export class MetricsController {
   async update(
     @Param("id", ParseIntPipe) id: number,
     @Body() updateMetricDto: UpdateMetricDto,
-  ): Promise<MetricResponseDto> {
-    return this.metricsService.update(id, updateMetricDto);
+    @CurrentUser() user: UserPayload,
+  ): Promise<KpiMetric> {
+    // For superadmins, don't filter by organization; for others, filter by their org
+    const organizationId =
+      user.role === Role.SUPERADMIN ? undefined : user.organizationId;
+
+    return this.metricsService.update(id, updateMetricDto, organizationId);
   }
 
   @Delete(":id")
@@ -130,7 +160,14 @@ export class MetricsController {
     description: "Metric soft deleted successfully",
   })
   @ApiResponse({ status: 404, description: "Metric not found" })
-  async remove(@Param("id", ParseIntPipe) id: number): Promise<void> {
-    return this.metricsService.remove(id);
+  async remove(
+    @Param("id", ParseIntPipe) id: number,
+    @CurrentUser() user: UserPayload,
+  ): Promise<void> {
+    // For superadmins, don't filter by organization; for others, filter by their org
+    const organizationId =
+      user.role === Role.SUPERADMIN ? undefined : user.organizationId;
+
+    return this.metricsService.remove(id, organizationId);
   }
 }

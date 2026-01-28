@@ -4,19 +4,17 @@ import {
   BadRequestException,
 } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
-import {
-  CreateTargetDto,
-  UpdateTargetDto,
-  TargetResponseDto,
-  PaginatedTargetsResponseDto,
-  MetricResponseDto,
-  PeriodResponseDto,
-} from "@/kpi/dto";
+import { CreateTargetDto, UpdateTargetDto } from "@/kpi/dto";
 import { PaginationQueryDto } from "@/common/dto";
 import { Prisma } from "@prisma/client";
 import { Decimal } from "@prisma/client/runtime/library";
 import { MetricsService } from "@/kpi/metrics/metrics.service";
 import { PeriodsService } from "@/kpi/periods/periods.service";
+
+const kpiTargetInclude = {
+  metric: true,
+  period: true,
+} as const;
 
 @Injectable()
 export class TargetsService {
@@ -26,16 +24,33 @@ export class TargetsService {
     private periodsService: PeriodsService,
   ) {}
 
-  async create(createTargetDto: CreateTargetDto): Promise<TargetResponseDto> {
-    // Validate metric exists and is active
-    const metric = await this.metricsService.findOne(createTargetDto.metricId);
+  async create(createTargetDto: CreateTargetDto, organizationId: number) {
+    if (!organizationId) {
+      throw new BadRequestException("Organization ID is required");
+    }
+
+    // Validate metric exists, is active, and belongs to the organization
+    const metric = await this.metricsService.findOne(
+      createTargetDto.metricId,
+      organizationId,
+    );
 
     if (!metric.isActive) {
       throw new BadRequestException("Cannot set target for inactive metric");
     }
 
-    // Validate period exists
-    await this.periodsService.findOne(createTargetDto.periodId);
+    // Validate period exists and belongs to the organization
+    const period = await this.periodsService.findOne(
+      createTargetDto.periodId,
+      organizationId,
+    );
+
+    // Ensure metric and period belong to the same organization
+    if (metric.organizationId !== period.organizationId) {
+      throw new BadRequestException(
+        "Metric and period must belong to the same organization",
+      );
+    }
 
     // Check if target already exists
     const existingTarget = await this.prisma.kpiTarget.findUnique({
@@ -57,20 +72,13 @@ export class TargetsService {
       data: {
         metricId: createTargetDto.metricId,
         periodId: createTargetDto.periodId,
+        organizationId,
         target: new Decimal(createTargetDto.target),
       },
-      include: {
-        metric: true,
-        period: true,
-      },
+      include: kpiTargetInclude,
     });
 
-    return {
-      ...target,
-      target: Number(target.target),
-      metric: target.metric as MetricResponseDto,
-      period: target.period as PeriodResponseDto,
-    } as TargetResponseDto;
+    return target;
   }
 
   async findAll(
@@ -78,12 +86,15 @@ export class TargetsService {
       periodId?: number;
       metricId?: number;
     },
-  ): Promise<PaginatedTargetsResponseDto> {
-    const page = paginationQuery.page ?? 1;
-    const limit = paginationQuery.limit ?? 10;
+    organizationId?: number,
+  ) {
+    const page = Number(paginationQuery.page) || 1;
+    const limit = Number(paginationQuery.limit) || 10;
     const skip = (page - 1) * limit;
 
-    const where: Prisma.KpiTargetWhereInput = {};
+    const where: Prisma.KpiTargetWhereInput = {
+      ...(organizationId !== undefined && { organizationId }),
+    };
 
     if (paginationQuery.periodId) {
       where.periodId = paginationQuery.periodId;
@@ -98,10 +109,7 @@ export class TargetsService {
         where,
         skip,
         take: limit,
-        include: {
-          metric: true,
-          period: true,
-        },
+        include: kpiTargetInclude,
         orderBy: { createdAt: "desc" },
       }),
       this.prisma.kpiTarget.count({ where }),
@@ -110,12 +118,7 @@ export class TargetsService {
     const totalPages = Math.ceil(total / limit);
 
     return {
-      data: targets.map((t) => ({
-        ...t,
-        target: Number(t.target),
-        metric: t.metric as MetricResponseDto,
-        period: t.period as PeriodResponseDto,
-      })) as TargetResponseDto[],
+      data: targets,
       total,
       page,
       limit,
@@ -123,31 +126,32 @@ export class TargetsService {
     };
   }
 
-  async findOne(id: number): Promise<TargetResponseDto> {
+  async findOne(id: number, organizationId?: number) {
     const target = await this.prisma.kpiTarget.findUnique({
       where: { id },
-      include: {
-        metric: true,
-        period: true,
-      },
+      include: kpiTargetInclude,
     });
 
     if (!target) {
       throw new NotFoundException(`Target with ID ${id} not found`);
     }
 
-    return {
-      ...target,
-      target: Number(target.target),
-      metric: target.metric as MetricResponseDto,
-      period: target.period as PeriodResponseDto,
-    } as TargetResponseDto;
+    // Check organization access if organizationId is provided
+    if (
+      organizationId !== undefined &&
+      target.organizationId !== organizationId
+    ) {
+      throw new NotFoundException(`Target with ID ${id} not found`);
+    }
+
+    return target;
   }
 
   async update(
     id: number,
     updateTargetDto: UpdateTargetDto,
-  ): Promise<TargetResponseDto> {
+    organizationId?: number,
+  ) {
     const existingTarget = await this.prisma.kpiTarget.findUnique({
       where: { id },
       include: {
@@ -156,6 +160,14 @@ export class TargetsService {
     });
 
     if (!existingTarget) {
+      throw new NotFoundException(`Target with ID ${id} not found`);
+    }
+
+    // Check organization access if organizationId is provided
+    if (
+      organizationId !== undefined &&
+      existingTarget.organizationId !== organizationId
+    ) {
       throw new NotFoundException(`Target with ID ${id} not found`);
     }
 
@@ -174,17 +186,9 @@ export class TargetsService {
           ? new Decimal(updateTargetDto.target)
           : undefined,
       },
-      include: {
-        metric: true,
-        period: true,
-      },
+      include: kpiTargetInclude,
     });
 
-    return {
-      ...target,
-      target: Number(target.target),
-      metric: target.metric as MetricResponseDto,
-      period: target.period as PeriodResponseDto,
-    } as TargetResponseDto;
+    return target;
   }
 }

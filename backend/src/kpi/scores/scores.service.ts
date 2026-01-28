@@ -5,21 +5,19 @@ import {
   ForbiddenException,
 } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
-import {
-  CreateScoreDto,
-  UpdateScoreDto,
-  BulkCreateScoreDto,
-  BulkScoreResponseDto,
-  ScoreResponseDto,
-  PaginatedScoresResponseDto,
-  PeriodResponseDto,
-  MetricResponseDto,
-} from "@/kpi/dto";
+import { CreateScoreDto, UpdateScoreDto, BulkCreateScoreDto } from "@/kpi/dto";
 import { PaginationQueryDto } from "@/common/dto";
 import { Prisma, Role as PrismaRole } from "@prisma/client";
 import { Decimal } from "@prisma/client/runtime/library";
 import { MetricsService } from "@/kpi/metrics/metrics.service";
 import { PeriodsService } from "@/kpi/periods/periods.service";
+
+const kpiScoreInclude = {
+  period: true,
+  metric: true,
+  scoredUser: true,
+  scorer: true,
+} as const;
 
 @Injectable()
 export class ScoresService {
@@ -33,7 +31,7 @@ export class ScoresService {
     createScoreDto: CreateScoreDto,
     scorerId: number,
     scorerRole: PrismaRole,
-  ): Promise<ScoreResponseDto> {
+  ) {
     // Validate period exists and window is open
     const period = await this.periodsService.findOne(createScoreDto.periodId);
 
@@ -112,20 +110,10 @@ export class ScoresService {
         scorerId,
         score: new Decimal(createScoreDto.score),
       },
-      include: {
-        period: true,
-        metric: true,
-        scoredUser: true,
-        scorer: true,
-      },
+      include: kpiScoreInclude,
     });
 
-    return {
-      ...score,
-      score: Number(score.score),
-      period: score.period as PeriodResponseDto,
-      metric: score.metric as MetricResponseDto,
-    } as ScoreResponseDto;
+    return score;
   }
 
   async findAll(
@@ -135,9 +123,9 @@ export class ScoresService {
       scoredUserId?: number;
       scorerId?: number;
     },
-  ): Promise<PaginatedScoresResponseDto> {
-    const page = paginationQuery.page ?? 1;
-    const limit = paginationQuery.limit ?? 10;
+  ) {
+    const page = Number(paginationQuery.page) || 1;
+    const limit = Number(paginationQuery.limit) || 10;
     const skip = (page - 1) * limit;
 
     const where: Prisma.KpiScoreWhereInput = {};
@@ -163,12 +151,7 @@ export class ScoresService {
         where,
         skip,
         take: limit,
-        include: {
-          period: true,
-          metric: true,
-          scoredUser: true,
-          scorer: true,
-        },
+        include: kpiScoreInclude,
         orderBy: { createdAt: "desc" },
       }),
       this.prisma.kpiScore.count({ where }),
@@ -177,12 +160,7 @@ export class ScoresService {
     const totalPages = Math.ceil(total / limit);
 
     return {
-      data: scores.map((s) => ({
-        ...s,
-        score: Number(s.score),
-        period: s.period as PeriodResponseDto,
-        metric: s.metric as MetricResponseDto,
-      })) as ScoreResponseDto[],
+      data: scores,
       total,
       page,
       limit,
@@ -190,34 +168,20 @@ export class ScoresService {
     };
   }
 
-  async findOne(id: number): Promise<ScoreResponseDto> {
+  async findOne(id: number) {
     const score = await this.prisma.kpiScore.findUnique({
       where: { id },
-      include: {
-        period: true,
-        metric: true,
-        scoredUser: true,
-        scorer: true,
-      },
+      include: kpiScoreInclude,
     });
 
     if (!score) {
       throw new NotFoundException(`Score with ID ${id} not found`);
     }
 
-    return {
-      ...score,
-      score: Number(score.score),
-      period: score.period as PeriodResponseDto,
-      metric: score.metric as MetricResponseDto,
-    } as ScoreResponseDto;
+    return score;
   }
 
-  async update(
-    id: number,
-    updateScoreDto: UpdateScoreDto,
-    scorerId: number,
-  ): Promise<ScoreResponseDto> {
+  async update(id: number, updateScoreDto: UpdateScoreDto, scorerId: number) {
     const existingScore = await this.prisma.kpiScore.findUnique({
       where: { id },
       include: {
@@ -251,27 +215,17 @@ export class ScoresService {
           ? new Decimal(updateScoreDto.score)
           : undefined,
       },
-      include: {
-        period: true,
-        metric: true,
-        scoredUser: true,
-        scorer: true,
-      },
+      include: kpiScoreInclude,
     });
 
-    return {
-      ...score,
-      score: Number(score.score),
-      period: score.period as PeriodResponseDto,
-      metric: score.metric as MetricResponseDto,
-    } as ScoreResponseDto;
+    return score;
   }
 
   async bulkCreate(
     bulkCreateScoreDto: BulkCreateScoreDto,
     scorerId: number,
     scorerRole: PrismaRole,
-  ): Promise<BulkScoreResponseDto> {
+  ) {
     // Validate period exists and window is open
     const period = await this.periodsService.findOne(
       bulkCreateScoreDto.periodId,
@@ -337,7 +291,7 @@ export class ScoresService {
     }
 
     // Process scores (create or update)
-    const createdScores: ScoreResponseDto[] = [];
+    const createdScores = [];
 
     for (const metricScore of bulkCreateScoreDto.scores) {
       // Check if score already exists
@@ -352,24 +306,19 @@ export class ScoresService {
         },
       });
 
-      let score;
       if (existingScore) {
         // Update existing score
-        score = await this.prisma.kpiScore.update({
+        const score = await this.prisma.kpiScore.update({
           where: { id: existingScore.id },
           data: {
             score: new Decimal(metricScore.score),
           },
-          include: {
-            period: true,
-            metric: true,
-            scoredUser: true,
-            scorer: true,
-          },
+          include: kpiScoreInclude,
         });
+        createdScores.push(score);
       } else {
         // Create new score
-        score = await this.prisma.kpiScore.create({
+        const score = await this.prisma.kpiScore.create({
           data: {
             periodId: bulkCreateScoreDto.periodId,
             metricId: metricScore.metricId,
@@ -377,21 +326,10 @@ export class ScoresService {
             scorerId,
             score: new Decimal(metricScore.score),
           },
-          include: {
-            period: true,
-            metric: true,
-            scoredUser: true,
-            scorer: true,
-          },
+          include: kpiScoreInclude,
         });
+        createdScores.push(score);
       }
-
-      createdScores.push({
-        ...score,
-        score: Number(score.score),
-        period: score.period as PeriodResponseDto,
-        metric: score.metric as MetricResponseDto,
-      } as ScoreResponseDto);
     }
 
     return {

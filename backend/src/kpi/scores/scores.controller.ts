@@ -72,7 +72,7 @@ export class ScoresController {
   async create(
     @Body() createScoreDto: CreateScoreDto,
     @CurrentUser() user: UserPayload,
-  ): Promise<ScoreResponseDto> {
+  ) {
     return this.scoresService.create(
       createScoreDto,
       user.id,
@@ -107,7 +107,7 @@ export class ScoresController {
   async bulkCreate(
     @Body() bulkCreateScoreDto: BulkCreateScoreDto,
     @CurrentUser() user: UserPayload,
-  ): Promise<BulkScoreResponseDto> {
+  ) {
     return this.scoresService.bulkCreate(
       bulkCreateScoreDto,
       user.id,
@@ -157,7 +157,7 @@ export class ScoresController {
       scoredUserId?: number;
       scorerId?: number;
     },
-  ): Promise<PaginatedScoresResponseDto> {
+  ) {
     return this.scoresService.findAll(paginationQuery);
   }
 
@@ -171,9 +171,7 @@ export class ScoresController {
     type: ScoreResponseDto,
   })
   @ApiResponse({ status: 404, description: "Score not found" })
-  async findOne(
-    @Param("id", ParseIntPipe) id: number,
-  ): Promise<ScoreResponseDto> {
+  async findOne(@Param("id", ParseIntPipe) id: number) {
     return this.scoresService.findOne(id);
   }
 
@@ -200,7 +198,7 @@ export class ScoresController {
     @Param("id", ParseIntPipe) id: number,
     @Body() updateScoreDto: UpdateScoreDto,
     @CurrentUser() user: UserPayload,
-  ): Promise<ScoreResponseDto> {
+  ) {
     return this.scoresService.update(id, updateScoreDto, user.id);
   }
 }

@@ -26,11 +26,15 @@ import {
   PeriodResponseDto,
   PaginatedPeriodsResponseDto,
 } from "@/kpi/dto";
-import { PaginationQueryDto } from "@/common/dto";
+import { PaginationQueryDto, PaginatedResponseDto } from "@/common/dto";
 import { JwtAuthGuard } from "@/auth/guards/jwt-auth.guard";
 import { RolesGuard } from "@/auth/guards/roles.guard";
 import { Roles } from "@/auth/decorators/roles.decorator";
+import { CurrentUser } from "@/auth/decorators/current-user.decorator";
 import { Role } from "@/users/dto";
+import type { UserPayload } from "@/auth/interfaces/user-payload.interface";
+import { BadRequestException } from "@nestjs/common";
+import { KpiPeriod } from "@prisma/client";
 
 @ApiTags("kpi-periods")
 @Controller("kpi/periods")
@@ -60,12 +64,23 @@ export class PeriodsController {
   })
   async create(
     @Body() createPeriodDto: CreatePeriodDto,
-  ): Promise<PeriodResponseDto> {
-    return this.periodsService.create(createPeriodDto);
+    @CurrentUser() user: UserPayload,
+  ): Promise<KpiPeriod> {
+    // For superadmins, allow override; for others, use their org
+    const organizationId =
+      user.role === Role.SUPERADMIN
+        ? (createPeriodDto.organizationId ?? user.organizationId)
+        : user.organizationId;
+
+    if (!organizationId) {
+      throw new BadRequestException("User must belong to an organization");
+    }
+
+    return this.periodsService.create(createPeriodDto, organizationId);
   }
 
   @Get()
-  @Roles(Role.SUPERADMIN)
+  @Roles(Role.SUPERADMIN, Role.SUPERVISOR)
   @ApiOperation({ summary: "Get all KPI periods (paginated and searchable)" })
   @ApiQuery({ name: "page", required: false, type: Number, example: 1 })
   @ApiQuery({ name: "limit", required: false, type: Number, example: 10 })
@@ -83,8 +98,13 @@ export class PeriodsController {
   })
   async findAll(
     @Query() paginationQuery: PaginationQueryDto,
-  ): Promise<PaginatedPeriodsResponseDto> {
-    return this.periodsService.findAll(paginationQuery);
+    @CurrentUser() user: UserPayload,
+  ): Promise<PaginatedResponseDto<KpiPeriod>> {
+    // For superadmins, don't filter by organization; for others, filter by their org
+    const organizationId =
+      user.role === Role.SUPERADMIN ? undefined : user.organizationId;
+
+    return this.periodsService.findAll(paginationQuery, organizationId);
   }
 
   @Get("current")
@@ -96,8 +116,13 @@ export class PeriodsController {
     type: PeriodResponseDto,
   })
   @ApiResponse({ status: 404, description: "No active period found" })
-  async findCurrent(): Promise<PeriodResponseDto | null> {
-    return this.periodsService.findCurrent();
+  async findCurrent(
+    @CurrentUser() user: UserPayload,
+  ): Promise<KpiPeriod | null> {
+    // Filter by user's organization
+    const organizationId = user.organizationId;
+
+    return this.periodsService.findCurrent(organizationId);
   }
 
   @Get(":id")
@@ -112,8 +137,12 @@ export class PeriodsController {
   @ApiResponse({ status: 404, description: "Period not found" })
   async findOne(
     @Param("id", ParseIntPipe) id: number,
-  ): Promise<PeriodResponseDto> {
-    return this.periodsService.findOne(id);
+    @CurrentUser() user: UserPayload,
+  ): Promise<KpiPeriod> {
+    // Filter by user's organization
+    const organizationId = user.organizationId;
+
+    return this.periodsService.findOne(id, organizationId);
   }
 
   @Put(":id")
@@ -134,7 +163,12 @@ export class PeriodsController {
   async update(
     @Param("id", ParseIntPipe) id: number,
     @Body() updatePeriodDto: Partial<CreatePeriodDto>,
-  ): Promise<PeriodResponseDto> {
-    return this.periodsService.update(id, updatePeriodDto);
+    @CurrentUser() user: UserPayload,
+  ): Promise<KpiPeriod> {
+    // For superadmins, don't filter by organization; for others, filter by their org
+    const organizationId =
+      user.role === Role.SUPERADMIN ? undefined : user.organizationId;
+
+    return this.periodsService.update(id, updatePeriodDto, organizationId);
   }
 }
