@@ -214,7 +214,7 @@ export const EmployeeProvider = ({ children }: EmployeeProviderProps) => {
   const getOverallKPI = (): number => {
     const activeEmployees = employees.filter(
       (emp) =>
-        (emp as any).employmentType !== "former" &&
+        (emp as any).employmentType !== "FORMER" &&
         (emp as any).kpi?.currentScore,
     );
 
@@ -247,7 +247,7 @@ export const EmployeeProvider = ({ children }: EmployeeProviderProps) => {
     const trendData = months.map((month) => {
       const activeEmployees = employees.filter(
         (emp) =>
-          (emp as any).employmentType !== "former" && (emp as any).kpi?.history,
+          (emp as any).employmentType !== "FORMER" && (emp as any).kpi?.history,
       );
 
       let totalScore = 0;
@@ -277,7 +277,7 @@ export const EmployeeProvider = ({ children }: EmployeeProviderProps) => {
     return [...employees]
       .filter(
         (emp) =>
-          (emp as any).employmentType !== "former" &&
+          (emp as any).employmentType !== "FORMER" &&
           (emp as any).kpi?.currentScore,
       )
       .sort((a, b) => (b as any).kpi.currentScore - (a as any).kpi.currentScore)
