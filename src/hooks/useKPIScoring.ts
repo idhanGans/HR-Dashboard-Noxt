@@ -1,178 +1,167 @@
-import { useState, useEffect, useCallback } from "react";
-import { getErrorMessage } from "../utils/errors";
-import {
-  getCurrentPeriod,
-  getMetrics,
-  getEmployeeScores,
-  submitBulkScores,
-} from "../services/kpi";
+import { useMemo, useState, useCallback } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { kpiService } from "../services/kpi";
 import type {
   KpiMetricApiResponse,
   KpiPeriodApiResponse,
   MetricScoreDto,
 } from "../types/api";
 
-interface UseKPIScoringReturn {
-  // Data
-  currentPeriod: KpiPeriodApiResponse | null;
-  metrics: KpiMetricApiResponse[];
-  existingScores: Record<number, number>; // metricId -> score
-  // Loading states
-  metricsLoading: boolean;
-  periodLoading: boolean;
-  scoresLoading: boolean;
-  submitting: boolean;
-  // Error state
-  error: string | null;
-  // Computed
-  canScore: boolean;
-  // Actions
-  submitScores: (employeeId: number, scores: MetricScoreDto[]) => Promise<boolean>;
-  fetchEmployeeScores: (employeeId: number) => Promise<void>;
-  refetchMetrics: () => Promise<void>;
-}
+// ============ Query Key Factory ============
+// Colocated with queries per TkDodo's best practices
+// @see https://tkdodo.eu/blog/effective-react-query-keys
+
+const kpiScoringKeys = {
+  all: ["kpi-scoring"] as const,
+  period: () => [...kpiScoringKeys.all, "period"] as const,
+  metrics: () => [...kpiScoringKeys.all, "metrics"] as const,
+  scores: () => [...kpiScoringKeys.all, "scores"] as const,
+  employeeScores: (employeeId: number, periodId: number) =>
+    [...kpiScoringKeys.scores(), { employeeId, periodId }] as const,
+};
 
 /**
- * useKPIScoring - Hook for KPI scoring functionality
+ * useKPIScoring - Hook for KPI scoring functionality using TanStack Query
+ *
  * Fetches metrics, current period, and existing scores; provides scoring submission
  */
-export const useKPIScoring = (): UseKPIScoringReturn => {
-  // Data state
-  const [currentPeriod, setCurrentPeriod] = useState<KpiPeriodApiResponse | null>(null);
-  const [metrics, setMetrics] = useState<KpiMetricApiResponse[]>([]);
-  const [existingScores, setExistingScores] = useState<Record<number, number>>({});
+export const useKPIScoring = () => {
+  const queryClient = useQueryClient();
 
-  // Loading states
-  const [metricsLoading, setMetricsLoading] = useState(true);
-  const [periodLoading, setPeriodLoading] = useState(true);
-  const [scoresLoading, setScoresLoading] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
+  // Track which employee's scores we're viewing (for lazy loading)
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<number | null>(
+    null
+  );
 
-  // Error state
-  const [error, setError] = useState<string | null>(null);
+  // ============ Queries ============
 
-  // Fetch current active period
-  const fetchCurrentPeriod = useCallback(async () => {
-    setPeriodLoading(true);
-    try {
-      const data = await getCurrentPeriod();
-      setCurrentPeriod(data);
-      setError(null);
-      return data;
-    } catch (err) {
-      console.error("Failed to fetch current period:", err);
-      setCurrentPeriod(null);
-      // Don't set error here - no period is a valid state
-      return null;
-    } finally {
-      setPeriodLoading(false);
-    }
-  }, []);
+  /**
+   * Fetch current active period
+   */
+  const periodQuery = useQuery({
+    queryKey: kpiScoringKeys.period(),
+    queryFn: kpiService.getCurrentPeriod,
+    retry: false, // No period is a valid state
+  });
 
-  // Fetch active metrics
-  const fetchMetrics = useCallback(async () => {
-    setMetricsLoading(true);
-    try {
-      const data = await getMetrics({ limit: 100 });
-      // Filter to only active metrics
-      const activeMetrics = data.data.filter((m) => m.isActive);
-      setMetrics(activeMetrics);
-      setError(null);
-    } catch (err) {
-      console.error("Failed to fetch metrics:", err);
-      setError(getErrorMessage(err, "Failed to load KPI metrics"));
-      setMetrics([]);
-    } finally {
-      setMetricsLoading(false);
-    }
-  }, []);
+  /**
+   * Fetch all active metrics
+   */
+  const metricsQuery = useQuery({
+    queryKey: kpiScoringKeys.metrics(),
+    queryFn: () => kpiService.getMetrics({ limit: 100 }),
+    select: (data) => data.data.filter((m) => m.isActive),
+  });
 
-  // Fetch existing scores for an employee in the current period
-  const fetchEmployeeScoresInternal = useCallback(async (employeeId: number) => {
-    if (!currentPeriod) {
-      setExistingScores({});
-      return;
-    }
-
-    setScoresLoading(true);
-    try {
-      const data = await getEmployeeScores({
-        scoredUserId: employeeId,
-        periodId: currentPeriod.id,
+  /**
+   * Fetch existing scores for selected employee
+   * Only runs when we have both an employee selected and a valid period
+   */
+  const scoresQuery = useQuery({
+    queryKey: kpiScoringKeys.employeeScores(
+      selectedEmployeeId ?? 0,
+      periodQuery.data?.id ?? 0
+    ),
+    queryFn: () =>
+      kpiService.getEmployeeScores({
+        scoredUserId: selectedEmployeeId!,
+        periodId: periodQuery.data!.id,
         limit: 100,
-      });
-
+      }),
+    enabled: selectedEmployeeId !== null && periodQuery.data !== undefined,
+    select: (data) => {
       // Convert array of scores to metricId -> score map
       const scoresMap: Record<number, number> = {};
       data.data.forEach((score) => {
         scoresMap[score.metricId] = Number(score.score);
       });
+      return scoresMap;
+    },
+  });
 
-      setExistingScores(scoresMap);
-    } catch (err) {
-      console.error("Failed to fetch employee scores:", err);
-      // Don't set error - just use empty scores
-      setExistingScores({});
-    } finally {
-      setScoresLoading(false);
-    }
-  }, [currentPeriod]);
+  // ============ Mutations ============
 
-  // Submit KPI scores for an employee
-  const submitScoresInternal = useCallback(
+  /**
+   * Submit bulk scores mutation
+   */
+  const submitMutation = useMutation({
+    mutationFn: kpiService.submitBulkScores,
+    onSuccess: (_data, variables) => {
+      // Invalidate the scores for this employee/period
+      queryClient.invalidateQueries({
+        queryKey: kpiScoringKeys.employeeScores(
+          variables.scoredUserId,
+          variables.periodId
+        ),
+      });
+    },
+  });
+
+  // ============ Derived State ============
+
+  const currentPeriod: KpiPeriodApiResponse | null = periodQuery.data ?? null;
+  const metrics: KpiMetricApiResponse[] = useMemo(
+    () => metricsQuery.data ?? [],
+    [metricsQuery.data]
+  );
+  const existingScores: Record<number, number> = scoresQuery.data ?? {};
+
+  const periodLoading = periodQuery.isLoading;
+  const metricsLoading = metricsQuery.isLoading;
+  const scoresLoading = scoresQuery.isLoading;
+  const submitting = submitMutation.isPending;
+
+  const error =
+    metricsQuery.error?.message ?? submitMutation.error?.message ?? null;
+
+  // Can score if we have a period and at least one metric
+  const canScore =
+    !periodLoading && !metricsLoading && currentPeriod !== null && metrics.length > 0;
+
+  // ============ Actions ============
+
+  /**
+   * Fetch scores for a specific employee
+   * Sets the selected employee which triggers the scores query
+   */
+  const fetchEmployeeScores = useCallback((employeeId: number) => {
+    setSelectedEmployeeId(employeeId);
+  }, []);
+
+  /**
+   * Submit KPI scores for an employee
+   */
+  const submitScores = useCallback(
     async (employeeId: number, scores: MetricScoreDto[]): Promise<boolean> => {
       if (!currentPeriod) {
-        setError("Period does not exist");
         return false;
       }
 
       if (scores.length === 0) {
-        setError("No scores are available");
         return false;
       }
 
-      setSubmitting(true);
-      setError(null);
-
       try {
-        await submitBulkScores({
+        await submitMutation.mutateAsync({
           periodId: currentPeriod.id,
           scoredUserId: employeeId,
           scores,
         });
-
-        // Update existing scores after successful save
-        const newScoresMap: Record<number, number> = {};
-        scores.forEach((s) => {
-          newScoresMap[s.metricId] = s.score;
-        });
-        setExistingScores(newScoresMap);
-
         return true;
-      } catch (err) {
-        console.error("Failed to submit KPI scores:", err);
-        setError(err instanceof Error ? err.message : "Failed to submit scores");
+      } catch {
         return false;
-      } finally {
-        setSubmitting(false);
       }
     },
-    [currentPeriod]
+    [currentPeriod, submitMutation]
   );
 
-  // Refetch metrics (useful after period change)
-  const refetchMetrics = useCallback(async () => {
-    await Promise.all([fetchCurrentPeriod(), fetchMetrics()]);
-  }, [fetchCurrentPeriod, fetchMetrics]);
-
-  // Fetch data on mount
-  useEffect(() => {
-    fetchCurrentPeriod();
-    fetchMetrics();
-  }, [fetchCurrentPeriod, fetchMetrics]);
-
-  // Can score if we have a period and at least one metric
-  const canScore = !periodLoading && !metricsLoading && currentPeriod !== null && metrics.length > 0;
+  /**
+   * Refetch metrics and period
+   */
+  const refetchMetrics = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: kpiScoringKeys.period() });
+    queryClient.invalidateQueries({ queryKey: kpiScoringKeys.metrics() });
+  }, [queryClient]);
 
   return {
     // Data
@@ -189,8 +178,8 @@ export const useKPIScoring = (): UseKPIScoringReturn => {
     // Computed
     canScore,
     // Actions
-    submitScores: submitScoresInternal,
-    fetchEmployeeScores: fetchEmployeeScoresInternal,
+    submitScores,
+    fetchEmployeeScores,
     refetchMetrics,
   };
 };

@@ -21,74 +21,16 @@ import type {
   BulkScoreResponseDto,
 } from "../types/api";
 
-// ============ KPI Statistics ============
-
-export const getOverallKPI = async (): Promise<CompanyOverallResponseDto> => {
-  const response = await interceptedAxios.get<CompanyOverallResponseDto>(
-    KPI_STATISTICS_OVERALL
-  );
-  return response.data;
-};
+// ============ Parameter Types ============
 
 export interface GetTrendsParams {
   startDate: Date;
   endDate: Date;
 }
 
-export const getKPITrends = async ({
-  startDate,
-  endDate,
-}: GetTrendsParams): Promise<TrendsResponseDto> => {
-  const params = new URLSearchParams({
-    startDate: startDate.toISOString(),
-    endDate: endDate.toISOString(),
-  });
-
-  const response = await interceptedAxios.get<TrendsResponseDto>(
-    `${KPI_STATISTICS_TRENDS}?${params.toString()}`
-  );
-  return response.data;
-};
-
-export const getDepartmentStats = async (): Promise<DepartmentsResponseDto> => {
-  const response = await interceptedAxios.get<DepartmentsResponseDto>(
-    KPI_STATISTICS_DEPARTMENTS
-  );
-  return response.data;
-};
-
-export const getPerformanceInsights = async (): Promise<PerformanceInsightsResponseDto> => {
-  const response = await interceptedAxios.get<PerformanceInsightsResponseDto>(
-    KPI_STATISTICS_INSIGHTS
-  );
-  return response.data;
-};
-
-// ============ KPI Periods ============
-
-export const getCurrentPeriod = async (): Promise<KpiPeriodApiResponse> => {
-  const response = await interceptedAxios.get<KpiPeriodApiResponse>(
-    KPI_PERIODS_CURRENT
-  );
-  return response.data;
-};
-
-// ============ KPI Metrics ============
-
 export interface GetMetricsParams {
   limit?: number;
 }
-
-export const getMetrics = async ({
-  limit = 100,
-}: GetMetricsParams = {}): Promise<PaginatedKpiMetricsResponse> => {
-  const response = await interceptedAxios.get<PaginatedKpiMetricsResponse>(
-    `${KPI_METRICS_LIST}?limit=${limit}`
-  );
-  return response.data;
-};
-
-// ============ KPI Scores ============
 
 export interface GetEmployeeScoresParams {
   scoredUserId: number;
@@ -96,33 +38,145 @@ export interface GetEmployeeScoresParams {
   limit?: number;
 }
 
-export const getEmployeeScores = async ({
-  scoredUserId,
-  periodId,
-  limit = 100,
-}: GetEmployeeScoresParams): Promise<PaginatedKpiScoresResponse> => {
-  const params = new URLSearchParams({
-    scoredUserId: String(scoredUserId),
-    periodId: String(periodId),
-    limit: String(limit),
-  });
+// ============ KPI Service Factory ============
 
-  const response = await interceptedAxios.get<PaginatedKpiScoresResponse>(
-    `${KPI_SCORES_LIST}?${params.toString()}`
-  );
-  return response.data;
+const createKpiService = () => {
+  // ============ Statistics ============
+
+  const getOverall = async (): Promise<CompanyOverallResponseDto> => {
+    try {
+      const response = await interceptedAxios.get<CompanyOverallResponseDto>(
+        KPI_STATISTICS_OVERALL
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(handleAxiosError(error));
+    }
+  };
+
+  const getTrends = async ({
+    startDate,
+    endDate,
+  }: GetTrendsParams): Promise<TrendsResponseDto> => {
+    try {
+      const params = new URLSearchParams({
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString(),
+      });
+
+      const response = await interceptedAxios.get<TrendsResponseDto>(
+        `${KPI_STATISTICS_TRENDS}?${params.toString()}`
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(handleAxiosError(error));
+    }
+  };
+
+  const getDepartments = async (): Promise<DepartmentsResponseDto> => {
+    try {
+      const response = await interceptedAxios.get<DepartmentsResponseDto>(
+        KPI_STATISTICS_DEPARTMENTS
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(handleAxiosError(error));
+    }
+  };
+
+  const getInsights = async (): Promise<PerformanceInsightsResponseDto> => {
+    try {
+      const response =
+        await interceptedAxios.get<PerformanceInsightsResponseDto>(
+          KPI_STATISTICS_INSIGHTS
+        );
+      return response.data;
+    } catch (error) {
+      throw new Error(handleAxiosError(error));
+    }
+  };
+
+  // ============ Periods ============
+
+  const getCurrentPeriod = async (): Promise<KpiPeriodApiResponse> => {
+    try {
+      const response = await interceptedAxios.get<KpiPeriodApiResponse>(
+        KPI_PERIODS_CURRENT
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(handleAxiosError(error));
+    }
+  };
+
+  // ============ Metrics ============
+
+  const getMetrics = async ({
+    limit = 100,
+  }: GetMetricsParams = {}): Promise<PaginatedKpiMetricsResponse> => {
+    try {
+      const response = await interceptedAxios.get<PaginatedKpiMetricsResponse>(
+        `${KPI_METRICS_LIST}?limit=${limit}`
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(handleAxiosError(error));
+    }
+  };
+
+  // ============ Scores ============
+
+  const getEmployeeScores = async ({
+    scoredUserId,
+    periodId,
+    limit = 100,
+  }: GetEmployeeScoresParams): Promise<PaginatedKpiScoresResponse> => {
+    try {
+      const params = new URLSearchParams({
+        scoredUserId: String(scoredUserId),
+        periodId: String(periodId),
+        limit: String(limit),
+      });
+
+      const response = await interceptedAxios.get<PaginatedKpiScoresResponse>(
+        `${KPI_SCORES_LIST}?${params.toString()}`
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(handleAxiosError(error));
+    }
+  };
+
+  const submitBulkScores = async (
+    payload: BulkCreateScoreDto
+  ): Promise<BulkScoreResponseDto> => {
+    try {
+      const response = await interceptedAxios.post<BulkScoreResponseDto>(
+        KPI_SCORES_BULK,
+        payload
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(handleAxiosError(error));
+    }
+  };
+
+  return {
+    // Statistics
+    getOverall,
+    getTrends,
+    getDepartments,
+    getInsights,
+    // Periods
+    getCurrentPeriod,
+    // Metrics
+    getMetrics,
+    // Scores
+    getEmployeeScores,
+    submitBulkScores,
+  };
 };
 
-export const submitBulkScores = async (
-  payload: BulkCreateScoreDto
-): Promise<BulkScoreResponseDto> => {
-  try {
-    const response = await interceptedAxios.post<BulkScoreResponseDto>(
-      KPI_SCORES_BULK,
-      payload
-    );
-    return response.data;
-  } catch (error) {
-    throw new Error(handleAxiosError(error));
-  }
-};
+const kpiService = createKpiService();
+
+export { kpiService };

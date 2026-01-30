@@ -1,31 +1,21 @@
-import { useState, useEffect, useCallback } from "react";
-import { getErrorMessage } from "../utils/errors";
-import {
-  getOverallKPI,
-  getKPITrends,
-  getDepartmentStats,
-  getPerformanceInsights,
-} from "../services/kpi";
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { kpiService } from "../services/kpi";
 import type { DepartmentKPIStats, PerformanceInsights } from "../types/employee";
 import type { KPITrendData } from "../types";
 
-interface UseKPIDataReturn {
-  // Data
-  overallScore: number;
-  trendData: KPITrendData[];
-  departmentStats: DepartmentKPIStats[];
-  performanceInsights: PerformanceInsights;
-  // Loading states
-  loading: boolean;
-  overallLoading: boolean;
-  trendsLoading: boolean;
-  departmentsLoading: boolean;
-  insightsLoading: boolean;
-  // Error state
-  error: string | null;
-  // Actions
-  refetch: () => Promise<void>;
-}
+// ============ Query Key Factory ============
+// Colocated with queries per TkDodo's best practices
+// @see https://tkdodo.eu/blog/effective-react-query-keys
+
+const kpiKeys = {
+  all: ["kpi"] as const,
+  overall: () => [...kpiKeys.all, "overall"] as const,
+  trends: (startDate: string, endDate: string) =>
+    [...kpiKeys.all, "trends", { startDate, endDate }] as const,
+  departments: () => [...kpiKeys.all, "departments"] as const,
+  insights: () => [...kpiKeys.all, "insights"] as const,
+};
 
 // Default values for when data is loading or unavailable
 const DEFAULT_INSIGHTS: PerformanceInsights = {
@@ -35,138 +25,111 @@ const DEFAULT_INSIGHTS: PerformanceInsights = {
 };
 
 /**
- * useKPIData - Hook for fetching KPI statistics from backend
- * Replaces the local dummy data from useEmployees() for KPI page
+ * useKPIData - Hook for fetching KPI statistics from backend using TanStack Query
+ *
+ * Uses parallel queries for:
+ * - Overall KPI score
+ * - KPI trends (last 12 months)
+ * - Department statistics
+ * - Performance insights
  */
-export const useKPIData = (): UseKPIDataReturn => {
-  // Data state
-  const [overallScore, setOverallScore] = useState<number>(0);
-  const [trendData, setTrendData] = useState<KPITrendData[]>([]);
-  const [departmentStats, setDepartmentStats] = useState<DepartmentKPIStats[]>([]);
-  const [performanceInsights, setPerformanceInsights] = useState<PerformanceInsights>(DEFAULT_INSIGHTS);
-
-  // Loading states
-  const [overallLoading, setOverallLoading] = useState(true);
-  const [trendsLoading, setTrendsLoading] = useState(true);
-  const [departmentsLoading, setDepartmentsLoading] = useState(true);
-  const [insightsLoading, setInsightsLoading] = useState(true);
-
-  // Error state
-  const [error, setError] = useState<string | null>(null);
-
-  // Fetch overall KPI score
-  const fetchOverallKPI = useCallback(async () => {
-    setOverallLoading(true);
-    try {
-      const data = await getOverallKPI();
-      setOverallScore(data.overallScore);
-    } catch (err) {
-      console.error("Failed to fetch overall KPI:", err);
-      setError(getErrorMessage(err, "Failed to load overall KPI"));
-    } finally {
-      setOverallLoading(false);
-    }
+export const useKPIData = () => {
+  // Calculate date range for trends (last 12 months)
+  const dateRange = useMemo(() => {
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setMonth(startDate.getMonth() - 12);
+    return {
+      startDate,
+      endDate,
+      // String versions for stable query key
+      startDateStr: startDate.toISOString(),
+      endDateStr: endDate.toISOString(),
+    };
   }, []);
 
-  // Fetch KPI trends
-  const fetchTrends = useCallback(async () => {
-    setTrendsLoading(true);
-    try {
-      // Calculate date range for last 12 months
-      const endDate = new Date();
-      const startDate = new Date();
-      startDate.setMonth(startDate.getMonth() - 12);
+  // ============ Queries ============
 
-      const data = await getKPITrends({ startDate, endDate });
+  const overallQuery = useQuery({
+    queryKey: kpiKeys.overall(),
+    queryFn: kpiService.getOverall,
+  });
 
-      // Map backend response to frontend format
-      const mappedTrends: KPITrendData[] = data.trends.map((trend) => ({
-        month: trend.periodName,
-        value: trend.averageScore,
-      }));
+  const trendsQuery = useQuery({
+    queryKey: kpiKeys.trends(dateRange.startDateStr, dateRange.endDateStr),
+    queryFn: () =>
+      kpiService.getTrends({
+        startDate: dateRange.startDate,
+        endDate: dateRange.endDate,
+      }),
+  });
 
-      setTrendData(mappedTrends);
-    } catch (err) {
-      console.error("Failed to fetch KPI trends:", err);
-      setError(getErrorMessage(err, "Failed to load KPI trends"));
-    } finally {
-      setTrendsLoading(false);
-    }
-  }, []);
+  const departmentsQuery = useQuery({
+    queryKey: kpiKeys.departments(),
+    queryFn: kpiService.getDepartments,
+  });
 
-  // Fetch department statistics
-  const fetchDepartmentStats = useCallback(async () => {
-    setDepartmentsLoading(true);
-    try {
-      const data = await getDepartmentStats();
+  const insightsQuery = useQuery({
+    queryKey: kpiKeys.insights(),
+    queryFn: kpiService.getInsights,
+  });
 
-      // Map backend response to frontend format
-      const mappedDepartments: DepartmentKPIStats[] = data.departments.map((dept) => ({
-        department: dept.departmentName,
-        score: dept.averageScore,
-        target: dept.targetScore,
-        // Backend doesn't provide trend, calculate or use placeholder
-        trend: dept.averageScore >= dept.targetScore ? "+0%" : "-0%",
-      }));
+  // ============ Derived Data ============
 
-      setDepartmentStats(mappedDepartments);
-    } catch (err) {
-      console.error("Failed to fetch department stats:", err);
-      setError(getErrorMessage(err, "Failed to load department statistics"));
-    } finally {
-      setDepartmentsLoading(false);
-    }
-  }, []);
+  const overallScore = overallQuery.data?.overallScore ?? 0;
 
-  // Fetch performance insights
-  const fetchInsights = useCallback(async () => {
-    setInsightsLoading(true);
-    try {
-      const data = await getPerformanceInsights();
+  const trendData: KPITrendData[] = useMemo(() => {
+    if (!trendsQuery.data?.trends) return [];
+    return trendsQuery.data.trends.map((trend) => ({
+      month: trend.periodName,
+      value: trend.averageScore,
+    }));
+  }, [trendsQuery.data]);
 
-      // Map backend response to frontend format
-      const mappedInsights: PerformanceInsights = {
-        topPerformer: {
-          department: data.topPerformer.departmentName,
-          score: data.topPerformer.score || "-",
-        },
-        mostImproved: {
-          department: data.mostImproved.departmentName,
-          improvement: data.mostImproved.improvement || "-",
-        },
-        needsAttention: {
-          department: data.needsAttention.departmentName,
-          note: data.needsAttention.note || "-",
-        },
-      };
+  const departmentStats: DepartmentKPIStats[] = useMemo(() => {
+    if (!departmentsQuery.data?.departments) return [];
+    return departmentsQuery.data.departments.map((dept) => ({
+      department: dept.departmentName,
+      score: dept.averageScore,
+      target: dept.targetScore,
+      trend: dept.averageScore >= dept.targetScore ? "+0%" : "-0%",
+    }));
+  }, [departmentsQuery.data]);
 
-      setPerformanceInsights(mappedInsights);
-    } catch (err) {
-      console.error("Failed to fetch performance insights:", err);
-      setError(getErrorMessage(err, "Failed to load performance insights"));
-    } finally {
-      setInsightsLoading(false);
-    }
-  }, []);
+  const performanceInsights: PerformanceInsights = useMemo(() => {
+    if (!insightsQuery.data) return DEFAULT_INSIGHTS;
+    return {
+      topPerformer: {
+        department: insightsQuery.data.topPerformer.departmentName,
+        score: insightsQuery.data.topPerformer.score || "-",
+      },
+      mostImproved: {
+        department: insightsQuery.data.mostImproved.departmentName,
+        improvement: insightsQuery.data.mostImproved.improvement || "-",
+      },
+      needsAttention: {
+        department: insightsQuery.data.needsAttention.departmentName,
+        note: insightsQuery.data.needsAttention.note || "-",
+      },
+    };
+  }, [insightsQuery.data]);
 
-  // Refetch all data
-  const refetch = useCallback(async () => {
-    setError(null);
-    await Promise.all([
-      fetchOverallKPI(),
-      fetchTrends(),
-      fetchDepartmentStats(),
-      fetchInsights(),
-    ]);
-  }, [fetchOverallKPI, fetchTrends, fetchDepartmentStats, fetchInsights]);
+  // ============ Loading & Error States ============
 
-  // Fetch data on mount
-  useEffect(() => {
-    refetch();
-  }, [refetch]);
+  const overallLoading = overallQuery.isLoading;
+  const trendsLoading = trendsQuery.isLoading;
+  const departmentsLoading = departmentsQuery.isLoading;
+  const insightsLoading = insightsQuery.isLoading;
+  const loading =
+    overallLoading || trendsLoading || departmentsLoading || insightsLoading;
 
-  // Combined loading state
-  const loading = overallLoading || trendsLoading || departmentsLoading || insightsLoading;
+  // Combine errors
+  const error =
+    overallQuery.error?.message ??
+    trendsQuery.error?.message ??
+    departmentsQuery.error?.message ??
+    insightsQuery.error?.message ??
+    null;
 
   return {
     // Data
@@ -182,7 +145,5 @@ export const useKPIData = (): UseKPIDataReturn => {
     insightsLoading,
     // Error state
     error,
-    // Actions
-    refetch,
   };
 };
