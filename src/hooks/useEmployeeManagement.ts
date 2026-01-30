@@ -1,21 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useDebounce } from "use-debounce";
 import { getInitials } from "../utils/utils";
-import {
-  getEmployees,
-  getEmployeeStatistics,
-  createEmployee,
-  updateEmployee,
-  markEmployeeAsFormer,
-} from "../services/employee";
-import type {
-  Employee,
-  EmployeeForm,
-  PayrollFormData,
-} from "../types";
+import { employeeService } from "../services/employee";
+import type { Employee, EmployeeForm, PayrollFormData } from "../types";
 import type {
   UserApiResponse,
-  EmployeeStatisticsApiResponse,
   CreateUserRequest,
   UpdateUserRequest,
   OrganizationCount,
@@ -24,6 +14,24 @@ import type {
   Gender,
   WorkStatus,
 } from "../types/api";
+
+// ============ Query Key Factory ============
+// Colocated with queries per TkDodo's best practices
+// @see https://tkdodo.eu/blog/effective-react-query-keys
+
+interface EmployeeFilters {
+  search?: string;
+  employmentType?: string;
+}
+
+const employeeKeys = {
+  all: ["employees"] as const,
+  lists: () => [...employeeKeys.all, "list"] as const,
+  list: (filters: EmployeeFilters) => [...employeeKeys.lists(), filters] as const,
+  details: () => [...employeeKeys.all, "detail"] as const,
+  detail: (id: number) => [...employeeKeys.details(), id] as const,
+  statistics: () => [...employeeKeys.all, "statistics"] as const,
+};
 
 const DEFAULT_PASSWORD = "Welcome123!";
 
@@ -60,8 +68,6 @@ const EMPTY_FORM: EmployeeForm = {
     bankName: "",
   },
 };
-
-
 
 // Map backend UserApiResponse to frontend Employee
 const mapUserToEmployee = (user: UserApiResponse): Employee => ({
@@ -103,14 +109,21 @@ const mapFormToCreateRequest = (form: EmployeeForm): CreateUserRequest => ({
   phoneNumber: form.phone ?? undefined,
   position: form.role ?? undefined,
   role: "EMPLOYEE",
-  employmentType: (form.employmentType ?? "PERMANENT") as "PERMANENT" | "TEMPORARY" | "FORMER",
+  employmentType: (form.employmentType ?? "PERMANENT") as
+    | "PERMANENT"
+    | "TEMPORARY"
+    | "FORMER",
   taxNumber: form.npwp ?? undefined,
   identityNumber: form.ktp ?? undefined,
-  startDate: form.startDate ? new Date(form.startDate).toISOString() : undefined,
+  startDate: form.startDate
+    ? new Date(form.startDate).toISOString()
+    : undefined,
   location: form.domicile ?? undefined,
   nickname: form.nickname ?? undefined,
   gender: form.gender as Gender | undefined,
-  dateOfBirth: form.dateOfBirth ? new Date(form.dateOfBirth).toISOString() : undefined,
+  dateOfBirth: form.dateOfBirth
+    ? new Date(form.dateOfBirth).toISOString()
+    : undefined,
   typeOfWork: form.typeOfWork as TypeOfWork | undefined,
   workStatus: form.workStatus as WorkStatus | undefined,
   division: form.division ?? undefined,
@@ -123,14 +136,22 @@ const mapFormToUpdateRequest = (form: EmployeeForm): UpdateUserRequest => ({
   email: form.email ?? undefined,
   phoneNumber: form.phone ?? undefined,
   position: form.role ?? undefined,
-  employmentType: form.employmentType as "PERMANENT" | "TEMPORARY" | "FORMER" | undefined,
+  employmentType: form.employmentType as
+    | "PERMANENT"
+    | "TEMPORARY"
+    | "FORMER"
+    | undefined,
   taxNumber: form.npwp ?? undefined,
   identityNumber: form.ktp ?? undefined,
-  startDate: form.startDate ? new Date(form.startDate).toISOString() : undefined,
+  startDate: form.startDate
+    ? new Date(form.startDate).toISOString()
+    : undefined,
   location: form.domicile ?? undefined,
   nickname: form.nickname ?? undefined,
   gender: form.gender as Gender | undefined,
-  dateOfBirth: form.dateOfBirth ? new Date(form.dateOfBirth).toISOString() : undefined,
+  dateOfBirth: form.dateOfBirth
+    ? new Date(form.dateOfBirth).toISOString()
+    : undefined,
   typeOfWork: form.typeOfWork as TypeOfWork | undefined,
   workStatus: form.workStatus as WorkStatus | undefined,
   division: form.division ?? undefined,
@@ -138,32 +159,31 @@ const mapFormToUpdateRequest = (form: EmployeeForm): UpdateUserRequest => ({
 });
 
 /**
- * useEmployeeManagement - Custom hook for employee state management with API integration
+ * useEmployeeManagement - Custom hook for employee state management with TanStack Query
+ *
+ * Uses:
+ * - useQuery for fetching employees and statistics
+ * - useMutation for create/update operations with automatic cache invalidation
+ * - Optimistic updates for better UX on mark as former
  */
 export const useEmployeeManagement = () => {
-  // Employee list state
-  const [employeeList, setEmployeeList] = useState<Employee[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
-  // Statistics state
-  const [statistics, setStatistics] = useState<EmployeeStatisticsApiResponse | null>(null);
-  const [statisticsLoading, setStatisticsLoading] = useState(true);
-
-  // Filter and search state
+  // Filter and search state (UI state, not server state)
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [debouncedSearch] = useDebounce(search, 1000);
 
-  // Modal state
+  // Modal state (UI state)
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [mode, setMode] = useState<"add" | "edit">("add");
   const [form, setForm] = useState<EmployeeForm>(EMPTY_FORM);
-  const [saving, setSaving] = useState(false);
 
   // KPI modal states
   const [isKPIModalOpen, setIsKPIModalOpen] = useState(false);
-  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(
+    null
+  );
 
   // Payroll modal states
   const [isPayrollModalOpen, setIsPayrollModalOpen] = useState(false);
@@ -179,179 +199,130 @@ export const useEmployeeManagement = () => {
     year: new Date().getFullYear(),
   });
 
-  // Fetch all employees with filtering
-  const fetchEmployees = useCallback(async (searchQuery?: string, employmentTypeFilter?: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const users = await getEmployees({
-        search: searchQuery,
-        employmentType: employmentTypeFilter,
+  // Build filters object for query key
+  const filters = useMemo(
+    () => ({
+      search: debouncedSearch || undefined,
+      employmentType: filter !== "all" ? filter : undefined,
+    }),
+    [debouncedSearch, filter]
+  );
+
+  // ============ Queries ============
+
+  /**
+   * Fetch employees with filters
+   * Query key includes filters so it auto-refetches when filters change
+   */
+  const employeesQuery = useQuery({
+    queryKey: employeeKeys.list(filters),
+    queryFn: () =>
+      employeeService.getEmployees({
+        search: filters.search,
+        employmentType: filters.employmentType,
+      }),
+    select: (data) => data.map(mapUserToEmployee),
+  });
+
+  /**
+   * Fetch employee statistics (totals, not affected by filters)
+   */
+  const statisticsQuery = useQuery({
+    queryKey: employeeKeys.statistics(),
+    queryFn: employeeService.getEmployeeStatistics,
+  });
+
+  // ============ Mutations ============
+
+  /**
+   * Create employee mutation
+   * Invalidates employee lists and statistics on success
+   */
+  const createMutation = useMutation({
+    mutationFn: employeeService.createEmployee,
+    onSuccess: () => {
+      // Invalidate all employee lists (any filter combination)
+      queryClient.invalidateQueries({ queryKey: employeeKeys.lists() });
+      // Also invalidate statistics since totals changed
+      queryClient.invalidateQueries({
+        queryKey: employeeKeys.statistics(),
       });
-      setEmployeeList(users.map(mapUserToEmployee));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load employees");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    },
+  });
 
-  // Fetch statistics
-  const fetchStatistics = useCallback(async () => {
-    setStatisticsLoading(true);
-    try {
-      const stats = await getEmployeeStatistics();
-      setStatistics(stats);
-    } catch (err) {
-      console.error("Failed to fetch statistics:", err);
-    } finally {
-      setStatisticsLoading(false);
-    }
-  }, []);
+  /**
+   * Update employee mutation
+   * Invalidates employee lists and statistics on success
+   */
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: UpdateUserRequest }) =>
+      employeeService.updateEmployee(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: employeeKeys.lists() });
+      queryClient.invalidateQueries({
+        queryKey: employeeKeys.statistics(),
+      });
+    },
+  });
 
-  // Fetch data on mount and when filters change
-  useEffect(() => {
-    let isActive = true;
+  /**
+   * Mark employee as former mutation
+   * Uses optimistic update for immediate UI feedback
+   */
+  const markFormerMutation = useMutation({
+    mutationFn: employeeService.markEmployeeAsFormer,
+    // Optimistic update: update cache immediately before server responds
+    onMutate: async (employeeId) => {
+      // Cancel any outgoing refetches to avoid overwriting optimistic update
+      await queryClient.cancelQueries({
+        queryKey: employeeKeys.lists(),
+      });
 
-    const loadData = async () => {
-      if (!isActive) return;
-      await Promise.all([
-        fetchEmployees(debouncedSearch, filter),
-        fetchStatistics(),
-      ]);
-    };
-
-    loadData();
-
-    return () => {
-      isActive = false;
-    };
-  }, [fetchEmployees, fetchStatistics, debouncedSearch, filter]);
-
-  // Refetch function for after mutations
-  const refetch = useCallback(async () => {
-    await Promise.all([
-      fetchEmployees(debouncedSearch, filter),
-      fetchStatistics(),
-    ]);
-  }, [fetchEmployees, fetchStatistics, debouncedSearch, filter]);
-
-  const handleOpenAdd = () => {
-    setMode("add");
-    setForm(EMPTY_FORM);
-    setIsModalOpen(true);
-  };
-
-  const handleOpenEdit = (emp: EmployeeForm) => {
-    setMode("edit");
-    setForm(emp);
-    setIsModalOpen(true);
-  };
-
-  const handleSave = async () => {
-    if (!form.name.trim() || !form.email?.trim()) {
-      alert("Please fill in name and email.");
-      return;
-    }
-
-    setSaving(true);
-    try {
-      if (mode === "add") {
-        const createRequest = mapFormToCreateRequest(form);
-        await createEmployee(createRequest);
-      } else {
-        if (form.id === null) {
-          setSaving(false);
-          return;
-        }
-        const updateRequest = mapFormToUpdateRequest(form);
-        await updateEmployee(form.id, updateRequest);
-      }
-
-      setIsModalOpen(false);
-      await refetch();
-    } catch (err) {
-      alert(err instanceof Error ? err.message : "An error occurred");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleMarkFormer = async (emp: Employee) => {
-    try {
-      await markEmployeeAsFormer(emp.id);
-
-      // Update local state immediately for better UX
-      setEmployeeList((prev) =>
-        prev.map((item) =>
-          item.id === emp.id
-            ? { ...item, employmentType: "FORMER" as const }
-            : item
-        )
+      // Snapshot current data for rollback
+      const previousEmployees = queryClient.getQueryData<Employee[]>(
+        employeeKeys.list(filters)
       );
 
-      // Refetch statistics
-      await fetchStatistics();
-    } catch (err) {
-      alert(err instanceof Error ? err.message : "An error occurred");
-    }
-  };
+      // Optimistically update the cache
+      if (previousEmployees) {
+        queryClient.setQueryData<Employee[]>(
+          employeeKeys.list(filters),
+          previousEmployees.map((emp) =>
+            emp.id === employeeId
+              ? { ...emp, employmentType: "FORMER" as const }
+              : emp
+          )
+        );
+      }
 
-  // KPI Management - opens modal, submission handled by KPIFormModal internally
-  const handleOpenKPI = (emp: Employee) => {
-    setSelectedEmployee(emp);
-    setIsKPIModalOpen(true);
-  };
+      return { previousEmployees };
+    },
+    // On error, rollback to previous state
+    onError: (_err, _employeeId, context) => {
+      if (context?.previousEmployees) {
+        queryClient.setQueryData(
+          employeeKeys.list(filters),
+          context.previousEmployees
+        );
+      }
+    },
+    // Always refetch after mutation to ensure consistency
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: employeeKeys.lists() });
+      queryClient.invalidateQueries({
+        queryKey: employeeKeys.statistics(),
+      });
+    },
+  });
 
-  const handleCloseKPI = () => {
-    setIsKPIModalOpen(false);
-    setSelectedEmployee(null);
-  };
+  // ============ Derived State ============
 
-  const handleKPISaveSuccess = () => {
-    // Optionally refetch data after successful KPI save
-    refetch();
-  };
-
-  // Payroll Management (local state only for now)
-  const handleOpenPayroll = (emp: Employee) => {
-    setSelectedEmployee(emp);
-    setPayrollForm({
-      basicSalary: emp.payroll?.basicSalary || 10000000,
-      allowances: emp.payroll?.allowances || 2000000,
-      bonus: emp.payroll?.bonus || 1000000,
-      deductions: emp.payroll?.deductions || 1200000,
-      netSalary: emp.payroll?.netSalary || 11800000,
-      bankAccount: emp.payroll?.bankAccount || "",
-      bankName: emp.payroll?.bankName || "",
-      month: new Date().getMonth() + 1,
-      year: new Date().getFullYear(),
-    });
-    setIsPayrollModalOpen(true);
-  };
-
-  const handleSavePayroll = () => {
-    if (!selectedEmployee) return;
-
-    const { month, year, ...payrollInfo } = payrollForm;
-    void month;
-    void year;
-
-    // Update local state
-    setEmployeeList((prev) =>
-      prev.map((emp) =>
-        emp.id === selectedEmployee.id
-          ? { ...emp, payroll: { ...emp.payroll, ...payrollInfo } }
-          : emp
-      )
-    );
-
-    setIsPayrollModalOpen(false);
-    setSelectedEmployee(null);
-  };
-
-  // Employees are already filtered by backend, so use employeeList directly
+  const employeeList = useMemo(
+    () => employeesQuery.data ?? [],
+    [employeesQuery.data]
+  );
   const filteredEmployees = employeeList;
+  const statistics = statisticsQuery.data ?? null;
 
   // Counts from statistics (always shows totals, not affected by filters)
   const counts = useMemo(() => {
@@ -382,29 +353,131 @@ export const useEmployeeManagement = () => {
     return statistics?.byOrganization ?? [];
   }, [statistics]);
 
+  // ============ Handlers ============
+
+  const handleOpenAdd = () => {
+    setMode("add");
+    setForm(EMPTY_FORM);
+    setIsModalOpen(true);
+  };
+
+  const handleOpenEdit = (emp: EmployeeForm) => {
+    setMode("edit");
+    setForm(emp);
+    setIsModalOpen(true);
+  };
+
+  const handleSave = async () => {
+    if (!form.name.trim() || !form.email?.trim()) {
+      alert("Please fill in name and email.");
+      return;
+    }
+
+    try {
+      if (mode === "add") {
+        const createRequest = mapFormToCreateRequest(form);
+        await createMutation.mutateAsync(createRequest);
+      } else {
+        if (form.id === null) {
+          return;
+        }
+        const updateRequest = mapFormToUpdateRequest(form);
+        await updateMutation.mutateAsync({ id: form.id, data: updateRequest });
+      }
+      setIsModalOpen(false);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "An error occurred");
+    }
+  };
+
+  const handleMarkFormer = async (emp: Employee) => {
+    try {
+      await markFormerMutation.mutateAsync(emp.id);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "An error occurred");
+    }
+  };
+
+  // KPI Management
+  const handleOpenKPI = (emp: Employee) => {
+    setSelectedEmployee(emp);
+    setIsKPIModalOpen(true);
+  };
+
+  const handleCloseKPI = () => {
+    setIsKPIModalOpen(false);
+    setSelectedEmployee(null);
+  };
+
+  const handleKPISaveSuccess = () => {
+    // Invalidate queries to refetch after KPI save
+    queryClient.invalidateQueries({ queryKey: employeeKeys.lists() });
+  };
+
+  // Payroll Management (local state only for now)
+  const handleOpenPayroll = (emp: Employee) => {
+    setSelectedEmployee(emp);
+    setPayrollForm({
+      basicSalary: emp.payroll?.basicSalary || 10000000,
+      allowances: emp.payroll?.allowances || 2000000,
+      bonus: emp.payroll?.bonus || 1000000,
+      deductions: emp.payroll?.deductions || 1200000,
+      netSalary: emp.payroll?.netSalary || 11800000,
+      bankAccount: emp.payroll?.bankAccount || "",
+      bankName: emp.payroll?.bankName || "",
+      month: new Date().getMonth() + 1,
+      year: new Date().getFullYear(),
+    });
+    setIsPayrollModalOpen(true);
+  };
+
+  const handleSavePayroll = () => {
+    if (!selectedEmployee) return;
+
+    // For now, payroll is local state only
+    // When backend supports it, this would be a mutation
+    setIsPayrollModalOpen(false);
+    setSelectedEmployee(null);
+  };
+
+  // Manual refetch function (for external use if needed)
+  const refetch = () => {
+    queryClient.invalidateQueries({ queryKey: employeeKeys.all });
+  };
+
   return {
+    // Data
     employeeList,
     filteredEmployees,
     counts,
     organizationBreakdown,
-    loading,
-    error,
-    statisticsLoading,
-    saving,
+
+    // Loading states
+    loading: employeesQuery.isLoading,
+    error: employeesQuery.error?.message ?? null,
+    statisticsLoading: statisticsQuery.isLoading,
+    saving: createMutation.isPending || updateMutation.isPending,
+
+    // Filter state
     filter,
     setFilter,
     search,
     setSearch,
+
+    // Modal state
     isModalOpen,
     setIsModalOpen,
     mode,
     form,
     setForm,
+
+    // Actions
     handleOpenAdd,
     handleOpenEdit,
     handleSave,
     handleMarkFormer,
     refetch,
+
     // KPI management
     isKPIModalOpen,
     setIsKPIModalOpen,
@@ -412,6 +485,7 @@ export const useEmployeeManagement = () => {
     handleOpenKPI,
     handleCloseKPI,
     handleKPISaveSuccess,
+
     // Payroll management
     isPayrollModalOpen,
     setIsPayrollModalOpen,
