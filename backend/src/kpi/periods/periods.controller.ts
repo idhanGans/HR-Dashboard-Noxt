@@ -108,25 +108,35 @@ export class PeriodsController {
   }
 
   @Get("current")
-  @Roles(Role.SUPERVISOR)
+  @Roles(Role.SUPERADMIN, Role.SUPERVISOR)
   @ApiOperation({ summary: "Get current active period" })
   @ApiResponse({
     status: 200,
     description: "Returns the current active period",
     type: PeriodResponseDto,
   })
+  @ApiResponse({
+    status: 400,
+    description: "User must belong to an organization",
+  })
   @ApiResponse({ status: 404, description: "No active period found" })
   async findCurrent(
     @CurrentUser() user: UserPayload,
   ): Promise<KpiPeriod | null> {
-    // Filter by user's organization
-    const organizationId = user.organizationId;
+    // For superadmins, don't filter by organization; for others, filter by their org
+    const organizationId =
+      user.role === Role.SUPERADMIN ? undefined : user.organizationId;
+
+    // Non-superadmin users must have an organizationId
+    if (user.role !== Role.SUPERADMIN && !organizationId) {
+      throw new BadRequestException("User must belong to an organization");
+    }
 
     return this.periodsService.findCurrent(organizationId);
   }
 
   @Get(":id")
-  @Roles(Role.SUPERVISOR)
+  @Roles(Role.SUPERADMIN, Role.SUPERVISOR)
   @ApiOperation({ summary: "Get a period by ID" })
   @ApiParam({ name: "id", description: "Period ID", example: 1, type: Number })
   @ApiResponse({
@@ -134,13 +144,23 @@ export class PeriodsController {
     description: "Returns the period",
     type: PeriodResponseDto,
   })
+  @ApiResponse({
+    status: 400,
+    description: "User must belong to an organization",
+  })
   @ApiResponse({ status: 404, description: "Period not found" })
   async findOne(
     @Param("id", ParseIntPipe) id: number,
     @CurrentUser() user: UserPayload,
   ): Promise<KpiPeriod> {
-    // Filter by user's organization
-    const organizationId = user.organizationId;
+    // For superadmins, don't filter by organization; for others, filter by their org
+    const organizationId =
+      user.role === Role.SUPERADMIN ? undefined : user.organizationId;
+
+    // Non-superadmin users must have an organizationId
+    if (user.role !== Role.SUPERADMIN && !organizationId) {
+      throw new BadRequestException("User must belong to an organization");
+    }
 
     return this.periodsService.findOne(id, organizationId);
   }

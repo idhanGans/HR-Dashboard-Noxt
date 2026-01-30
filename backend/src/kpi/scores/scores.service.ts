@@ -131,19 +131,19 @@ export class ScoresService {
     const where: Prisma.KpiScoreWhereInput = {};
 
     if (paginationQuery.periodId) {
-      where.periodId = paginationQuery.periodId;
+      where.periodId = Number(paginationQuery.periodId);
     }
 
     if (paginationQuery.metricId) {
-      where.metricId = paginationQuery.metricId;
+      where.metricId = Number(paginationQuery.metricId);
     }
 
     if (paginationQuery.scoredUserId) {
-      where.scoredUserId = paginationQuery.scoredUserId;
+      where.scoredUserId = Number(paginationQuery.scoredUserId);
     }
 
     if (paginationQuery.scorerId) {
-      where.scorerId = paginationQuery.scorerId;
+      where.scorerId = Number(paginationQuery.scorerId);
     }
 
     const [scores, total] = await Promise.all([

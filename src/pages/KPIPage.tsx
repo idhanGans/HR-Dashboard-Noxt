@@ -7,7 +7,7 @@ import {
   PerformanceInsights,
   KPIHeader,
 } from "../components/kpi";
-import { useEmployees } from "../hooks/useEmployees";
+import { useKPIData } from "../hooks/useKPIData";
 import type { DepartmentKPIStats } from "../types/employee";
 import type { LayoutProps } from "../types/auth";
 
@@ -28,20 +28,17 @@ const ComparisonSection = ({
 );
 
 /**
- * KPIPage - KPI tracking page with real employee data
+ * KPIPage - KPI tracking page with backend data
  */
 export const KPIPage = ({ onLogout, userName, userRole }: LayoutProps) => {
   const {
-    getOverallKPI,
-    getKPITrendData,
-    getDepartmentKPIStats,
-    getPerformanceInsights,
-  } = useEmployees();
-
-  const overallScore = getOverallKPI();
-  const trendData = getKPITrendData();
-  const departmentStats = getDepartmentKPIStats();
-  const performanceInsights = getPerformanceInsights();
+    overallScore,
+    trendData,
+    departmentStats,
+    performanceInsights,
+    loading,
+    error,
+  } = useKPIData();
 
   // Calculate trend from last period
   const lastTwoMonths = trendData.slice(-2);
@@ -68,16 +65,31 @@ export const KPIPage = ({ onLogout, userName, userRole }: LayoutProps) => {
     >
       <KPIHeader />
 
-      <OverallKPICard score={overallScore} trend={trend} />
+      {error && (
+        <div className="mb-4 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400">
+          {error}
+        </div>
+      )}
 
-      <KPITrendChartFull data={trendData} />
+      {loading ? (
+        <div className="flex items-center justify-center py-20">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+          <span className="ml-3 text-gray-400">Loading data...</span>
+        </div>
+      ) : (
+        <>
+          <OverallKPICard score={overallScore} trend={trend} />
 
-      <ComparisonSection
-        chartData={departmentChartData}
-        listData={departmentStats}
-      />
+          <KPITrendChartFull data={trendData} />
 
-      <PerformanceInsights insights={performanceInsights} />
+          <ComparisonSection
+            chartData={departmentChartData}
+            listData={departmentStats}
+          />
+
+          <PerformanceInsights insights={performanceInsights} />
+        </>
+      )}
     </DashboardLayout>
   );
 };

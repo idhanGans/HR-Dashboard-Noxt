@@ -12,7 +12,6 @@ import {
 import type {
   Employee,
   EmployeeForm,
-  KPIProfile,
   PayrollFormData,
 } from "../types";
 import type {
@@ -168,16 +167,6 @@ export const useEmployeeManagement = () => {
   // KPI modal states
   const [isKPIModalOpen, setIsKPIModalOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
-  const [kpiForm, setKpiForm] = useState<KPIProfile>({
-    currentScore: 8.0,
-    target: 8.5,
-    metrics: {
-      productivity: 8.0,
-      quality: 8.0,
-      teamwork: 8.0,
-      punctuality: 8.0,
-    },
-  });
 
   // Payroll modal states
   const [isPayrollModalOpen, setIsPayrollModalOpen] = useState(false);
@@ -349,75 +338,20 @@ export const useEmployeeManagement = () => {
     }
   };
 
-  // KPI Management (local state only for now)
+  // KPI Management - opens modal, submission handled by KPIFormModal internally
   const handleOpenKPI = (emp: Employee) => {
     setSelectedEmployee(emp);
-    setKpiForm({
-      currentScore: emp.kpi?.currentScore || 8.0,
-      target: emp.kpi?.target || 8.5,
-      metrics: emp.kpi?.metrics || {
-        productivity: 8.0,
-        quality: 8.0,
-        teamwork: 8.0,
-        punctuality: 8.0,
-      },
-    });
     setIsKPIModalOpen(true);
   };
 
-  const handleSaveKPI = () => {
-    if (!selectedEmployee) return;
-
-    // Calculate trend
-    const oldScore = selectedEmployee.kpi?.currentScore || 0;
-    const newScore = kpiForm.currentScore;
-    const diff =
-      oldScore > 0
-        ? Math.round(((newScore - oldScore) / oldScore) * 100)
-        : 0;
-    const trend = diff > 0 ? `+${diff}%` : `${diff}%`;
-
-    // Update history with month and year
-    const now = new Date();
-    const currentMonth = now.toLocaleString("en-US", { month: "short" });
-    const currentYear = now.getFullYear();
-
-    const history = [...(selectedEmployee.kpi?.history || [])];
-    const lastEntryIndex = history.findIndex(
-      (h: { month: string; year?: number }) =>
-        h.month === currentMonth && h.year === currentYear
-    );
-
-    if (lastEntryIndex >= 0) {
-      history[lastEntryIndex] = {
-        month: currentMonth,
-        year: currentYear,
-        score: newScore,
-      };
-    } else {
-      history.push({ month: currentMonth, year: currentYear, score: newScore });
-      if (history.length > 12) history.shift();
-    }
-
-    // Update local state
-    setEmployeeList((prev) =>
-      prev.map((emp) =>
-        emp.id === selectedEmployee.id
-          ? {
-              ...emp,
-              kpi: {
-                ...kpiForm,
-                trend,
-                history,
-                lastUpdated: new Date().toISOString().split("T")[0],
-              },
-            }
-          : emp
-      )
-    );
-
+  const handleCloseKPI = () => {
     setIsKPIModalOpen(false);
     setSelectedEmployee(null);
+  };
+
+  const handleKPISaveSuccess = () => {
+    // Optionally refetch data after successful KPI save
+    refetch();
   };
 
   // Payroll Management (local state only for now)
@@ -516,10 +450,9 @@ export const useEmployeeManagement = () => {
     isKPIModalOpen,
     setIsKPIModalOpen,
     selectedEmployee,
-    kpiForm,
-    setKpiForm,
     handleOpenKPI,
-    handleSaveKPI,
+    handleCloseKPI,
+    handleKPISaveSuccess,
     // Payroll management
     isPayrollModalOpen,
     setIsPayrollModalOpen,

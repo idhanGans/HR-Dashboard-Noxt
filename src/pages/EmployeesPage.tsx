@@ -43,12 +43,10 @@ export const EmployeesPage = ({
     handleMarkFormer,
     // KPI management
     isKPIModalOpen,
-    setIsKPIModalOpen,
     selectedEmployee,
-    kpiForm,
-    setKpiForm,
     handleOpenKPI,
-    handleSaveKPI,
+    handleCloseKPI,
+    handleKPISaveSuccess,
     // Payroll management
     isPayrollModalOpen,
     setIsPayrollModalOpen,
@@ -108,11 +106,9 @@ export const EmployeesPage = ({
 
       <KPIFormModal
         isOpen={isKPIModalOpen}
-        onClose={() => setIsKPIModalOpen(false)}
+        onClose={handleCloseKPI}
         employee={selectedEmployee}
-        kpiData={kpiForm}
-        onKpiChange={setKpiForm}
-        onSave={handleSaveKPI}
+        onSaveSuccess={handleKPISaveSuccess}
       />
 
       <PayrollFormModal
