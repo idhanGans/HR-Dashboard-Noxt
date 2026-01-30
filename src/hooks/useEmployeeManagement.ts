@@ -1,14 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useDebounce } from "use-debounce";
-import { interceptedAxios, handleAxiosError } from "../lib/axios";
-import { getErrorMessage } from "../utils/errors";
 import { getInitials } from "../utils/utils";
 import {
-  USERS_LIST,
-  USERS_CREATE,
-  USERS_UPDATE,
-  USERS_STATISTICS,
-} from "../services/endpoints";
+  getEmployees,
+  getEmployeeStatistics,
+  createEmployee,
+  updateEmployee,
+  markEmployeeAsFormer,
+} from "../services/employee";
 import type {
   Employee,
   EmployeeForm,
@@ -16,7 +15,6 @@ import type {
 } from "../types";
 import type {
   UserApiResponse,
-  PaginatedUsersApiResponse,
   EmployeeStatisticsApiResponse,
   CreateUserRequest,
   UpdateUserRequest,
@@ -27,7 +25,6 @@ import type {
   WorkStatus,
 } from "../types/api";
 
-const EMPLOYEE_PAGE_SIZE = 50;
 const DEFAULT_PASSWORD = "Welcome123!";
 
 const EMPTY_FORM: EmployeeForm = {
@@ -187,44 +184,13 @@ export const useEmployeeManagement = () => {
     setLoading(true);
     setError(null);
     try {
-      // Build query parameters
-      const params = new URLSearchParams();
-      params.append("page", "1");
-      params.append("limit", String(EMPLOYEE_PAGE_SIZE));
-      
-      if (searchQuery) {
-        params.append("search", searchQuery);
-      }
-      
-      if (employmentTypeFilter && employmentTypeFilter !== "all") {
-        params.append("employmentType", employmentTypeFilter);
-      }
-
-      // Fetch first page
-      const firstResponse = await interceptedAxios.get<PaginatedUsersApiResponse>(
-        `${USERS_LIST}?${params.toString()}`
-      );
-      const { data: firstPageUsers, totalPages } = firstResponse.data;
-
-      let allUsers = firstPageUsers;
-
-      // Fetch remaining pages in parallel if there are more
-      if (totalPages > 1) {
-        const pagePromises = Array.from({ length: totalPages - 1 }, (_, i) => {
-          const pageParams = new URLSearchParams(params);
-          pageParams.set("page", String(i + 2));
-          return interceptedAxios.get<PaginatedUsersApiResponse>(
-            `${USERS_LIST}?${pageParams.toString()}`
-          );
-        });
-        const responses = await Promise.all(pagePromises);
-        const additionalUsers = responses.flatMap((r) => r.data.data);
-        allUsers = [...firstPageUsers, ...additionalUsers];
-      }
-
-      setEmployeeList(allUsers.map(mapUserToEmployee));
+      const users = await getEmployees({
+        search: searchQuery,
+        employmentType: employmentTypeFilter,
+      });
+      setEmployeeList(users.map(mapUserToEmployee));
     } catch (err) {
-      setError(getErrorMessage(err, "Failed to load employees"));
+      setError(err instanceof Error ? err.message : "Failed to load employees");
     } finally {
       setLoading(false);
     }
@@ -234,10 +200,8 @@ export const useEmployeeManagement = () => {
   const fetchStatistics = useCallback(async () => {
     setStatisticsLoading(true);
     try {
-      const response = await interceptedAxios.get<EmployeeStatisticsApiResponse>(
-        USERS_STATISTICS
-      );
-      setStatistics(response.data);
+      const stats = await getEmployeeStatistics();
+      setStatistics(stats);
     } catch (err) {
       console.error("Failed to fetch statistics:", err);
     } finally {
@@ -294,21 +258,20 @@ export const useEmployeeManagement = () => {
     try {
       if (mode === "add") {
         const createRequest = mapFormToCreateRequest(form);
-        await interceptedAxios.post<UserApiResponse>(USERS_CREATE, createRequest);
+        await createEmployee(createRequest);
       } else {
         if (form.id === null) {
           setSaving(false);
           return;
         }
         const updateRequest = mapFormToUpdateRequest(form);
-        const endpoint = USERS_UPDATE.replace(":id", String(form.id));
-        await interceptedAxios.put<UserApiResponse>(endpoint, updateRequest);
+        await updateEmployee(form.id, updateRequest);
       }
 
       setIsModalOpen(false);
       await refetch();
     } catch (err) {
-      alert(handleAxiosError(err));
+      alert(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setSaving(false);
     }
@@ -316,11 +279,7 @@ export const useEmployeeManagement = () => {
 
   const handleMarkFormer = async (emp: Employee) => {
     try {
-      const endpoint = USERS_UPDATE.replace(":id", String(emp.id));
-      await interceptedAxios.put<UserApiResponse>(endpoint, {
-        employmentType: "FORMER",
-        leaveDate: new Date().toISOString(),
-      } as UpdateUserRequest);
+      await markEmployeeAsFormer(emp.id);
 
       // Update local state immediately for better UX
       setEmployeeList((prev) =>
@@ -334,7 +293,7 @@ export const useEmployeeManagement = () => {
       // Refetch statistics
       await fetchStatistics();
     } catch (err) {
-      alert(handleAxiosError(err));
+      alert(err instanceof Error ? err.message : "An error occurred");
     }
   };
 
