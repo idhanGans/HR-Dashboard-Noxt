@@ -48,7 +48,7 @@ CREATE TABLE "LeaveEntitlement" (
     "type" "LeaveType" NOT NULL,
     "entitledDays" INTEGER NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "LeaveEntitlement_pkey" PRIMARY KEY ("id")
 );
