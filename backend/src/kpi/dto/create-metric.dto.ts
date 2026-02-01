@@ -1,5 +1,6 @@
-import { IsString, IsOptional, IsNotEmpty } from "class-validator";
+import { IsString, IsOptional, IsNotEmpty, IsInt } from "class-validator";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { Type } from "class-transformer";
 
 export class CreateMetricDto {
   @ApiProperty({
@@ -17,4 +18,14 @@ export class CreateMetricDto {
   @IsOptional()
   @IsString()
   description?: string;
+
+  @ApiPropertyOptional({
+    description:
+      "Organization ID (optional, only for SUPERADMIN. Defaults to user's organization)",
+    example: 1,
+  })
+  @IsOptional()
+  @IsInt()
+  @Type(() => Number)
+  organizationId?: number;
 }

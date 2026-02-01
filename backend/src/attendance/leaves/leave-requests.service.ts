@@ -347,6 +347,23 @@ export class LeaveRequestsService {
     }));
   }
 
+  async getEntitlements(): Promise<LeaveEntitlementDto[]> {
+    const entitlements = await this.prisma.leaveEntitlement.findMany({
+      select: {
+        type: true,
+        entitledDays: true,
+      },
+      orderBy: {
+        type: "asc",
+      },
+    });
+
+    return entitlements.map((entitlement) => ({
+      type: entitlement.type,
+      entitledDays: entitlement.entitledDays,
+    }));
+  }
+
   async findRecentApprovals(limit = 10): Promise<LeaveRequestResponseDto[]> {
     const approvals = await this.prisma.leaveRequest.findMany({
       where: {

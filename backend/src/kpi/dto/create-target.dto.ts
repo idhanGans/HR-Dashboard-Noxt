@@ -1,5 +1,12 @@
-import { IsInt, IsNumber, Min, Max, IsNotEmpty } from "class-validator";
-import { ApiProperty } from "@nestjs/swagger";
+import {
+  IsInt,
+  IsNumber,
+  Min,
+  Max,
+  IsNotEmpty,
+  IsOptional,
+} from "class-validator";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { Type } from "class-transformer";
 
 export class CreateTargetDto {
@@ -33,4 +40,14 @@ export class CreateTargetDto {
   @Max(10)
   @IsNotEmpty()
   target: number;
+
+  @ApiPropertyOptional({
+    description:
+      "Organization ID (optional, only for SUPERADMIN. Defaults to user's organization)",
+    example: 1,
+  })
+  @IsOptional()
+  @IsInt()
+  @Type(() => Number)
+  organizationId?: number;
 }

@@ -1,5 +1,5 @@
 // Employee types
-export type EmploymentType = "permanent" | "temporary" | "former";
+export type EmploymentType = "PERMANENT" | "TEMPORARY" | "FORMER";
 export type EmployeeStatus =
   | "present"
   | "absent"

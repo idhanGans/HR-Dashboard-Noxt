@@ -10,6 +10,7 @@ interface EmployeeFormModalProps {
   form: EmployeeForm;
   onFormChange: Dispatch<SetStateAction<EmployeeForm>>;
   onSave: () => void;
+  saving?: boolean;
 }
 
 /**
@@ -20,6 +21,7 @@ interface EmployeeFormModalProps {
  * @param {Object} form - Form data object
  * @param {Function} onFormChange - Callback when form data changes
  * @param {Function} onSave - Callback when saving
+ * @param {boolean} saving - Whether the form is currently saving
  */
 export const EmployeeFormModal = ({
   isOpen,
@@ -28,6 +30,7 @@ export const EmployeeFormModal = ({
   form,
   onFormChange,
   onSave,
+  saving = false,
 }: EmployeeFormModalProps) => {
   const handleChange = (field: string, value: string) => {
     onFormChange({ ...form, [field]: value });
@@ -94,8 +97,8 @@ export const EmployeeFormModal = ({
                 onChange={(e) => handleChange("gender", e.target.value)}
               >
                 <option value="">Select Gender</option>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
+                <option value="MALE">Male</option>
+                <option value="FEMALE">Female</option>
               </select>
             </div>
           </div>
@@ -200,10 +203,10 @@ export const EmployeeFormModal = ({
                 onChange={(e) => handleChange("typeOfWork", e.target.value)}
               >
                 <option value="">Select Type</option>
-                <option value="full-time">Full-time</option>
-                <option value="part-time">Part-time</option>
-                <option value="contract">Contract</option>
-                <option value="freelance">Freelance</option>
+                <option value="FULL_TIME">Full-time</option>
+                <option value="PART_TIME">Part-time</option>
+                <option value="CONTRACT">Contract</option>
+                <option value="FREELANCE">Freelance</option>
               </select>
             </div>
             <div>
@@ -216,10 +219,10 @@ export const EmployeeFormModal = ({
                 onChange={(e) => handleChange("workStatus", e.target.value)}
               >
                 <option value="">Select Status</option>
-                <option value="active">Active</option>
-                <option value="on-leave">On Leave</option>
-                <option value="inactive">Inactive</option>
-                <option value="terminated">Terminated</option>
+                <option value="ACTIVE">Active</option>
+                <option value="ON_LEAVE">On Leave</option>
+                <option value="INACTIVE">Inactive</option>
+                <option value="TERMINATED">Terminated</option>
               </select>
             </div>
           </div>
@@ -260,12 +263,12 @@ export const EmployeeFormModal = ({
                 onChange={(e) => handleChange("level", e.target.value)}
               >
                 <option value="">Select Level</option>
-                <option value="junior">Junior</option>
-                <option value="mid">Mid-level</option>
-                <option value="senior">Senior</option>
-                <option value="lead">Lead</option>
-                <option value="manager">Manager</option>
-                <option value="director">Director</option>
+                <option value="JUNIOR">Junior</option>
+                <option value="MID">Mid-level</option>
+                <option value="SENIOR">Senior</option>
+                <option value="LEAD">Lead</option>
+                <option value="MANAGER">Manager</option>
+                <option value="DIRECTOR">Director</option>
               </select>
             </div>
             <div>
@@ -278,9 +281,9 @@ export const EmployeeFormModal = ({
                 onChange={(e) => handleChange("employmentType", e.target.value)}
               >
                 <option value="">Select Type</option>
-                <option value="permanent">Permanent</option>
-                <option value="temporary">Temporary</option>
-                <option value="former">Former</option>
+                <option value="PERMANENT">Permanent</option>
+                <option value="TEMPORARY">Temporary</option>
+                <option value="FORMER">Former</option>
               </select>
             </div>
           </div>
@@ -321,11 +324,16 @@ export const EmployeeFormModal = ({
             variant="secondary"
             onClick={onClose}
             className="w-full sm:w-auto"
+            disabled={saving}
           >
             Cancel
           </Button>
-          <Button onClick={onSave} className="w-full sm:w-auto">
-            {mode === "add" ? "Add" : "Save"} Employee
+          <Button onClick={onSave} className="w-full sm:w-auto" disabled={saving}>
+            {saving
+              ? "Saving..."
+              : mode === "add"
+                ? "Add Employee"
+                : "Save"}
           </Button>
         </div>
       </div>

@@ -9,8 +9,9 @@ import {
   UpdateUserDto,
   UserResponseDto,
   PaginatedUsersResponseDto,
+  EmployeeStatisticsDto,
+  UserPaginationQueryDto,
 } from "@/users/dto";
-import { PaginationQueryDto } from "@/common/dto";
 import { Prisma } from "@prisma/client";
 import * as bcrypt from "bcrypt";
 
@@ -39,7 +40,7 @@ export class UsersService {
         email: createUserDto.email,
         password: hashedPassword,
         phoneNumber: createUserDto.phoneNumber,
-        roleName: createUserDto.roleName,
+        position: createUserDto.position,
         role: createUserDto.role,
         employmentType: createUserDto.employmentType,
         taxNumber: createUserDto.taxNumber,
@@ -56,6 +57,15 @@ export class UsersService {
         bankAccountHolderName: createUserDto.bankAccountHolderName,
         photoUrl: createUserDto.photoUrl,
         organizationId: createUserDto.organizationId,
+        nickname: createUserDto.nickname,
+        gender: createUserDto.gender,
+        dateOfBirth: createUserDto.dateOfBirth
+          ? new Date(createUserDto.dateOfBirth)
+          : null,
+        typeOfWork: createUserDto.typeOfWork,
+        workStatus: createUserDto.workStatus,
+        division: createUserDto.division,
+        level: createUserDto.level,
       },
       include: {
         organization: true,
@@ -66,20 +76,24 @@ export class UsersService {
   }
 
   async findAll(
-    paginationQuery: PaginationQueryDto,
+    paginationQuery: UserPaginationQueryDto,
   ): Promise<PaginatedUsersResponseDto> {
     const page = paginationQuery.page ?? 1;
     const limit = paginationQuery.limit ?? 10;
     const skip = (page - 1) * limit;
 
-    const where: Prisma.UserWhereInput = paginationQuery.search
-      ? {
-          fullName: {
-            contains: paginationQuery.search,
-            mode: "insensitive",
-          },
-        }
-      : {};
+    const where: Prisma.UserWhereInput = {};
+
+    if (paginationQuery.search) {
+      where.fullName = {
+        contains: paginationQuery.search,
+        mode: "insensitive",
+      };
+    }
+
+    if (paginationQuery.employmentType) {
+      where.employmentType = paginationQuery.employmentType;
+    }
 
     const [users, total] = await Promise.all([
       this.prisma.user.findMany({
@@ -91,7 +105,7 @@ export class UsersService {
           fullName: true,
           email: true,
           phoneNumber: true,
-          roleName: true,
+          position: true,
           role: true,
           employmentType: true,
           taxNumber: true,
@@ -112,6 +126,13 @@ export class UsersService {
               updatedAt: true,
             },
           },
+          nickname: true,
+          gender: true,
+          dateOfBirth: true,
+          typeOfWork: true,
+          workStatus: true,
+          division: true,
+          level: true,
           createdAt: true,
           updatedAt: true,
         },
@@ -127,6 +148,37 @@ export class UsersService {
       page,
       limit,
       totalPages,
+    };
+  }
+
+  async getStatistics(): Promise<EmployeeStatisticsDto> {
+    const [total, permanent, temporary, former, organizationCounts] =
+      await Promise.all([
+        this.prisma.user.count(),
+        this.prisma.user.count({ where: { employmentType: "PERMANENT" } }),
+        this.prisma.user.count({ where: { employmentType: "TEMPORARY" } }),
+        this.prisma.user.count({ where: { employmentType: "FORMER" } }),
+        this.prisma.organization.findMany({
+          select: {
+            name: true,
+            _count: {
+              select: { members: true },
+            },
+          },
+        }),
+      ]);
+
+    const byOrganization = organizationCounts.map((org) => ({
+      name: org.name,
+      count: org._count.members,
+    }));
+
+    return {
+      total,
+      permanent,
+      temporary,
+      former,
+      byOrganization,
     };
   }
 
@@ -177,7 +229,7 @@ export class UsersService {
       fullName: updateUserDto.fullName,
       email: updateUserDto.email,
       phoneNumber: updateUserDto.phoneNumber,
-      roleName: updateUserDto.roleName,
+      position: updateUserDto.position,
       role: updateUserDto.role,
       employmentType: updateUserDto.employmentType,
       taxNumber: updateUserDto.taxNumber,
@@ -193,6 +245,15 @@ export class UsersService {
       bankName: updateUserDto.bankName,
       bankAccountHolderName: updateUserDto.bankAccountHolderName,
       photoUrl: updateUserDto.photoUrl,
+      nickname: updateUserDto.nickname,
+      gender: updateUserDto.gender,
+      dateOfBirth: updateUserDto.dateOfBirth
+        ? new Date(updateUserDto.dateOfBirth)
+        : undefined,
+      typeOfWork: updateUserDto.typeOfWork,
+      workStatus: updateUserDto.workStatus,
+      division: updateUserDto.division,
+      level: updateUserDto.level,
     };
 
     // Handle organization relation

@@ -68,7 +68,7 @@ const EmployeeSelector = ({
         <option value="">{placeholder}</option>
         {!isLoading &&
           employees
-            .filter((emp) => emp.employmentType !== "former")
+            .filter((emp) => emp.employmentType !== "FORMER")
             .map((emp) => (
               <option key={emp.id} value={emp.id}>
                 {isCompactLabel
@@ -499,7 +499,7 @@ export const PayrollPage = ({ onLogout, userName, userRole }: LayoutProps) => {
             <p className="text-gray-400 text-lg">
               {employeesLoading
                 ? "Loading employees..."
-                : employees.filter((e) => e.employmentType !== "former").length > 0
+                : employees.filter((e) => e.employmentType !== "FORMER").length > 0
                   ? "Please select an employee to view their payroll details"
                   : employeesError
                     ? "Unable to load employees"

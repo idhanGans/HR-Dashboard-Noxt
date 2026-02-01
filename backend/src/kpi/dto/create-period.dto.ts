@@ -1,5 +1,12 @@
-import { IsString, IsNotEmpty, IsDateString } from "class-validator";
-import { ApiProperty } from "@nestjs/swagger";
+import {
+  IsString,
+  IsNotEmpty,
+  IsDateString,
+  IsOptional,
+  IsInt,
+} from "class-validator";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { Type } from "class-transformer";
 
 export class CreatePeriodDto {
   @ApiProperty({
@@ -25,4 +32,14 @@ export class CreatePeriodDto {
   @IsDateString()
   @IsNotEmpty()
   endDate: string;
+
+  @ApiPropertyOptional({
+    description:
+      "Organization ID (optional, only for SUPERADMIN. Defaults to user's organization)",
+    example: 1,
+  })
+  @IsOptional()
+  @IsInt()
+  @Type(() => Number)
+  organizationId?: number;
 }

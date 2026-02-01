@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { MetricResponseDto } from "@/kpi/dto/metric-response.dto";
 import { PeriodResponseDto } from "@/kpi/dto/period-response.dto";
+import { Prisma } from "@prisma/client";
 
 export class TargetResponseDto {
   @ApiProperty({ description: "Target ID", example: 1 })
@@ -16,7 +17,7 @@ export class TargetResponseDto {
     description: "Target score",
     example: 8.5,
   })
-  target: number;
+  target: Prisma.Decimal;
 
   @ApiProperty({ description: "Created at", example: "2024-01-01T00:00:00Z" })
   createdAt: Date;

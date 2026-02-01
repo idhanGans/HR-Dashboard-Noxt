@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { Role, EmploymentType } from "@/users/dto/create-user.dto";
+import { Role, EmploymentType, TypeOfWork, Level, Gender, WorkStatus } from "@/users/dto/create-user.dto";
 
 export class OrganizationBasicDto {
   @ApiProperty({ description: "Organization ID", example: 1 })
@@ -38,10 +38,10 @@ export class UserResponseDto {
   phoneNumber?: string;
 
   @ApiPropertyOptional({
-    description: "Role name/job title",
+    description: "Position/job title",
     example: "Senior Developer",
   })
-  roleName?: string;
+  position?: string;
 
   @ApiProperty({
     description: "User role permission",
@@ -113,6 +113,46 @@ export class UserResponseDto {
     type: OrganizationBasicDto,
   })
   organization?: OrganizationBasicDto;
+
+  @ApiPropertyOptional({ description: "Nickname", example: "Johnny" })
+  nickname?: string;
+
+  @ApiPropertyOptional({
+    description: "Gender",
+    enum: Gender,
+    example: Gender.MALE,
+  })
+  gender?: Gender;
+
+  @ApiPropertyOptional({
+    description: "Date of birth",
+    example: "1990-01-15T00:00:00Z",
+  })
+  dateOfBirth?: Date;
+
+  @ApiPropertyOptional({
+    description: "Type of work",
+    enum: TypeOfWork,
+    example: TypeOfWork.FULL_TIME,
+  })
+  typeOfWork?: TypeOfWork;
+
+  @ApiPropertyOptional({
+    description: "Work status",
+    enum: WorkStatus,
+    example: WorkStatus.ACTIVE,
+  })
+  workStatus?: WorkStatus;
+
+  @ApiPropertyOptional({ description: "Division", example: "Engineering" })
+  division?: string;
+
+  @ApiPropertyOptional({
+    description: "Level",
+    enum: Level,
+    example: Level.SENIOR,
+  })
+  level?: Level;
 
   @ApiProperty({ description: "Created at", example: "2024-01-01T00:00:00Z" })
   createdAt: Date;

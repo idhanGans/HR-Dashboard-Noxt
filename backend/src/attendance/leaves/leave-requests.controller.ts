@@ -141,6 +141,18 @@ export class LeaveRequestsController {
     return this.leaveRequestsService.updateEntitlements(dto);
   }
 
+  @Get("entitlements")
+  @Roles(Role.SUPERADMIN, Role.SUPERVISOR, Role.EMPLOYEE)
+  @ApiOperation({ summary: "Get global leave entitlements" })
+  @ApiResponse({
+    status: 200,
+    description: "Returns leave entitlements",
+    type: [LeaveEntitlementDto],
+  })
+  async getEntitlements(): Promise<LeaveEntitlementDto[]> {
+    return this.leaveRequestsService.getEntitlements();
+  }
+
   @Get("me")
   @Roles(Role.EMPLOYEE)
   @ApiOperation({ summary: "Get current user's leave requests" })

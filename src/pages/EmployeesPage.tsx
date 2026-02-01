@@ -11,7 +11,6 @@ import {
   PayrollFormModal,
 } from "../components/employees";
 import { useEmployeeManagement } from "../hooks/useEmployeeManagement";
-import { departmentList } from "../utils/dummyData";
 import type { LayoutProps } from "../types/auth";
 
 /**
@@ -23,9 +22,12 @@ export const EmployeesPage = ({
   userRole,
 }: LayoutProps) => {
   const {
-    employeeList,
     filteredEmployees,
     counts,
+    organizationBreakdown,
+    loading,
+    error,
+    saving,
     filter,
     setFilter,
     search,
@@ -41,12 +43,10 @@ export const EmployeesPage = ({
     handleMarkFormer,
     // KPI management
     isKPIModalOpen,
-    setIsKPIModalOpen,
     selectedEmployee,
-    kpiForm,
-    setKpiForm,
     handleOpenKPI,
-    handleSaveKPI,
+    handleCloseKPI,
+    handleKPISaveSuccess,
     // Payroll management
     isPayrollModalOpen,
     setIsPayrollModalOpen,
@@ -72,18 +72,24 @@ export const EmployeesPage = ({
 
       <EmployeeFilters filter={filter} onFilterChange={setFilter} />
 
-      <EmployeeTable
-        employees={filteredEmployees}
-        onEdit={handleOpenEdit}
-        onMarkFormer={handleMarkFormer}
-        onManageKPI={handleOpenKPI}
-        onManagePayroll={handleOpenPayroll}
-      />
+      {loading ? (
+        <div className="text-center py-8 text-lightGrey">Loading...</div>
+      ) : error ? (
+        <div className="text-center py-8 text-red-400">{error}</div>
+      ) : (
+        <EmployeeTable
+          employees={filteredEmployees}
+          onEdit={handleOpenEdit}
+          onMarkFormer={handleMarkFormer}
+          onManageKPI={handleOpenKPI}
+          onManagePayroll={handleOpenPayroll}
+        />
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <DepartmentBreakdown
-          employees={employeeList}
-          departments={departmentList}
+          organizationBreakdown={organizationBreakdown}
+          totalEmployees={counts.total}
         />
         <HRContactCard />
       </div>
@@ -95,15 +101,14 @@ export const EmployeesPage = ({
         form={form}
         onFormChange={setForm}
         onSave={handleSave}
+        saving={saving}
       />
 
       <KPIFormModal
         isOpen={isKPIModalOpen}
-        onClose={() => setIsKPIModalOpen(false)}
+        onClose={handleCloseKPI}
         employee={selectedEmployee}
-        kpiData={kpiForm}
-        onKpiChange={setKpiForm}
-        onSave={handleSaveKPI}
+        onSaveSuccess={handleKPISaveSuccess}
       />
 
       <PayrollFormModal

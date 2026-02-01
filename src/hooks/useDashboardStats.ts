@@ -11,13 +11,13 @@ export const useDashboardStats = () => {
 
   // Calculate total active employees (excluding former employees)
   const totalEmployees = useMemo(() => {
-    return employees.filter((emp) => emp.employmentType !== "former").length;
+    return employees.filter((emp) => emp.employmentType !== "FORMER").length;
   }, [employees]);
 
   // Calculate today's attendance: present or late (not absent)
   const presentToday = useMemo(() => {
     return employees.filter(
-      (emp) => emp.employmentType !== "former" && emp.status !== "absent",
+      (emp) => emp.employmentType !== "FORMER" && emp.status !== "absent",
     ).length;
   }, [employees]);
 
@@ -41,7 +41,7 @@ export const useDashboardStats = () => {
     const deptMap: Record<string, { total: number; present: number }> = {};
 
     employees.forEach((emp) => {
-      if (emp.employmentType === "former") return;
+      if ((emp as any).employmentType === "FORMER") return;
 
       const dept = emp.department;
       if (!deptMap[dept]) {

@@ -4,25 +4,29 @@ import {
   BadRequestException,
 } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
-import {
-  CreatePeriodDto,
-  PeriodResponseDto,
-  PaginatedPeriodsResponseDto,
-} from "@/kpi/dto";
-import { PaginationQueryDto } from "@/common/dto";
-import { Prisma } from "@prisma/client";
+import { CreatePeriodDto } from "@/kpi/dto";
+import { PaginationQueryDto, PaginatedResponseDto } from "@/common/dto";
+import { KpiPeriod, Prisma } from "@prisma/client";
 
 @Injectable()
 export class PeriodsService {
   constructor(private prisma: PrismaService) {}
 
-  async create(createPeriodDto: CreatePeriodDto): Promise<PeriodResponseDto> {
+  async create(
+    createPeriodDto: CreatePeriodDto,
+    organizationId: number,
+  ): Promise<KpiPeriod> {
+    if (!organizationId) {
+      throw new BadRequestException("Organization ID is required");
+    }
+
     const startDate = new Date(createPeriodDto.startDate);
     const endDate = new Date(createPeriodDto.endDate);
 
-    // Check for overlapping periods
+    // Check for overlapping periods within the same organization
     const overlappingPeriod = await this.prisma.kpiPeriod.findFirst({
       where: {
+        organizationId,
         OR: [
           {
             AND: [
@@ -57,27 +61,30 @@ export class PeriodsService {
         name: createPeriodDto.name,
         startDate,
         endDate,
+        organizationId,
       },
     });
 
-    return period as PeriodResponseDto;
+    return period;
   }
 
   async findAll(
     paginationQuery: PaginationQueryDto,
-  ): Promise<PaginatedPeriodsResponseDto> {
-    const page = paginationQuery.page ?? 1;
-    const limit = paginationQuery.limit ?? 10;
+    organizationId?: number,
+  ): Promise<PaginatedResponseDto<KpiPeriod>> {
+    const page = Number(paginationQuery.page) || 1;
+    const limit = Number(paginationQuery.limit) || 10;
     const skip = (page - 1) * limit;
 
-    const where: Prisma.KpiPeriodWhereInput = paginationQuery.search
-      ? {
-          name: {
-            contains: paginationQuery.search,
-            mode: "insensitive",
-          },
-        }
-      : {};
+    const where: Prisma.KpiPeriodWhereInput = {
+      ...(organizationId !== undefined && { organizationId }),
+      ...(paginationQuery.search && {
+        name: {
+          contains: paginationQuery.search,
+          mode: "insensitive",
+        },
+      }),
+    };
 
     const [periods, total] = await Promise.all([
       this.prisma.kpiPeriod.findMany({
@@ -92,7 +99,7 @@ export class PeriodsService {
     const totalPages = Math.ceil(total / limit);
 
     return {
-      data: periods as PeriodResponseDto[],
+      data: periods,
       total,
       page,
       limit,
@@ -100,7 +107,7 @@ export class PeriodsService {
     };
   }
 
-  async findOne(id: number): Promise<PeriodResponseDto> {
+  async findOne(id: number, organizationId?: number): Promise<KpiPeriod> {
     const period = await this.prisma.kpiPeriod.findUnique({
       where: { id },
     });
@@ -109,21 +116,32 @@ export class PeriodsService {
       throw new NotFoundException(`Period with ID ${id} not found`);
     }
 
-    return period as PeriodResponseDto;
+    // Check organization access if organizationId is provided
+    if (
+      organizationId !== undefined &&
+      period.organizationId !== organizationId
+    ) {
+      throw new NotFoundException(`Period with ID ${id} not found`);
+    }
+
+    return period;
   }
 
-  async findCurrent(): Promise<PeriodResponseDto | null> {
+  async findCurrent(organizationId?: number): Promise<KpiPeriod | null> {
     const now = new Date();
+    const where: Prisma.KpiPeriodWhereInput = {
+      isActive: true,
+      startDate: { lte: now },
+      endDate: { gte: now },
+      ...(organizationId !== undefined && { organizationId }),
+    };
+
     const period = await this.prisma.kpiPeriod.findFirst({
-      where: {
-        isActive: true,
-        startDate: { lte: now },
-        endDate: { gte: now },
-      },
+      where,
       orderBy: { startDate: "desc" },
     });
 
-    return period as PeriodResponseDto | null;
+    return period;
   }
 
   /**
@@ -132,7 +150,7 @@ export class PeriodsService {
    * @param period The period to calculate the scoring window for
    * @returns Object with scoringWindowStart and scoringWindowEnd dates
    */
-  getScoringWindow(period: PeriodResponseDto): {
+  getScoringWindow(period: KpiPeriod): {
     scoringWindowStart: Date;
     scoringWindowEnd: Date;
   } {
@@ -156,7 +174,7 @@ export class PeriodsService {
    * @param period The period to check
    * @returns true if the scoring window is open, false otherwise
    */
-  isScoringWindowOpen(period: PeriodResponseDto): boolean {
+  isScoringWindowOpen(period: KpiPeriod): boolean {
     const { scoringWindowStart, scoringWindowEnd } =
       this.getScoringWindow(period);
     const now = new Date();
@@ -166,7 +184,8 @@ export class PeriodsService {
   async update(
     id: number,
     updatePeriodDto: Partial<CreatePeriodDto>,
-  ): Promise<PeriodResponseDto> {
+    organizationId?: number,
+  ): Promise<KpiPeriod> {
     const existingPeriod = await this.prisma.kpiPeriod.findUnique({
       where: { id },
       include: {
@@ -177,6 +196,14 @@ export class PeriodsService {
     });
 
     if (!existingPeriod) {
+      throw new NotFoundException(`Period with ID ${id} not found`);
+    }
+
+    // Check organization access if organizationId is provided
+    if (
+      organizationId !== undefined &&
+      existingPeriod.organizationId !== organizationId
+    ) {
       throw new NotFoundException(`Period with ID ${id} not found`);
     }
 
@@ -198,6 +225,6 @@ export class PeriodsService {
       data: updateData,
     });
 
-    return period as PeriodResponseDto;
+    return period;
   }
 }

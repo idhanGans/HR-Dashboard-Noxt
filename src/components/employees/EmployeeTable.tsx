@@ -176,7 +176,7 @@ export const EmployeeTable = ({
               </button>
 
               {/* Divider */}
-              {row.employmentType !== "former" && (
+              {row.employmentType !== "FORMER" && (
                 <>
                   <div className="border-t border-white/25 my-2"></div>
 

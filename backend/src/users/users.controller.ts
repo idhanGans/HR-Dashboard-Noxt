@@ -27,9 +27,10 @@ import {
   UpdateUserDto,
   UserResponseDto,
   PaginatedUsersResponseDto,
+  EmployeeStatisticsDto,
+  UserPaginationQueryDto,
   Role,
 } from "@/users/dto";
-import { PaginationQueryDto } from "@/common/dto";
 import { JwtAuthGuard } from "@/auth/guards/jwt-auth.guard";
 import { RolesGuard } from "@/auth/guards/roles.guard";
 import { Roles } from "@/auth/decorators/roles.decorator";
@@ -73,15 +74,39 @@ export class UsersController {
     description: "Search by user full name (case-insensitive)",
     example: "john",
   })
+  @ApiQuery({
+    name: "employmentType",
+    required: false,
+    enum: ["PERMANENT", "TEMPORARY", "FORMER"],
+    description: "Filter by employment type",
+    example: "PERMANENT",
+  })
   @ApiResponse({
     status: 200,
     description: "Returns paginated list of users",
     type: PaginatedUsersResponseDto,
   })
   async findAll(
-    @Query() paginationQuery: PaginationQueryDto,
+    @Query() paginationQuery: UserPaginationQueryDto,
   ): Promise<PaginatedUsersResponseDto> {
     return this.usersService.findAll(paginationQuery);
+  }
+
+  @Get("statistics")
+  @Roles(Role.SUPERVISOR)
+  @ApiOperation({ summary: "Get employee statistics" })
+  @ApiResponse({
+    status: 200,
+    description: "Returns employee statistics",
+    type: EmployeeStatisticsDto,
+  })
+  @ApiResponse({ status: 401, description: "Unauthorized" })
+  @ApiResponse({
+    status: 403,
+    description: "Forbidden - Insufficient permissions",
+  })
+  async getStatistics(): Promise<EmployeeStatisticsDto> {
+    return this.usersService.getStatistics();
   }
 
   @Get(":id")

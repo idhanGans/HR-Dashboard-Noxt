@@ -11,7 +11,7 @@ export interface UserProfile {
   fullName: string;
   email: string;
   role: string;
-  roleName?: string;
+  position?: string;
 }
 
 export const login = async (email: string, password: string): Promise<AuthTokens> => {

@@ -1,4 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import "./index.css";
 import {
   LoginPage,
@@ -12,6 +14,7 @@ import {
 } from "./pages";
 import { EmployeeProvider } from "./contexts/EmployeeContext";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { queryClient } from "./lib/queryClient";
 import { hasRequiredRole } from "./utils/roles";
 import type { ProtectedRouteProps, PublicRouteProps } from "./types/auth";
 
@@ -61,7 +64,7 @@ const AppRoutes = () => {
   const layoutProps = {
     onLogout: signOut,
     userName: auth.userName,
-    userRole: auth.userRole,
+    userRole: auth.role ?? "EMPLOYEE",
   };
 
   return (
@@ -196,13 +199,16 @@ const AppRoutes = () => {
 
 function App() {
   return (
-    <AuthProvider>
-      <EmployeeProvider>
-        <BrowserRouter>
-          <AppRoutes />
-        </BrowserRouter>
-      </EmployeeProvider>
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <EmployeeProvider>
+          <BrowserRouter>
+            <AppRoutes />
+          </BrowserRouter>
+        </EmployeeProvider>
+      </AuthProvider>
+      {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
+    </QueryClientProvider>
   );
 }
 

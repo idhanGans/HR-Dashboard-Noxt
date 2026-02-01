@@ -17,6 +17,13 @@ export type AttendanceApiRecord = {
   updatedAt: string;
 };
 
+export type LeaveType = "PAID_LEAVE" | "UNPAID_LEAVE" | "SICK_LEAVE" | "URGENT_LEAVE";
+
+export type LeaveEntitlementApi = {
+  type: LeaveType;
+  entitledDays: number;
+};
+
 export type PaginatedAttendanceRecordsResponse = {
   data: AttendanceApiRecord[];
   total: number;
