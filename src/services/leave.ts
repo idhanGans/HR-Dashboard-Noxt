@@ -1,4 +1,4 @@
-import { interceptedAxios } from "../lib/axios";
+import { interceptedAxios, handleAxiosError } from "../lib/axios";
 import {
   ATTENDANCE_LEAVES,
   ATTENDANCE_LEAVES_APPROVE,
@@ -14,14 +14,14 @@ import type {
   PaginatedLeaveRequestsResponse,
 } from "../types/api/leave";
 
-type LeaveQueryParams = {
+export interface LeaveQueryParams {
   page?: number;
   limit?: number;
   status?: string;
   startDate?: string;
   endDate?: string;
   userId?: number;
-};
+}
 
 const buildQueryString = (params?: LeaveQueryParams) => {
   if (!params) return "";
@@ -34,69 +34,112 @@ const buildQueryString = (params?: LeaveQueryParams) => {
   return queryString ? `?${queryString}` : "";
 };
 
-export const fetchLeaveRequests = async (
-  params?: LeaveQueryParams,
-): Promise<PaginatedLeaveRequestsResponse> => {
-  const response = await interceptedAxios.get<PaginatedLeaveRequestsResponse>(
-    `${ATTENDANCE_LEAVES}${buildQueryString(params)}`,
-  );
-  return response.data;
+const createLeaveService = () => {
+  const getRequests = async (
+    params?: LeaveQueryParams
+  ): Promise<PaginatedLeaveRequestsResponse> => {
+    try {
+      const response = await interceptedAxios.get<PaginatedLeaveRequestsResponse>(
+        `${ATTENDANCE_LEAVES}${buildQueryString(params)}`
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(handleAxiosError(error));
+    }
+  };
+
+  const getMyRequests = async (
+    params?: Omit<LeaveQueryParams, "userId">
+  ): Promise<PaginatedLeaveRequestsResponse> => {
+    try {
+      const response = await interceptedAxios.get<PaginatedLeaveRequestsResponse>(
+        `${ATTENDANCE_LEAVES_SELF}${buildQueryString(params)}`
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(handleAxiosError(error));
+    }
+  };
+
+  const getBalances = async (userId?: number): Promise<LeaveBalanceResponse[]> => {
+    try {
+      const query = userId ? `?userId=${userId}` : "";
+      const response = await interceptedAxios.get<LeaveBalanceResponse[]>(
+        `${ATTENDANCE_LEAVES_BALANCE}${query}`
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(handleAxiosError(error));
+    }
+  };
+
+  const getRecentApprovals = async (limit?: number): Promise<LeaveApiRequest[]> => {
+    try {
+      const query = limit ? `?limit=${limit}` : "";
+      const response = await interceptedAxios.get<LeaveApiRequest[]>(
+        `${ATTENDANCE_LEAVES_RECENT_APPROVALS}${query}`
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(handleAxiosError(error));
+    }
+  };
+
+  const createRequest = async (
+    payload: CreateLeaveRequestPayload
+  ): Promise<LeaveApiRequest> => {
+    try {
+      const response = await interceptedAxios.post<LeaveApiRequest>(
+        ATTENDANCE_LEAVES,
+        payload
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(handleAxiosError(error));
+    }
+  };
+
+  const approveRequest = async (id: number): Promise<LeaveApiRequest> => {
+    try {
+      const response = await interceptedAxios.put<LeaveApiRequest>(
+        ATTENDANCE_LEAVES_APPROVE.replace(":id", String(id))
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(handleAxiosError(error));
+    }
+  };
+
+  const rejectRequest = async (id: number): Promise<LeaveApiRequest> => {
+    try {
+      const response = await interceptedAxios.put<LeaveApiRequest>(
+        ATTENDANCE_LEAVES_REJECT.replace(":id", String(id))
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(handleAxiosError(error));
+    }
+  };
+
+  return {
+    getRequests,
+    getMyRequests,
+    getBalances,
+    getRecentApprovals,
+    createRequest,
+    approveRequest,
+    rejectRequest,
+  };
 };
 
-export const fetchMyLeaveRequests = async (
-  params?: Omit<LeaveQueryParams, "userId">,
-): Promise<PaginatedLeaveRequestsResponse> => {
-  const response = await interceptedAxios.get<PaginatedLeaveRequestsResponse>(
-    `${ATTENDANCE_LEAVES_SELF}${buildQueryString(params)}`,
-  );
-  return response.data;
-};
+const leaveService = createLeaveService();
 
-export const fetchLeaveBalances = async (
-  userId?: number,
-): Promise<LeaveBalanceResponse[]> => {
-  const query = userId ? `?userId=${userId}` : "";
-  const response =
-    await interceptedAxios.get<LeaveBalanceResponse[]>(
-      `${ATTENDANCE_LEAVES_BALANCE}${query}`,
-    );
-  return response.data;
-};
+export { leaveService };
 
-export const fetchRecentApprovals = async (
-  limit?: number,
-): Promise<LeaveApiRequest[]> => {
-  const query = limit ? `?limit=${limit}` : "";
-  const response = await interceptedAxios.get<LeaveApiRequest[]>(
-    `${ATTENDANCE_LEAVES_RECENT_APPROVALS}${query}`,
-  );
-  return response.data;
-};
-
-export const createLeaveRequest = async (
-  payload: CreateLeaveRequestPayload,
-): Promise<LeaveApiRequest> => {
-  const response = await interceptedAxios.post<LeaveApiRequest>(
-    ATTENDANCE_LEAVES,
-    payload,
-  );
-  return response.data;
-};
-
-export const approveLeaveRequest = async (
-  id: number,
-): Promise<LeaveApiRequest> => {
-  const response = await interceptedAxios.put<LeaveApiRequest>(
-    ATTENDANCE_LEAVES_APPROVE.replace(":id", String(id)),
-  );
-  return response.data;
-};
-
-export const rejectLeaveRequest = async (
-  id: number,
-): Promise<LeaveApiRequest> => {
-  const response = await interceptedAxios.put<LeaveApiRequest>(
-    ATTENDANCE_LEAVES_REJECT.replace(":id", String(id)),
-  );
-  return response.data;
-};
+export const fetchLeaveRequests = leaveService.getRequests;
+export const fetchMyLeaveRequests = leaveService.getMyRequests;
+export const fetchLeaveBalances = leaveService.getBalances;
+export const fetchRecentApprovals = leaveService.getRecentApprovals;
+export const createLeaveRequest = leaveService.createRequest;
+export const approveLeaveRequest = leaveService.approveRequest;
+export const rejectLeaveRequest = leaveService.rejectRequest;

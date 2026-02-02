@@ -325,10 +325,7 @@ export const PayrollPage = ({ onLogout, userName, userRole }: LayoutProps) => {
       );
       response = result.data;
 
-      applyPayrollResponse(selectedEmployeeId, response, {
-        bankName: payrollFormData.bankName,
-        bankAccount: payrollFormData.bankAccount,
-      });
+      applyPayrollResponse(selectedEmployeeId, response);
       setSelectedMonth(payloadMonth);
       setSelectedYear(payloadYear);
 

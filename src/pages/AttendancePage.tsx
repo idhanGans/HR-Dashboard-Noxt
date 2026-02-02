@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
-import type { Dispatch, SetStateAction } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { DashboardLayout, DropdownSelect } from "../components";
 import {
   CheckInCard,
@@ -19,6 +18,7 @@ import {
   LeaveRequestModal,
 } from "../components/leave";
 import { EmployeeSelector } from "../components/employees";
+import { useAttendanceRecords } from "../hooks/useAttendanceRecords";
 import { useAttendanceSession } from "../hooks/useAttendanceSession";
 import { useEmployeeManagement } from "../hooks/useEmployeeManagement";
 import { useEmployees } from "../hooks/useEmployees";
@@ -199,15 +199,15 @@ const RowsSelector = ({
  */
 interface AttendanceFilterSectionProps {
   filterType: string;
-  setFilterType: Dispatch<SetStateAction<string>>;
+  setFilterType: (value: string) => void;
   dateFrom: string;
-  setDateFrom: Dispatch<SetStateAction<string>>;
+  setDateFrom: (value: string) => void;
   dateTo: string;
-  setDateTo: Dispatch<SetStateAction<string>>;
+  setDateTo: (value: string) => void;
   statusFilter: string;
-  setStatusFilter: Dispatch<SetStateAction<string>>;
+  setStatusFilter: (value: string) => void;
   employeeFilter: string;
-  setEmployeeFilter: Dispatch<SetStateAction<string>>;
+  setEmployeeFilter: (value: string) => void;
   employees: Employee[];
   showEmployeeFilter: boolean;
 }
@@ -448,14 +448,36 @@ export const AttendancePage = ({
   const [isCheckOutModalOpen, setIsCheckOutModalOpen] = useState(false);
 
   // Filter states
-  const [filterType, setFilterType] = useState("all");
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [employeeFilter, setEmployeeFilter] = useState("all");
+  const [filterType, setFilterTypeRaw] = useState("all");
+  const [dateFrom, setDateFromRaw] = useState("");
+  const [dateTo, setDateToRaw] = useState("");
+  const [statusFilter, setStatusFilterRaw] = useState("all");
+  const [employeeFilter, setEmployeeFilterRaw] = useState("all");
   const [leaveEmployeeId, setLeaveEmployeeId] = useState<number | null>(null);
   const [attendancePage, setAttendancePage] = useState(1);
   const [attendanceLimit, setAttendanceLimit] = useState(50);
+
+  // Wrapper setters that reset page to 1 when filter changes
+  const setFilterType = useCallback((value: string) => {
+    setFilterTypeRaw(value);
+    setAttendancePage(1);
+  }, []);
+  const setDateFrom = useCallback((value: string) => {
+    setDateFromRaw(value);
+    setAttendancePage(1);
+  }, []);
+  const setDateTo = useCallback((value: string) => {
+    setDateToRaw(value);
+    setAttendancePage(1);
+  }, []);
+  const setStatusFilter = useCallback((value: string) => {
+    setStatusFilterRaw(value);
+    setAttendancePage(1);
+  }, []);
+  const setEmployeeFilter = useCallback((value: string) => {
+    setEmployeeFilterRaw(value);
+    setAttendancePage(1);
+  }, []);
 
   const { employees, updateEmployeeStatus } = useEmployees();
   const canFilterEmployees = hasRequiredRole(auth.role, ["SUPERADMIN"]);
@@ -466,11 +488,6 @@ export const AttendancePage = ({
     loading: employeeOptionsLoading,
     error: employeeOptionsError,
   } = useEmployeeManagement({ enabled: isSuperadminRole });
-
-  // Reset page when filters change
-  useEffect(() => {
-    setAttendancePage(1);
-  }, [filterType, dateFrom, dateTo, statusFilter, employeeFilter]);
 
   // Parse month input (YYYY-MM) into month and year for backend
   const parsedMonth = useMemo(() => {
@@ -527,21 +544,29 @@ export const AttendancePage = ({
 
   const {
     records,
-    checkInTime,
-    elapsed,
-    isCheckedIn,
-    handleCheckIn,
-    handleCheckOut,
     total: attendanceTotal,
     totalPages: attendanceTotalPages,
     isLoading: attendanceLoading,
-  } = useAttendanceSession({
+    activeCheckInAt,
+    currentUserId: attendanceUserId,
+  } = useAttendanceRecords({
     currentEmployee: employees[0]
       ? { id: employees[0].id, name: employees[0].name }
       : undefined,
     page: attendancePage,
     limit: attendanceLimit,
     filters: attendanceFilters,
+  });
+
+  const {
+    checkInTime,
+    elapsed,
+    isCheckedIn,
+    handleCheckIn,
+    handleCheckOut,
+  } = useAttendanceSession({
+    currentUserId: attendanceUserId,
+    initialCheckInAt: activeCheckInAt,
   });
 
   // Leave management

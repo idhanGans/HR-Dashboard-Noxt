@@ -1,34 +1,24 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../contexts/AuthContext";
-import { interceptedAxios } from "../lib/axios";
-import {
-  PAYROLL_BY_PERIOD,
-  PAYROLL_EMPLOYEE_LIST,
-} from "../services/endpoints";
+import { payrollService } from "../services/payrollService";
 import { hasRequiredRole } from "../utils/roles";
-import { getErrorMessage } from "../utils/errors";
 import { getInitials } from "../utils/utils";
-import type {
-  Employee,
-  PayrollHistoryRecord,
-  PayrollInfo,
-} from "../types";
-import type {
-  PayrollApiResponse,
-  PayrollUser,
-  PayrollUsersResponse,
-} from "../types/api";
+import type { Employee, PayrollHistoryRecord } from "../types";
+import type { PayrollApiResponse, PayrollUser } from "../types/api";
 
-const EMPLOYEE_PAGE_SIZE = 50;
+export const payrollKeys = {
+  all: ["payroll"] as const,
+  employees: () => [...payrollKeys.all, "employees"] as const,
+  payrollData: () => [...payrollKeys.all, "data"] as const,
+  payroll: (userId: number, month: number, year: number) =>
+    [...payrollKeys.payrollData(), { userId, month, year }] as const,
+};
 
 const normalizeEmploymentType = (
-  value?: string,
+  value?: string
 ): Employee["employmentType"] | undefined => {
-  if (
-    value === "PERMANENT" ||
-    value === "TEMPORARY" ||
-    value === "FORMER"
-  ) {
+  if (value === "PERMANENT" || value === "TEMPORARY" || value === "FORMER") {
     return value as Employee["employmentType"];
   }
   return undefined;
@@ -56,9 +46,7 @@ const mapPayrollUser = (user: PayrollUser): Employee => {
   };
 };
 
-const mapPayrollResponse = (
-  response: PayrollApiResponse,
-): PayrollHistoryRecord => ({
+const mapPayrollResponse = (response: PayrollApiResponse): PayrollHistoryRecord => ({
   month: response.month,
   year: response.year,
   basicSalary: response.baseSalary ?? 0,
@@ -74,247 +62,191 @@ const mapPayrollResponse = (
   totalDeductions: response.totalDeductions ?? 0,
 });
 
-const upsertPayrollHistory = (
-  history: PayrollHistoryRecord[] | undefined,
-  record: PayrollHistoryRecord,
-) => {
-  const existing = history ? [...history] : [];
-  const index = existing.findIndex(
-    (entry) => entry.month === record.month && entry.year === record.year,
-  );
-
-  if (index >= 0) {
-    existing[index] = record;
-  } else {
-    existing.push(record);
-  }
-
-  existing.sort((a, b) => {
-    if (a.year !== b.year) return b.year - a.year;
-    return b.month - a.month;
-  });
-
-  return existing;
-};
-
-const extractUsers = (response: PayrollUsersResponse) => {
-  if (Array.isArray(response)) {
-    return { users: response, totalPages: 1 };
-  }
-  return {
-    users: response.data ?? [],
-    totalPages: response.totalPages ?? 1,
-  };
-};
-
 export const usePayrollData = () => {
   const { auth } = useAuth();
-  const [employees, setEmployees] = useState<Employee[]>([]);
-  const [employeesLoading, setEmployeesLoading] = useState(true);
-  const [employeesError, setEmployeesError] = useState<string | null>(null);
-  const [selectedEmployeeId, setSelectedEmployeeId] = useState<number | null>(
-    null,
-  );
+  const queryClient = useQueryClient();
+
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<number | null>(null);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-  const [payrollData, setPayrollData] = useState<
-    PayrollInfo | PayrollHistoryRecord | null
-  >(null);
-  const [payrollLoading, setPayrollLoading] = useState(false);
-  const [payrollError, setPayrollError] = useState<string | null>(null);
 
   const canManagePayroll = hasRequiredRole(auth.role, ["SUPERADMIN"]);
   const isSelfPayrollView = !canManagePayroll;
   const canDownloadPayslip = canManagePayroll || isSelfPayrollView;
 
-  useEffect(() => {
-    let isActive = true;
-
-    if (isSelfPayrollView) {
-      if (!auth.userId) {
-        setEmployees([]);
-        setEmployeesError("Unable to load your profile");
-        setEmployeesLoading(false);
-        return () => {
-          isActive = false;
+  const employeesQuery = useQuery({
+    queryKey: payrollKeys.employees(),
+    queryFn: async () => {
+      if (isSelfPayrollView) {
+        if (!auth.userId) {
+          throw new Error("Unable to load your profile");
+        }
+        const selfEmployee: Employee = {
+          id: auth.userId,
+          name: auth.userName,
+          department: "General",
+          role: auth.userRole,
+          employmentType: "PERMANENT",
+          avatar: getInitials(auth.userName),
+          payroll: {
+            basicSalary: 0,
+            allowances: 0,
+            bonus: 0,
+            deductions: 0,
+            netSalary: 0,
+            bankName: "",
+            bankAccount: "",
+          },
         };
+        return [selfEmployee];
       }
+      const users = await payrollService.getEmployees();
+      return users.map(mapPayrollUser);
+    },
+    enabled: auth.isAuthenticated && !auth.isInitializing,
+  });
 
-      const selfEmployee: Employee = {
-        id: auth.userId,
-        name: auth.userName,
-        department: "General",
-        role: auth.userRole,
-        employmentType: "PERMANENT",
-        avatar: getInitials(auth.userName),
-        payroll: {
-          basicSalary: 0,
-          allowances: 0,
-          bonus: 0,
-          deductions: 0,
-          netSalary: 0,
-          bankName: "",
-          bankAccount: "",
-        },
-      };
-
-      setEmployees([selfEmployee]);
-      setEmployeesError(null);
-      setEmployeesLoading(false);
-      setSelectedEmployeeId(auth.userId);
-      return () => {
-        isActive = false;
-      };
+  const effectiveEmployeeId = useMemo(() => {
+    if (isSelfPayrollView && auth.userId) {
+      return auth.userId;
     }
+    return selectedEmployeeId;
+  }, [isSelfPayrollView, auth.userId, selectedEmployeeId]);
 
-    const fetchEmployees = async () => {
-      setEmployeesLoading(true);
-      setEmployeesError(null);
-      try {
-        const firstResponse = await interceptedAxios.get<PayrollUsersResponse>(
-          `${PAYROLL_EMPLOYEE_LIST}?page=1&limit=${EMPLOYEE_PAGE_SIZE}`,
-        );
-        const { users, totalPages } = extractUsers(firstResponse.data);
+  const payrollQuery = useQuery({
+    queryKey: payrollKeys.payroll(
+      effectiveEmployeeId ?? 0,
+      selectedMonth,
+      selectedYear
+    ),
+    queryFn: () =>
+      payrollService.getPayroll({
+        userId: effectiveEmployeeId!,
+        month: selectedMonth,
+        year: selectedYear,
+      }),
+    select: (data) => (data ? mapPayrollResponse(data) : null),
+    enabled:
+      auth.isAuthenticated && !auth.isInitializing && !!effectiveEmployeeId,
+  });
 
-        let allUsers = users;
-        if (totalPages > 1) {
-          const pages = await Promise.all(
-            Array.from({ length: totalPages - 1 }, (_, index) =>
-              interceptedAxios.get<PayrollUsersResponse>(
-                `${PAYROLL_EMPLOYEE_LIST}?page=${index + 2}&limit=${EMPLOYEE_PAGE_SIZE}`,
-              ),
-            ),
-          );
-          const rest = pages.flatMap((page) => extractUsers(page.data).users);
-          allUsers = [...users, ...rest];
-        }
+  const updateMutation = useMutation({
+    mutationFn: payrollService.updatePayroll,
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: payrollKeys.payroll(
+          variables.userId,
+          variables.month,
+          variables.year
+        ),
+      });
+    },
+  });
 
-        if (!isActive) return;
-        setEmployees(allUsers.map(mapPayrollUser));
-      } catch (error) {
-        if (!isActive) return;
-        setEmployeesError(getErrorMessage(error, "Unable to load employees"));
-      } finally {
-        if (isActive) {
-          setEmployeesLoading(false);
-        }
+  const downloadMutation = useMutation({
+    mutationFn: payrollService.downloadPayslip,
+  });
+
+  const employees = useMemo(
+    () => employeesQuery.data ?? [],
+    [employeesQuery.data]
+  );
+  const payrollData = payrollQuery.data ?? null;
+
+  const selectedEmployee = useMemo(
+    () => employees.find((emp) => emp.id === effectiveEmployeeId) ?? null,
+    [employees, effectiveEmployeeId]
+  );
+
+  const handleSelectEmployee = useCallback((id: number | null) => {
+    setSelectedEmployeeId(id);
+  }, []);
+
+  const handleSelectMonth = useCallback((month: number) => {
+    setSelectedMonth(month);
+  }, []);
+
+  const handleSelectYear = useCallback((year: number) => {
+    setSelectedYear(year);
+  }, []);
+
+  const handleUpdatePayroll = useCallback(
+    async (data: {
+      baseSalary: number;
+      allowance: number;
+      bonuses: number;
+      tax?: number;
+      insurance?: number;
+      pensionFund?: number;
+      otherDeductions?: number;
+    }) => {
+      if (!effectiveEmployeeId) {
+        throw new Error("No employee selected");
       }
-    };
+      return updateMutation.mutateAsync({
+        userId: effectiveEmployeeId,
+        month: selectedMonth,
+        year: selectedYear,
+        ...data,
+      });
+    },
+    [effectiveEmployeeId, selectedMonth, selectedYear, updateMutation]
+  );
 
-    fetchEmployees();
-    return () => {
-      isActive = false;
-    };
-  }, [auth.userId, auth.userName, auth.userRole, isSelfPayrollView]);
-
-  useEffect(() => {
-    let isActive = true;
-
-    const fetchPayroll = async () => {
-      if (!selectedEmployeeId) {
-        setPayrollData(null);
-        setPayrollError(null);
-        setPayrollLoading(false);
-        return;
-      }
-
-      setPayrollLoading(true);
-      setPayrollError(null);
-      try {
-        const path = `${PAYROLL_BY_PERIOD.replace(
-          ":userId",
-          String(selectedEmployeeId),
-        )}?month=${selectedMonth}&year=${selectedYear}`;
-        const response =
-          await interceptedAxios.get<PayrollApiResponse | null>(path);
-        if (!isActive) return;
-        if (!response.data) {
-          setPayrollData(null);
-          return;
-        }
-        const mapped = mapPayrollResponse(response.data);
-        setPayrollData(mapped);
-        setEmployees((prev) =>
-          prev.map((emp) =>
-            emp.id === selectedEmployeeId
-              ? {
-                  ...emp,
-                  payrollHistory: upsertPayrollHistory(emp.payrollHistory, mapped),
-                }
-              : emp,
-          ),
-        );
-      } catch (error) {
-        if (!isActive) return;
-        setPayrollError(getErrorMessage(error, "Unable to load payroll data"));
-        setPayrollData(null);
-      } finally {
-        if (isActive) {
-          setPayrollLoading(false);
-        }
-      }
-    };
-
-    fetchPayroll();
-    return () => {
-      isActive = false;
-    };
-  }, [selectedEmployeeId, selectedMonth, selectedYear]);
+  const handleDownloadPayslip = useCallback(async () => {
+    if (!effectiveEmployeeId || !selectedEmployee) {
+      throw new Error("No employee selected");
+    }
+    return downloadMutation.mutateAsync({
+      userId: effectiveEmployeeId,
+      month: selectedMonth,
+      year: selectedYear,
+      employeeName: selectedEmployee.name,
+    });
+  }, [
+    effectiveEmployeeId,
+    selectedEmployee,
+    selectedMonth,
+    selectedYear,
+    downloadMutation,
+  ]);
 
   const applyPayrollResponse = useCallback(
-    (
-      userId: number,
-      response: PayrollApiResponse,
-      bankInfo?: { bankName?: string; bankAccount?: string },
-    ) => {
+    (userId: number, response: PayrollApiResponse) => {
       const mapped = mapPayrollResponse(response);
-      setPayrollData(mapped);
-      setEmployees((prev) =>
-        prev.map((emp) => {
-          if (emp.id !== userId) return emp;
-          return {
-            ...emp,
-            payrollHistory: upsertPayrollHistory(emp.payrollHistory, mapped),
-            payroll: {
-              basicSalary: mapped.basicSalary ?? 0,
-              allowances: mapped.allowances ?? 0,
-              bonus: mapped.bonus ?? 0,
-              deductions: mapped.deductions ?? 0,
-              netSalary: mapped.netSalary ?? 0,
-              tax: mapped.tax ?? 0,
-              insurance: mapped.insurance ?? 0,
-              pension: mapped.pension ?? 0,
-              otherDeductions: mapped.otherDeductions ?? 0,
-              totalEarnings: mapped.totalEarnings ?? 0,
-              totalDeductions: mapped.totalDeductions ?? 0,
-              bankName: bankInfo?.bankName ?? emp.payroll?.bankName ?? "",
-              bankAccount:
-                bankInfo?.bankAccount ?? emp.payroll?.bankAccount ?? "",
-            },
-          };
-        }),
+      queryClient.setQueryData(
+        payrollKeys.payroll(userId, response.month, response.year),
+        mapped
       );
       return mapped;
     },
-    [setEmployees, setPayrollData],
+    [queryClient]
   );
 
   return {
     employees,
-    employeesLoading,
-    employeesError,
-    selectedEmployeeId,
-    setSelectedEmployeeId,
-    selectedMonth,
-    setSelectedMonth,
-    selectedYear,
-    setSelectedYear,
+    selectedEmployee,
     payrollData,
-    payrollLoading,
-    payrollError,
+    selectedEmployeeId: effectiveEmployeeId,
+    setSelectedEmployeeId: handleSelectEmployee,
+    selectedMonth,
+    setSelectedMonth: handleSelectMonth,
+    selectedYear,
+    setSelectedYear: handleSelectYear,
+    employeesLoading: employeesQuery.isLoading,
+    employeesError: employeesQuery.error?.message ?? null,
+    payrollLoading: payrollQuery.isLoading,
+    payrollError: payrollQuery.error?.message ?? null,
+    isUpdating: updateMutation.isPending,
+    isDownloading: downloadMutation.isPending,
     canManagePayroll,
     isSelfPayrollView,
     canDownloadPayslip,
+    handleUpdatePayroll,
+    handleDownloadPayslip,
     applyPayrollResponse,
+    refreshPayroll: () => {
+      queryClient.invalidateQueries({ queryKey: payrollKeys.all });
+    },
   };
 };

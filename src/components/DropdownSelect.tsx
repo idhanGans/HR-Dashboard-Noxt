@@ -175,6 +175,7 @@ export const DropdownSelect = ({
       {isOpen && (
         <FloatingPortal>
           <div
+            // eslint-disable-next-line react-hooks/refs -- refs.setFloating is a callback ref, not a .current access
             ref={refs.setFloating}
             role="listbox"
             style={{ ...floatingStyles, zIndex: 9999 }}
