@@ -78,6 +78,27 @@ export class AttendanceRecordsController {
   @ApiOperation({ summary: "Get attendance records for all users" })
   @ApiQuery({ name: "page", required: false, type: Number, example: 1 })
   @ApiQuery({ name: "limit", required: false, type: Number, example: 10 })
+  @ApiQuery({ name: "userId", required: false, type: Number, example: 1 })
+  @ApiQuery({
+    name: "status",
+    required: false,
+    enum: ["PRESENT", "LATE", "ABSENT"],
+    example: "PRESENT",
+  })
+  @ApiQuery({
+    name: "month",
+    required: false,
+    type: Number,
+    example: 2,
+    description: "Filter by month (1-12). Requires year.",
+  })
+  @ApiQuery({
+    name: "year",
+    required: false,
+    type: Number,
+    example: 2026,
+    description: "Filter by year. Requires month.",
+  })
   @ApiQuery({
     name: "startDate",
     required: false,

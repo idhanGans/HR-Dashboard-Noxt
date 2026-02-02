@@ -77,30 +77,6 @@ enum AttendanceStatus {
   ABSENT
 }
 
-enum LeaveStatus {
-  PENDING
-  APPROVED
-  REJECTED
-}
-
-enum LeaveType {
-  PAID_LEAVE
-  UNPAID_LEAVE
-  SICK_LEAVE
-  URGENT_LEAVE
-}
-
-enum AttendanceCheckoutSource {
-  MANUAL
-  AUTO
-}
-
-enum AttendanceStatus {
-  PRESENT
-  LATE
-  ABSENT
-}
-
 model User {
   id                      Int            @id @default(autoincrement())
   fullName                String
@@ -119,6 +95,7 @@ model User {
   bankName                String?
   bankAccountHolderName   String?
   photoUrl                String?
+  extraPaidLeaveDays      Int?
   nickname                String?
   gender                  Gender?
   dateOfBirth             DateTime?
@@ -255,7 +232,7 @@ model LeaveRequest {
   id           Int         @id @default(autoincrement())
   userId       Int
   type         LeaveType
-  reason       String?
+  reason       String
   startDate    DateTime
   endDate      DateTime
   status       LeaveStatus @default(PENDING)
@@ -270,16 +247,6 @@ model LeaveRequest {
   @@index([status])
   @@index([startDate, endDate])
   @@index([reviewedById])
-}
-
-model LeaveEntitlement {
-  id           Int      @id @default(autoincrement())
-  type         LeaveType
-  entitledDays Int
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  @@unique([type])
 }
 
 model Payroll {

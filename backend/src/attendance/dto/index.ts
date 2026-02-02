@@ -4,7 +4,6 @@ export * from "@/attendance/dto/paginated-attendance-records-response.dto";
 export * from "@/attendance/dto/create-check-in.dto";
 export * from "@/attendance/dto/create-leave-request.dto";
 export * from "@/attendance/dto/leave-balance.dto";
-export * from "@/attendance/dto/leave-entitlement.dto";
 export * from "@/attendance/dto/leave-request-response.dto";
 export * from "@/attendance/dto/leave-requests-query.dto";
 export * from "@/attendance/dto/paginated-leave-requests-response.dto";

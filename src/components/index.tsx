@@ -7,6 +7,7 @@ export { Table } from "./Table";
 export { Sidebar } from "./Sidebar";
 export { Topbar } from "./Topbar";
 export { DashboardLayout } from "./DashboardLayout";
+export { DropdownSelect } from "./DropdownSelect";
 
 // Dashboard Components
 export * from "./dashboard";

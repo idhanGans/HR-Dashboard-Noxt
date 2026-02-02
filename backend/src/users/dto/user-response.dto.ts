@@ -1,5 +1,12 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { Role, EmploymentType, TypeOfWork, Level, Gender, WorkStatus } from "@/users/dto/create-user.dto";
+import {
+  Role,
+  EmploymentType,
+  TypeOfWork,
+  Level,
+  Gender,
+  WorkStatus,
+} from "@/users/dto/create-user.dto";
 
 export class OrganizationBasicDto {
   @ApiProperty({ description: "Organization ID", example: 1 })
@@ -104,6 +111,12 @@ export class UserResponseDto {
     example: "https://example.com/photo.jpg",
   })
   photoUrl?: string;
+
+  @ApiPropertyOptional({
+    description: "Extra paid leave days per year",
+    example: 2,
+  })
+  extraPaidLeaveDays?: number | null;
 
   @ApiPropertyOptional({ description: "Organization ID", example: 1 })
   organizationId?: number;

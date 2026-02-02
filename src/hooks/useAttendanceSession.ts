@@ -13,8 +13,18 @@ import type {
   AttendanceApiRecord,
   PaginatedAttendanceRecordsResponse,
 } from "../types/api";
+import { formatUtcOffset } from "../utils/timezone";
 
-const PAGE_SIZE = 100;
+const DEFAULT_PAGE_SIZE = 50;
+
+export interface AttendanceFilters {
+  status?: "present" | "late" | "absent" | "all";
+  month?: number;
+  year?: number;
+  startDate?: string;
+  endDate?: string;
+  userId?: number | "all";
+}
 
 const formatDateKey = (date: Date) => {
   const year = date.getFullYear();
@@ -55,22 +65,32 @@ const mapApiRecord = (
     status: normalizedStatus,
     employeeId: record.userId,
     employeeName: record.user?.fullName ?? fallbackName,
+    timezone: record.timezone ?? null,
+    timezoneLabel: formatUtcOffset(record.timezone ?? undefined, checkInDate),
   };
 };
 
 /**
  * useAttendanceSession - Custom hook for attendance session management
  */
-export const useAttendanceSession = (currentEmployee?: {
-  id?: number;
-  name?: string;
+export const useAttendanceSession = (options?: {
+  currentEmployee?: { id?: number; name?: string };
+  page?: number;
+  limit?: number;
+  filters?: AttendanceFilters;
 }) => {
+  const currentEmployee = options?.currentEmployee;
+  const page = options?.page ?? 1;
+  const limit = options?.limit ?? DEFAULT_PAGE_SIZE;
+  const filters = options?.filters;
   const { auth } = useAuth();
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
   const [checkInTime, setCheckInTime] = useState<number | null>(null);
   const [elapsed, setElapsed] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
 
   const isCheckedIn = useMemo(() => !!checkInTime, [checkInTime]);
   const canManageRecords = hasRequiredRole(auth.role, ["SUPERADMIN"]);
@@ -105,6 +125,8 @@ export const useAttendanceSession = (currentEmployee?: {
       setRecords([]);
       setCheckInTime(null);
       setElapsed(0);
+      setTotal(0);
+      setTotalPages(1);
       return;
     }
 
@@ -115,25 +137,43 @@ export const useAttendanceSession = (currentEmployee?: {
       ? ATTENDANCE_RECORDS
       : ATTENDANCE_RECORDS_SELF;
 
-    try {
-      const fetchPage = async (page: number) => {
-        const path = `${basePath}?page=${page}&limit=${PAGE_SIZE}`;
-        return interceptedAxios.get<PaginatedAttendanceRecordsResponse>(path);
-      };
+    // Build query params
+    const params = new URLSearchParams();
+    params.set("page", String(page));
+    params.set("limit", String(limit));
 
-      const first = await fetchPage(1);
-      let allRecords = [...first.data.data];
-      const totalPages = first.data.totalPages ?? 1;
-
-      if (totalPages > 1) {
-        const pages = await Promise.all(
-          Array.from({ length: totalPages - 1 }, (_, index) =>
-            fetchPage(index + 2),
-          ),
-        );
-        const rest = pages.flatMap((page) => page.data.data);
-        allRecords = [...allRecords, ...rest];
+    if (filters) {
+      // Status filter
+      if (filters.status && filters.status !== "all") {
+        params.set("status", filters.status.toUpperCase());
       }
+      // Month/year filter (takes precedence over date range)
+      if (filters.month && filters.year) {
+        params.set("month", String(filters.month));
+        params.set("year", String(filters.year));
+      } else {
+        // Date range filter
+        if (filters.startDate) {
+          params.set("startDate", filters.startDate);
+        }
+        if (filters.endDate) {
+          params.set("endDate", filters.endDate);
+        }
+      }
+      // User filter (for superadmin)
+      if (filters.userId && filters.userId !== "all") {
+        params.set("userId", String(filters.userId));
+      }
+    }
+
+    try {
+      const path = `${basePath}?${params.toString()}`;
+      const response =
+        await interceptedAxios.get<PaginatedAttendanceRecordsResponse>(path);
+
+      const allRecords = response.data.data;
+      setTotal(response.data.total ?? allRecords.length);
+      setTotalPages(response.data.totalPages ?? 1);
 
       const mapped = allRecords.map((record) =>
         mapApiRecord(record, fallbackName),
@@ -156,10 +196,20 @@ export const useAttendanceSession = (currentEmployee?: {
       setRecords([]);
       setCheckInTime(null);
       setElapsed(0);
+      setTotal(0);
+      setTotalPages(1);
     } finally {
       setIsLoading(false);
     }
-  }, [auth.isAuthenticated, canManageRecords, currentUserId, fallbackName]);
+  }, [
+    auth.isAuthenticated,
+    canManageRecords,
+    currentUserId,
+    fallbackName,
+    page,
+    limit,
+    filters,
+  ]);
 
   useEffect(() => {
     if (auth.isInitializing) return;
@@ -228,5 +278,9 @@ export const useAttendanceSession = (currentEmployee?: {
     isLoading,
     error,
     refreshRecords: fetchAttendanceRecords,
+    total,
+    totalPages,
+    page,
+    limit,
   };
 };

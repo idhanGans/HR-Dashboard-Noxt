@@ -1,5 +1,6 @@
 import {
   Body,
+  BadRequestException,
   Controller,
   Get,
   Param,
@@ -22,12 +23,10 @@ import { LeaveRequestsService } from "@/attendance/leaves/leave-requests.service
 import {
   CreateLeaveRequestDto,
   LeaveBalanceDto,
-  LeaveEntitlementDto,
   LeaveRequestResponseDto,
   LeaveRequestsMeQueryDto,
   LeaveRequestsQueryDto,
   PaginatedLeaveRequestsResponseDto,
-  UpdateLeaveEntitlementsDto,
 } from "@/attendance/dto";
 import { JwtAuthGuard } from "@/auth/guards/jwt-auth.guard";
 import { RolesGuard } from "@/auth/guards/roles.guard";
@@ -44,7 +43,7 @@ export class LeaveRequestsController {
   constructor(private readonly leaveRequestsService: LeaveRequestsService) {}
 
   @Post()
-  @Roles(Role.EMPLOYEE)
+  @Roles(Role.EMPLOYEE, Role.SUPERVISOR)
   @ApiOperation({ summary: "Create a leave request" })
   @ApiBody({ type: CreateLeaveRequestDto })
   @ApiResponse({
@@ -95,8 +94,9 @@ export class LeaveRequestsController {
   }
 
   @Get("balance")
-  @Roles(Role.EMPLOYEE)
+  @Roles(Role.EMPLOYEE, Role.SUPERVISOR, Role.SUPERADMIN)
   @ApiOperation({ summary: "Get leave balance for current user" })
+  @ApiQuery({ name: "userId", required: false, type: Number, example: 1 })
   @ApiResponse({
     status: 200,
     description: "Returns leave balances by type",
@@ -104,8 +104,22 @@ export class LeaveRequestsController {
   })
   async getBalance(
     @CurrentUser() user: UserPayload,
+    @Query("userId") userId?: string,
   ): Promise<LeaveBalanceDto[]> {
-    return this.leaveRequestsService.getLeaveBalances(user.id);
+    if (user.role !== Role.SUPERADMIN) {
+      return this.leaveRequestsService.getLeaveBalances(user.id);
+    }
+
+    if (!userId) {
+      return this.leaveRequestsService.getLeaveBalances(user.id);
+    }
+
+    const parsedUserId = Number(userId);
+    if (!Number.isFinite(parsedUserId) || parsedUserId <= 0) {
+      throw new BadRequestException("Invalid userId");
+    }
+
+    return this.leaveRequestsService.getLeaveBalances(parsedUserId);
   }
 
   @Get("recent-approvals")
@@ -126,35 +140,8 @@ export class LeaveRequestsController {
     return this.leaveRequestsService.findRecentApprovals(safeLimit);
   }
 
-  @Put("entitlements")
-  @Roles(Role.SUPERADMIN)
-  @ApiOperation({ summary: "Update global leave entitlements" })
-  @ApiBody({ type: UpdateLeaveEntitlementsDto })
-  @ApiResponse({
-    status: 200,
-    description: "Updated leave entitlements",
-    type: [LeaveEntitlementDto],
-  })
-  async updateEntitlements(
-    @Body() dto: UpdateLeaveEntitlementsDto,
-  ): Promise<LeaveEntitlementDto[]> {
-    return this.leaveRequestsService.updateEntitlements(dto);
-  }
-
-  @Get("entitlements")
-  @Roles(Role.SUPERADMIN, Role.SUPERVISOR, Role.EMPLOYEE)
-  @ApiOperation({ summary: "Get global leave entitlements" })
-  @ApiResponse({
-    status: 200,
-    description: "Returns leave entitlements",
-    type: [LeaveEntitlementDto],
-  })
-  async getEntitlements(): Promise<LeaveEntitlementDto[]> {
-    return this.leaveRequestsService.getEntitlements();
-  }
-
   @Get("me")
-  @Roles(Role.EMPLOYEE)
+  @Roles(Role.EMPLOYEE, Role.SUPERVISOR)
   @ApiOperation({ summary: "Get current user's leave requests" })
   @ApiQuery({ name: "page", required: false, type: Number, example: 1 })
   @ApiQuery({ name: "limit", required: false, type: Number, example: 10 })

@@ -1,6 +1,7 @@
 import { Card } from "../Card";
 import { StatusBadge } from "../StatusBadge";
 import type { LeaveRecord } from "../../types";
+import { formatLeaveType } from "../../utils/leave";
 
 type ApprovalItem = {
   name: string;
@@ -23,15 +24,15 @@ const buildDefaultApprovals = () => {
       startDate: toDate(now - 7 * 24 * 60 * 60 * 1000),
       endDate: toDate(now - 5 * 24 * 60 * 60 * 1000),
       approvalDate: toDate(now - 14 * 24 * 60 * 60 * 1000),
-      status: "approved",
+      status: "APPROVED",
     },
     {
       name: "Bob Smith",
-      type: "Vacation",
+      type: "Urgent Leave",
       startDate: toDate(now + 15 * 24 * 60 * 60 * 1000),
       endDate: toDate(now + 18 * 24 * 60 * 60 * 1000),
       approvalDate: toDate(now),
-      status: "pending",
+      status: "PENDING",
     },
     {
       name: "Carol White",
@@ -39,7 +40,7 @@ const buildDefaultApprovals = () => {
       startDate: toDate(now - 3 * 24 * 60 * 60 * 1000),
       endDate: toDate(now - 2 * 24 * 60 * 60 * 1000),
       approvalDate: toDate(now - 10 * 24 * 60 * 60 * 1000),
-      status: "approved",
+      status: "APPROVED",
     },
   ];
 };
@@ -93,7 +94,9 @@ export const RecentApprovalsCard = ({
               <div className="flex justify-between items-start">
                 <div>
                   <p className="text-white font-medium">{name}</p>
-                  <p className="text-lightGrey text-xs">{item.type}</p>
+                  <p className="text-lightGrey text-xs">
+                    {formatLeaveType(item.type)}
+                  </p>
                 </div>
                 <StatusBadge status={item.status} />
               </div>
@@ -102,7 +105,10 @@ export const RecentApprovalsCard = ({
                   {formatDateRange(startDate, endDate)}
                 </p>
                 <p className="text-xs text-gray-500">
-                  {item.status === "approved" ? "Approved" : "Pending"} on{" "}
+                  {String(item.status).toLowerCase() === "approved"
+                    ? "Approved"
+                    : "Pending"}{" "}
+                  on{" "}
                   {new Date(approvalDate).toLocaleDateString("en-US", {
                     month: "short",
                     day: "numeric",

@@ -14,6 +14,10 @@ import {
   Prisma,
   Role,
 } from "@prisma/client";
+import {
+  buildDateRangeFilter,
+  buildMonthFilter,
+} from "@/common/utils/date-filters";
 
 @Injectable()
 export class AttendanceRecordsService {
@@ -120,16 +124,27 @@ export class AttendanceRecordsService {
     const skip = (page - 1) * limit;
 
     const where: Prisma.AttendanceRecordWhereInput = {};
+
+    // User filter (from param or query)
     if (userId) {
       where.userId = userId;
+    } else if (query.userId) {
+      where.userId = query.userId;
     }
-    const checkInRange = this.buildDateRangeFilter(
-      query.startDate,
-      query.endDate,
-    );
 
-    if (checkInRange) {
-      where.checkInAt = checkInRange;
+    // Status filter
+    if (query.status) {
+      where.status = query.status;
+    }
+
+    // Date filter: month/year takes precedence over startDate/endDate
+    if (query.month && query.year) {
+      where.checkInAt = buildMonthFilter(query.month, query.year);
+    } else {
+      const checkInRange = buildDateRangeFilter(query.startDate, query.endDate);
+      if (checkInRange) {
+        where.checkInAt = checkInRange;
+      }
     }
 
     const [records, total] = await Promise.all([
@@ -185,19 +200,38 @@ export class AttendanceRecordsService {
       },
     });
 
+    // Group records by their end-of-day time to batch updates
+    const recordsByEndTime = new Map<string, { ids: number[]; endOfDay: Date }>();
+
     for (const record of openRecords) {
       const zone = this.normalizeTimezone(record.timezone);
       const endOfDay = this.getEndOfDayUtc(record.checkInAt, zone);
 
       if (now >= endOfDay) {
-        await this.prisma.attendanceRecord.update({
-          where: { id: record.id },
+        const key = endOfDay.toISOString();
+        const existing = recordsByEndTime.get(key);
+        if (existing) {
+          existing.ids.push(record.id);
+        } else {
+          recordsByEndTime.set(key, { ids: [record.id], endOfDay });
+        }
+      }
+    }
+
+    // Batch update all records with the same end-of-day time
+    const updates = Array.from(recordsByEndTime.values()).map(
+      ({ ids, endOfDay }) =>
+        this.prisma.attendanceRecord.updateMany({
+          where: { id: { in: ids } },
           data: {
             checkOutAt: endOfDay,
             checkOutSource: AttendanceCheckoutSource.AUTO,
           },
-        });
-      }
+        }),
+    );
+
+    if (updates.length > 0) {
+      await Promise.all(updates);
     }
   }
 
@@ -244,26 +278,6 @@ export class AttendanceRecordsService {
         timezone: zone,
       })),
     });
-  }
-
-  private buildDateRangeFilter(
-    startDate?: string,
-    endDate?: string,
-  ): Prisma.DateTimeFilter | undefined {
-    if (!startDate && !endDate) {
-      return undefined;
-    }
-
-    const range: Prisma.DateTimeFilter = {};
-    if (startDate) {
-      range.gte = new Date(startDate);
-    }
-
-    if (endDate) {
-      range.lte = new Date(endDate);
-    }
-
-    return range;
   }
 
   private getDayBounds(

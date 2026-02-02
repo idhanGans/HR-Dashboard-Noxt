@@ -26,11 +26,11 @@ export class LeaveRequestResponseDto {
   })
   type: LeaveType;
 
-  @ApiPropertyOptional({
+  @ApiProperty({
     description: "Reason",
     example: "Medical appointment",
   })
-  reason?: string | null;
+  reason: string;
 
   @ApiProperty({
     description: "Start date",

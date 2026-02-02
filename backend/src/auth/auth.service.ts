@@ -88,6 +88,7 @@ export class AuthService {
         bankName: true,
         bankAccountHolderName: true,
         photoUrl: true,
+        extraPaidLeaveDays: true,
         organizationId: true,
         createdAt: true,
         updatedAt: true,
@@ -117,6 +118,7 @@ export class AuthService {
         bankName: true,
         bankAccountHolderName: true,
         photoUrl: true,
+        extraPaidLeaveDays: true,
         organizationId: true,
         organization: {
           select: {

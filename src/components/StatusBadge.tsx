@@ -5,6 +5,7 @@ interface StatusBadgeProps {
 
 // Reusable Status Badge component
 export const StatusBadge = ({ status, label }: StatusBadgeProps) => {
+  const normalizedStatus = status?.toLowerCase?.() ?? "";
   const statusStyles: Record<string, string> = {
     present: "status-success",
     absent: "status-danger",
@@ -15,8 +16,12 @@ export const StatusBadge = ({ status, label }: StatusBadgeProps) => {
   };
 
   return (
-    <span className={statusStyles[status] || "status-warning"}>
-      {label || status.charAt(0).toUpperCase() + status.slice(1)}
+    <span className={statusStyles[normalizedStatus] || "status-warning"}>
+      {label ||
+        (normalizedStatus
+          ? normalizedStatus.charAt(0).toUpperCase() +
+            normalizedStatus.slice(1)
+          : status)}
     </span>
   );
 };

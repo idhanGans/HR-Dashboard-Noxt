@@ -1,11 +1,5 @@
-import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import {
-  IsDateString,
-  IsEnum,
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-} from "class-validator";
+import { ApiProperty } from "@nestjs/swagger";
+import { IsDateString, IsEnum, IsNotEmpty, IsString } from "class-validator";
 import { LeaveType } from "@prisma/client";
 
 export class CreateLeaveRequestDto {
@@ -34,11 +28,11 @@ export class CreateLeaveRequestDto {
   @IsNotEmpty()
   endDate: string;
 
-  @ApiPropertyOptional({
+  @ApiProperty({
     description: "Reason for leave",
     example: "Family event",
   })
-  @IsOptional()
   @IsString()
-  reason?: string;
+  @IsNotEmpty()
+  reason: string;
 }

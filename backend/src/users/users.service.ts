@@ -56,6 +56,7 @@ export class UsersService {
         bankName: createUserDto.bankName,
         bankAccountHolderName: createUserDto.bankAccountHolderName,
         photoUrl: createUserDto.photoUrl,
+        extraPaidLeaveDays: createUserDto.extraPaidLeaveDays ?? null,
         organizationId: createUserDto.organizationId,
         nickname: createUserDto.nickname,
         gender: createUserDto.gender,
@@ -117,6 +118,7 @@ export class UsersService {
           bankName: true,
           bankAccountHolderName: true,
           photoUrl: true,
+          extraPaidLeaveDays: true,
           organizationId: true,
           organization: {
             select: {
@@ -245,6 +247,7 @@ export class UsersService {
       bankName: updateUserDto.bankName,
       bankAccountHolderName: updateUserDto.bankAccountHolderName,
       photoUrl: updateUserDto.photoUrl,
+      extraPaidLeaveDays: updateUserDto.extraPaidLeaveDays,
       nickname: updateUserDto.nickname,
       gender: updateUserDto.gender,
       dateOfBirth: updateUserDto.dateOfBirth

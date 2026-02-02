@@ -7,6 +7,7 @@ import {
   IsInt,
   IsDateString,
   MinLength,
+  Min,
 } from "class-validator";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 
@@ -183,6 +184,15 @@ export class CreateUserDto {
   @IsOptional()
   @IsString()
   photoUrl?: string;
+
+  @ApiPropertyOptional({
+    description: "Extra paid leave days per year",
+    example: 3,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  extraPaidLeaveDays?: number;
 
   @ApiPropertyOptional({
     description: "Organization ID",

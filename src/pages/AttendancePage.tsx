@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
-import { DashboardLayout } from "../components";
+import { DashboardLayout, DropdownSelect } from "../components";
 import {
   CheckInCard,
   CheckOutCard,
@@ -18,12 +18,15 @@ import {
   LeaveHeader,
   LeaveRequestModal,
 } from "../components/leave";
+import { EmployeeSelector } from "../components/employees";
 import { useAttendanceSession } from "../hooks/useAttendanceSession";
+import { useEmployeeManagement } from "../hooks/useEmployeeManagement";
 import { useEmployees } from "../hooks/useEmployees";
 import { useLeaveManagement } from "../hooks/useLeaveManagement";
 import { useAuth } from "../contexts/AuthContext";
 import { hasRequiredRole } from "../utils/roles";
 import { Calendar, Filter } from "lucide-react";
+import { useMediaQuery } from "../hooks/useMediaQuery";
 import type {
   AttendanceRecord,
   Employee,
@@ -61,6 +64,99 @@ const ActionCardsGrid = ({
   </div>
 );
 
+interface PaginationControlsProps {
+  page: number;
+  totalPages: number;
+  totalItems?: number;
+  onPageChange: (nextPage: number) => void;
+  isLoading?: boolean;
+}
+
+const PaginationControls = ({
+  page,
+  totalPages,
+  totalItems,
+  onPageChange,
+  isLoading,
+}: PaginationControlsProps) => {
+  const [pageInput, setPageInput] = useState(String(page));
+  const maxPage = Math.max(totalPages, 1);
+
+  useEffect(() => {
+    setPageInput(String(page));
+  }, [page]);
+
+  if (totalPages <= 1 && !totalItems) return null;
+
+  const canGoBack = page > 1;
+  const canGoNext = page < totalPages;
+
+  const commitPageInput = () => {
+    const parsed = Number(pageInput);
+    if (!Number.isFinite(parsed)) {
+      setPageInput(String(page));
+      return;
+    }
+    const nextPage = Math.min(Math.max(Math.trunc(parsed), 1), maxPage);
+    if (nextPage !== page) {
+      onPageChange(nextPage);
+    } else {
+      setPageInput(String(nextPage));
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-3 mt-4">
+      <div className="flex flex-wrap items-center justify-center gap-2">
+        <button
+          onClick={() => onPageChange(1)}
+          disabled={!canGoBack || isLoading}
+          className="px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {"<<"}
+        </button>
+        <button
+          onClick={() => onPageChange(page - 1)}
+          disabled={!canGoBack || isLoading}
+          className="px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {"<"}
+        </button>
+        <input
+          id="page-input"
+          type="number"
+          min={1}
+          max={maxPage}
+          value={pageInput}
+          onChange={(event) => setPageInput(event.target.value)}
+          onBlur={commitPageInput}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              commitPageInput();
+            }
+          }}
+          className="w-20 h-9 px-3 bg-white/5 border border-white/10 rounded-lg text-white text-center focus:border-blue-500 focus:outline-none"
+        />
+        <button
+          onClick={() => onPageChange(page + 1)}
+          disabled={!canGoNext || isLoading}
+          className="px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {">"}
+        </button>
+        <button
+          onClick={() => onPageChange(totalPages)}
+          disabled={!canGoNext || isLoading}
+          className="px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {">>"}
+        </button>
+      </div>
+    </div>
+  );
+};
+
 /**
  * LeaveBalanceGrid - Grid of leave balance cards
  */
@@ -70,6 +166,32 @@ const LeaveBalanceGrid = ({ balances }: { balances: LeaveBalance[] }) => (
       <LeaveBalanceCard key={leave.type} leave={leave} />
     ))}
   </div>
+);
+
+const RowsSelector = ({
+  value,
+  onChange,
+}: {
+  value: number;
+  onChange: (nextSize: number) => void;
+}) => (
+  <label className="flex items-center gap-2 text-sm text-lightGrey">
+    <span>Rows</span>
+    <DropdownSelect
+      value={value}
+      onChange={(nextValue) => {
+        if (nextValue !== null) {
+          onChange(Number(nextValue));
+        }
+      }}
+      options={[25, 50, 100].map((s) => ({
+        value: s,
+        label: `${s}`,
+      }))}
+      ariaLabel="Rows per page"
+      size="compact"
+    />
+  </label>
 );
 
 /**
@@ -90,6 +212,20 @@ interface AttendanceFilterSectionProps {
   showEmployeeFilter: boolean;
 }
 
+const filterTypeOptions = [
+  { value: "all", label: "All Records" },
+  { value: "date", label: "Date Range" },
+  { value: "month", label: "Month" },
+  { value: "status", label: "Status" },
+];
+
+const statusOptions = [
+  { value: "all", label: "All Status" },
+  { value: "present", label: "Present" },
+  { value: "late", label: "Late" },
+  { value: "absent", label: "Absent" },
+];
+
 const AttendanceFilterSection = ({
   filterType,
   setFilterType,
@@ -103,146 +239,120 @@ const AttendanceFilterSection = ({
   setEmployeeFilter,
   employees,
   showEmployeeFilter,
-}: AttendanceFilterSectionProps) => (
-  <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-6 mb-8">
-    <div className="flex items-center gap-2 mb-6">
-      <Filter size={20} className="text-blue-400" />
-      <h3 className="text-lg font-semibold text-white">
-        Filter Attendance Records
-      </h3>
-    </div>
+}: AttendanceFilterSectionProps) => {
+  const employeeOptions = [
+    { value: "all", label: "All Employees" },
+    ...(employees?.map((emp) => ({
+      value: String(emp.id),
+      label: emp.name,
+    })) ?? []),
+  ];
 
-    <div
-      className={`grid grid-cols-1 sm:grid-cols-2 ${
-        showEmployeeFilter ? "lg:grid-cols-5" : "lg:grid-cols-4"
-      } gap-4`}
-    >
-      {/* Filter Type */}
-      <div>
-        <label className="block text-sm font-medium text-gray-300 mb-2">
-          Filter By
-        </label>
-        <select
-          value={filterType}
-          onChange={(e) => setFilterType(e.target.value)}
-          className="w-full h-11 px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors"
-        >
-          <option value="all" className="bg-gray-800">
-            All Records
-          </option>
-          <option value="date" className="bg-gray-800">
-            Date Range
-          </option>
-          <option value="month" className="bg-gray-800">
-            Month
-          </option>
-          <option value="status" className="bg-gray-800">
-            Status
-          </option>
-        </select>
+  return (
+    <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-6 mb-8">
+      <div className="flex items-center gap-2 mb-6">
+        <Filter size={20} className="text-blue-400" />
+        <h3 className="text-lg font-semibold text-white">
+          Filter Attendance Records
+        </h3>
       </div>
 
-      {/* Employee Filter */}
-      {showEmployeeFilter && (
+      <div
+        className={`grid grid-cols-1 sm:grid-cols-2 ${
+          showEmployeeFilter ? "lg:grid-cols-5" : "lg:grid-cols-4"
+        } gap-4`}
+      >
+        {/* Filter Type */}
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-2">
-            Employee
+            Filter By
           </label>
-          <select
-            value={employeeFilter}
-            onChange={(e) => setEmployeeFilter(e.target.value)}
-            className="w-full h-11 px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors"
-          >
-            <option value="all" className="bg-gray-800">
-              All Employees
-            </option>
-            {employees?.map((emp) => (
-              <option
-                key={emp.id}
-                value={String(emp.id)}
-                className="bg-gray-800"
-              >
-                {emp.name}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
-
-      {/* Date Range - From */}
-      {(filterType === "date" || filterType === "all") && (
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">
-            From Date
-          </label>
-          <input
-            type="date"
-            value={dateFrom}
-            onChange={(e) => setDateFrom(e.target.value)}
-            className="w-full h-11 px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors"
+          <DropdownSelect
+            value={filterType}
+            onChange={(val) => setFilterType(String(val ?? "all"))}
+            options={filterTypeOptions}
+            ariaLabel="Filter type"
           />
         </div>
-      )}
 
-      {/* Date Range - To */}
-      {(filterType === "date" || filterType === "all") && (
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">
-            To Date
-          </label>
-          <input
-            type="date"
-            value={dateTo}
-            onChange={(e) => setDateTo(e.target.value)}
-            className="w-full h-11 px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors"
-          />
-        </div>
-      )}
+        {/* Employee Filter */}
+        {showEmployeeFilter && (
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Employee
+            </label>
+            <DropdownSelect
+              value={employeeFilter}
+              onChange={(val) => setEmployeeFilter(String(val ?? "all"))}
+              options={employeeOptions}
+              ariaLabel="Filter by employee"
+            />
+          </div>
+        )}
 
-      {/* Month Filter */}
-      {filterType === "month" && (
-        <div className="lg:col-span-2">
-          <label className="block text-sm font-medium text-gray-300 mb-2">
-            Select Month & Year
-          </label>
-          <input
-            type="month"
-            value={dateFrom}
-            onChange={(e) => setDateFrom(e.target.value)}
-            className="w-full h-11 px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors"
-          />
-        </div>
-      )}
+        {/* Date Range - From */}
+        {(filterType === "date" || filterType === "all") && (
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              From Date
+            </label>
+            <input
+              type="date"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              className="w-full h-11 px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors"
+            />
+          </div>
+        )}
 
-      {/* Status Filter */}
-      {(filterType === "status" || filterType === "all") && (
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">
-            Status
-          </label>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="w-full h-11 px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors"
-          >
-            <option value="all" className="bg-gray-800">
-              All Status
-            </option>
-            <option value="present" className="bg-gray-800">
-              Present
-            </option>
-            <option value="late" className="bg-gray-800">
-              Late
-            </option>
-            <option value="absent" className="bg-gray-800">
-              Absent
-            </option>
-          </select>
-        </div>
-      )}
+        {/* Date Range - To */}
+        {(filterType === "date" || filterType === "all") && (
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              To Date
+            </label>
+            <input
+              type="date"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+              className="w-full h-11 px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors"
+            />
+          </div>
+        )}
+
+        {/* Month Filter */}
+        {filterType === "month" && (
+          <div className="lg:col-span-2">
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Select Month & Year
+            </label>
+            <input
+              type="month"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              className="w-full h-11 px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors"
+            />
+          </div>
+        )}
+
+        {/* Status Filter */}
+        {(filterType === "status" || filterType === "all") && (
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Status
+            </label>
+            <DropdownSelect
+              value={statusFilter}
+              onChange={(val) => setStatusFilter(String(val ?? "all"))}
+              options={statusOptions}
+              ariaLabel="Filter by status"
+            />
+          </div>
+        )}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 /**
  * TodayAttendanceSection - Displays only today's attendance record
@@ -286,7 +396,7 @@ const TodayAttendanceSection = ({
         <h3 className="text-lg font-semibold text-white">Today's Attendance</h3>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
         <div className="bg-white/5 rounded-lg p-4 border border-white/10">
           <p className="text-sm text-gray-400 mb-1">Date</p>
           <p className="text-lg font-semibold text-white">{todayRecord.date}</p>
@@ -301,6 +411,12 @@ const TodayAttendanceSection = ({
           <p className="text-sm text-gray-400 mb-1">Check-out</p>
           <p className="text-lg font-semibold text-white">
             {todayRecord.checkOut}
+          </p>
+        </div>
+        <div className="bg-white/5 rounded-lg p-4 border border-white/10">
+          <p className="text-sm text-gray-400 mb-1">Timezone</p>
+          <p className="text-lg font-semibold text-white">
+            {todayRecord.timezoneLabel || "-"}
           </p>
         </div>
         <div className="bg-white/5 rounded-lg p-4 border border-white/10">
@@ -337,9 +453,77 @@ export const AttendancePage = ({
   const [dateTo, setDateTo] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [employeeFilter, setEmployeeFilter] = useState("all");
+  const [leaveEmployeeId, setLeaveEmployeeId] = useState<number | null>(null);
+  const [attendancePage, setAttendancePage] = useState(1);
+  const [attendanceLimit, setAttendanceLimit] = useState(50);
 
   const { employees, updateEmployeeStatus } = useEmployees();
   const canFilterEmployees = hasRequiredRole(auth.role, ["SUPERADMIN"]);
+  const isSuperadminRole = canFilterEmployees;
+  const isCompactLabel = useMediaQuery("(max-width: 639px)");
+  const {
+    employeeList: employeeOptions,
+    loading: employeeOptionsLoading,
+    error: employeeOptionsError,
+  } = useEmployeeManagement({ enabled: isSuperadminRole });
+
+  // Reset page when filters change
+  useEffect(() => {
+    setAttendancePage(1);
+  }, [filterType, dateFrom, dateTo, statusFilter, employeeFilter]);
+
+  // Parse month input (YYYY-MM) into month and year for backend
+  const parsedMonth = useMemo(() => {
+    if (filterType !== "month" || !dateFrom) return null;
+    const [yearStr, monthStr] = dateFrom.split("-");
+    const year = parseInt(yearStr, 10);
+    const month = parseInt(monthStr, 10);
+    if (Number.isFinite(year) && Number.isFinite(month)) {
+      return { month, year };
+    }
+    return null;
+  }, [filterType, dateFrom]);
+
+  // Build attendance filters for backend
+  const attendanceFilters = useMemo(() => {
+    const filters: {
+      status?: "present" | "late" | "absent" | "all";
+      month?: number;
+      year?: number;
+      startDate?: string;
+      endDate?: string;
+      userId?: number | "all";
+    } = {};
+
+    // Status filter
+    if (statusFilter !== "all") {
+      filters.status = statusFilter as "present" | "late" | "absent";
+    }
+
+    // Date filters based on filterType
+    if (filterType === "month" && parsedMonth) {
+      filters.month = parsedMonth.month;
+      filters.year = parsedMonth.year;
+    } else if (filterType === "date" || filterType === "all") {
+      // Send date range for both "date" and "all" filter types
+      if (dateFrom) {
+        filters.startDate = dateFrom;
+      }
+      if (dateTo) {
+        filters.endDate = dateTo;
+      }
+    }
+
+    // Employee filter (only for superadmin)
+    if (canFilterEmployees && employeeFilter !== "all") {
+      const userId = parseInt(employeeFilter, 10);
+      if (Number.isFinite(userId)) {
+        filters.userId = userId;
+      }
+    }
+
+    return filters;
+  }, [filterType, statusFilter, parsedMonth, dateFrom, dateTo, employeeFilter, canFilterEmployees]);
 
   const {
     records,
@@ -348,14 +532,23 @@ export const AttendancePage = ({
     isCheckedIn,
     handleCheckIn,
     handleCheckOut,
-  } = useAttendanceSession(
-    employees[0] ? { id: employees[0].id, name: employees[0].name } : undefined,
-  );
+    total: attendanceTotal,
+    totalPages: attendanceTotalPages,
+    isLoading: attendanceLoading,
+  } = useAttendanceSession({
+    currentEmployee: employees[0]
+      ? { id: employees[0].id, name: employees[0].name }
+      : undefined,
+    page: attendancePage,
+    limit: attendanceLimit,
+    filters: attendanceFilters,
+  });
 
   // Leave management
   const {
     leaveRecords,
     leaveBalance: leaveBalanceData,
+    recentApprovals,
     isRequestModalOpen,
     setIsRequestModalOpen,
     isReviewModalOpen,
@@ -369,7 +562,15 @@ export const AttendancePage = ({
     handleRejectRequest,
     handleSubmitLeaveRequest,
     getAvailableBalance,
-  } = useLeaveManagement();
+    canRequestLeave,
+    page: leavePage,
+    total: leaveTotal,
+    totalPages: leaveTotalPages,
+    setPage: setLeavePage,
+    limit: leaveLimit,
+    setLimit: setLeaveLimit,
+    isLoading: leaveLoading,
+  } = useLeaveManagement({ employeeId: leaveEmployeeId ?? undefined });
 
   const handleLeaveFormChange = (updates: Partial<LeaveRecord>) => {
     setLeaveForm((prev) => {
@@ -405,7 +606,31 @@ export const AttendancePage = ({
   };
 
   const handleRequestLeave = () => {
+    if (!canRequestLeave) return;
     openRequestModal();
+  };
+
+  const onSubmitLeaveRequest = async () => {
+    const message = await handleSubmitLeaveRequest();
+    if (message) {
+      alert(message);
+      return;
+    }
+    alert("Leave request submitted successfully!");
+  };
+
+  const onApproveRequest = async (record: LeaveRecord) => {
+    const message = await handleApproveRequest(record);
+    if (message) {
+      alert(message);
+    }
+  };
+
+  const onRejectRequest = async (record: LeaveRecord) => {
+    const message = await handleRejectRequest(record);
+    if (message) {
+      alert(message);
+    }
   };
 
   const employeeLookup = useMemo(
@@ -446,50 +671,29 @@ export const AttendancePage = ({
   // Separate today's record from past records
   const todayRecord = recordsWithEmployee.find((r) => r.date === todayKey);
 
-  // Filter records based on selected filters
-  const filteredRecords = useMemo(() => {
-    let filtered = [...recordsWithEmployee];
-
-    if (filterType === "date" && dateFrom && dateTo) {
-      filtered = filtered.filter((r) => r.date >= dateFrom && r.date <= dateTo);
-    } else if (filterType === "month" && dateFrom) {
-      // dateFrom format: YYYY-MM for month input
-      filtered = filtered.filter((r) => r.date.startsWith(dateFrom));
-    }
-
-    if (statusFilter !== "all") {
-      filtered = filtered.filter((r) => r.status === statusFilter);
-    }
-
-    if (employeeFilter !== "all") {
-      filtered = filtered.filter((r) => {
-        const idMatch = r.employeeId
-          ? String(r.employeeId) === employeeFilter
-          : false;
-        const nameMatch = r.employeeName
-          ? r.employeeName.toLowerCase() === employeeFilter.toLowerCase()
-          : false;
-        return idMatch || nameMatch;
-      });
-    }
-
-    return filtered;
-  }, [
-    recordsWithEmployee,
-    filterType,
-    dateFrom,
-    dateTo,
-    statusFilter,
-    employeeFilter,
-  ]);
+  // Records are now filtered by backend, just use recordsWithEmployee directly
+  const filteredRecords = recordsWithEmployee;
 
   // Get leave balances for display
-  const leaveBalancesForDisplay = Object.keys(leaveBalanceData).map((type) => ({
-    type,
-    balance: leaveBalanceData[type].total - leaveBalanceData[type].used,
-    used: leaveBalanceData[type].used,
-    total: leaveBalanceData[type].total,
-  }));
+  const leaveBalancesForDisplay = Object.keys(leaveBalanceData).map((type) => {
+    const balance = leaveBalanceData[type];
+    const isUnlimited = balance?.isUnlimited ?? false;
+    return {
+      type,
+      balance: isUnlimited ? 0 : balance.total - balance.used,
+      used: balance.used,
+      total: balance.total,
+      isUnlimited,
+    };
+  });
+
+  const approvalsForDisplay = isSuperadminRole
+    ? leaveEmployeeId !== null
+      ? recentApprovals.filter(
+          (approval) => approval.employeeId === leaveEmployeeId,
+        )
+      : recentApprovals
+    : leaveRecords;
 
   return (
     <DashboardLayout
@@ -549,20 +753,33 @@ export const AttendancePage = ({
             setStatusFilter={setStatusFilter}
             employeeFilter={employeeFilter}
             setEmployeeFilter={setEmployeeFilter}
-            employees={employees}
+            employees={employeeOptions}
             showEmployeeFilter={canFilterEmployees}
           />
 
-          {/* Past Attendance Records */}
+          {/* Attendance Records */}
           <div>
-            <h3 className="text-lg font-semibold text-white mb-4">
-              Attendance History{" "}
-              {filteredRecords.length > 0 &&
-                `(${filteredRecords.length} records)`}
-            </h3>
             <AttendanceTable
               records={filteredRecords}
               showEmployeeColumn={canFilterEmployees}
+              headerContent={
+                <RowsSelector
+                  value={attendanceLimit}
+                  onChange={(nextSize) => {
+                    setAttendanceLimit(nextSize);
+                    setAttendancePage(1);
+                  }}
+                />
+              }
+            />
+            <PaginationControls
+              page={attendancePage}
+              totalPages={attendanceTotalPages}
+              totalItems={attendanceTotal}
+              isLoading={attendanceLoading}
+              onPageChange={(nextPage) =>
+                setAttendancePage(Math.max(1, nextPage))
+              }
             />
           </div>
 
@@ -583,20 +800,58 @@ export const AttendancePage = ({
       {/* Leave Tab */}
       {activeTab === "leave" && (
         <>
-          <LeaveHeader onRequestLeave={handleRequestLeave} />
+          <LeaveHeader
+            onRequestLeave={handleRequestLeave}
+            canRequest={canRequestLeave}
+          />
 
-          <LeaveBalanceGrid balances={leaveBalancesForDisplay} />
+          {isSuperadminRole && (
+            <EmployeeSelector
+              employees={employeeOptions}
+              selectedId={leaveEmployeeId}
+              onChange={(employeeId) => {
+                setLeaveEmployeeId(employeeId);
+                setLeavePage(1);
+              }}
+              isCompactLabel={isCompactLabel}
+              isLoading={employeeOptionsLoading}
+              error={employeeOptionsError}
+            />
+          )}
+
+          {(!isSuperadminRole || leaveEmployeeId !== null) && (
+            <LeaveBalanceGrid balances={leaveBalancesForDisplay} />
+          )}
 
           <LeaveRequestsTable
             records={leaveRecords}
             onReview={handleReviewRequest}
-            onApprove={(record) => handleApproveRequest(record)}
-            onReject={(record) => handleRejectRequest(record)}
+            onApprove={onApproveRequest}
+            onReject={onRejectRequest}
+            canReview={isSuperadminRole}
+            headerContent={
+              <RowsSelector
+                value={leaveLimit}
+                onChange={(nextSize) => {
+                  setLeaveLimit(nextSize);
+                  setLeavePage(1);
+                }}
+              />
+            }
+          />
+          <PaginationControls
+            page={leavePage}
+            totalPages={leaveTotalPages}
+            totalItems={leaveTotal}
+            isLoading={leaveLoading}
+            onPageChange={(nextPage) => setLeavePage(Math.max(1, nextPage))}
           />
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
             <LeavePolicyCard />
-            <RecentApprovalsCard approvals={leaveRecords} />
+            <RecentApprovalsCard
+              approvals={approvalsForDisplay}
+            />
           </div>
 
           {/* Leave Request Modal */}
@@ -606,7 +861,7 @@ export const AttendancePage = ({
             mode="request"
             leaveRequest={leaveForm}
             onChange={handleLeaveFormChange}
-            onApprove={handleSubmitLeaveRequest}
+            onApprove={onSubmitLeaveRequest}
             onReject={() => setIsRequestModalOpen(false)}
           />
 
@@ -620,12 +875,12 @@ export const AttendancePage = ({
             employeeName={selectedRequest?.employeeName}
             onApprove={() => {
               if (selectedRequest) {
-                handleApproveRequest(selectedRequest);
+                onApproveRequest(selectedRequest);
               }
             }}
             onReject={() => {
               if (selectedRequest) {
-                handleRejectRequest(selectedRequest);
+                onRejectRequest(selectedRequest);
               }
             }}
           />

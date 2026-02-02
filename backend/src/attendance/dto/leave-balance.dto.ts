@@ -26,4 +26,10 @@ export class LeaveBalanceDto {
     example: 9,
   })
   remainingDays: number;
+
+  @ApiProperty({
+    description: "Whether the leave type has no annual limit",
+    example: false,
+  })
+  isUnlimited: boolean;
 }

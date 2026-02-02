@@ -8,15 +8,21 @@ import { PrismaService } from "@/prisma/prisma.service";
 import {
   CreateLeaveRequestDto,
   LeaveBalanceDto,
-  LeaveEntitlementDto,
   LeaveRequestResponseDto,
   LeaveRequestsQueryDto,
-  UpdateLeaveEntitlementsDto,
   PaginatedLeaveRequestsResponseDto,
 } from "@/attendance/dto";
-import { LeaveStatus, LeaveType, Prisma } from "@prisma/client";
+import { LeaveStatus, LeaveType, Prisma, PrismaClient } from "@prisma/client";
 import { UserPayload } from "@/auth/interfaces/user-payload.interface";
 import { Role } from "@/users/dto";
+import { buildDateRangeFilter } from "@/common/utils/date-filters";
+
+type TransactionClient = Omit<
+  PrismaClient,
+  "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends"
+>;
+
+const PAID_LEAVE_DAYS_PER_MONTH = 1;
 
 @Injectable()
 export class LeaveRequestsService {
@@ -33,51 +39,56 @@ export class LeaveRequestsService {
       throw new BadRequestException("End date must be after start date");
     }
 
-    const overlapping = await this.prisma.leaveRequest.findFirst({
-      where: {
-        userId,
-        status: {
-          in: [LeaveStatus.PENDING, LeaveStatus.APPROVED],
+    const leave = await this.prisma.$transaction(async (tx) => {
+      const overlapping = await tx.leaveRequest.findFirst({
+        where: {
+          userId,
+          status: {
+            in: [LeaveStatus.PENDING, LeaveStatus.APPROVED],
+          },
+          AND: [
+            { startDate: { lte: endDate } },
+            { endDate: { gte: startDate } },
+          ],
         },
-        AND: [
-          {
-            startDate: {
-              lte: endDate,
+      });
+
+      if (overlapping) {
+        throw new BadRequestException(
+          "Leave request overlaps with an existing request",
+        );
+      }
+
+      // Check paid leave balance within transaction
+      if (dto.type === LeaveType.PAID_LEAVE) {
+        const daysRequested = this.calculateLeaveDays(startDate, endDate);
+        const remainingPaid = await this.getPaidLeaveRemainingTx(tx, userId);
+        if (daysRequested > remainingPaid) {
+          throw new BadRequestException(
+            `Insufficient paid leave balance. You have ${remainingPaid} days available but need ${daysRequested} days.`,
+          );
+        }
+      }
+
+      return tx.leaveRequest.create({
+        data: {
+          userId,
+          type: dto.type,
+          reason: dto.reason,
+          startDate,
+          endDate,
+          status: LeaveStatus.PENDING,
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              fullName: true,
+              email: true,
             },
           },
-          {
-            endDate: {
-              gte: startDate,
-            },
-          },
-        ],
-      },
-    });
-
-    if (overlapping) {
-      throw new BadRequestException(
-        "Leave request overlaps with an existing request",
-      );
-    }
-
-    const leave = await this.prisma.leaveRequest.create({
-      data: {
-        userId,
-        type: dto.type,
-        reason: dto.reason,
-        startDate,
-        endDate,
-        status: LeaveStatus.PENDING,
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            fullName: true,
-            email: true,
-          },
         },
-      },
+      });
     });
 
     return this.mapLeaveRequest(leave);
@@ -99,7 +110,7 @@ export class LeaveRequestsService {
       where.status = query.status;
     }
 
-    const dateRange = this.buildDateRangeFilter(query.startDate, query.endDate);
+    const dateRange = buildDateRangeFilter(query.startDate, query.endDate);
     if (dateRange) {
       where.startDate = dateRange;
     }
@@ -226,142 +237,41 @@ export class LeaveRequestsService {
   }
 
   async getLeaveBalances(userId: number): Promise<LeaveBalanceDto[]> {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        startDate: true,
-        createdAt: true,
-      },
-    });
+    const { entitlementStart, entitlementMonths, extraPaidLeaveDays } =
+      await this.getEntitlementContext(userId);
 
-    if (!user) {
-      throw new NotFoundException(`User with ID ${userId} not found`);
-    }
-
-    const entitlementYears = this.getEntitlementYears(
-      user.startDate ?? user.createdAt,
+    const usedByType = await this.getApprovedLeaveUsageByType(
+      userId,
+      entitlementStart,
     );
 
-    const entitlements = await this.prisma.leaveEntitlement.findMany({
-      select: {
-        type: true,
-        entitledDays: true,
-      },
-    });
-
-    const entitledPerYearByType = entitlements.reduce<
-      Record<LeaveType, number>
-    >(
-      (acc, entitlement) => {
-        acc[entitlement.type] = entitlement.entitledDays;
-        return acc;
-      },
-      {
-        [LeaveType.PAID_LEAVE]: 0,
-        [LeaveType.UNPAID_LEAVE]: 0,
-        [LeaveType.SICK_LEAVE]: 0,
-        [LeaveType.URGENT_LEAVE]: 0,
-      },
+    const paidEntitledDays = this.roundToTwoDecimals(
+      entitlementMonths * PAID_LEAVE_DAYS_PER_MONTH + extraPaidLeaveDays,
     );
-
-    const approvedLeaves = await this.prisma.leaveRequest.findMany({
-      where: {
-        userId,
-        status: LeaveStatus.APPROVED,
-        startDate: {
-          gte: user.startDate ?? user.createdAt,
-        },
-      },
-      select: {
-        type: true,
-        startDate: true,
-        endDate: true,
-      },
-    });
-
-    const usedByType = approvedLeaves.reduce<Record<LeaveType, number>>(
-      (acc, leave) => {
-        const days = this.calculateLeaveDays(leave.startDate, leave.endDate);
-        acc[leave.type] = (acc[leave.type] ?? 0) + days;
-        return acc;
-      },
-      {
-        [LeaveType.PAID_LEAVE]: 0,
-        [LeaveType.UNPAID_LEAVE]: 0,
-        [LeaveType.SICK_LEAVE]: 0,
-        [LeaveType.URGENT_LEAVE]: 0,
-      },
+    const usedPaidDays = usedByType[LeaveType.PAID_LEAVE] ?? 0;
+    const remainingPaidDays = this.roundToTwoDecimals(
+      Math.max(paidEntitledDays - usedPaidDays, 0),
     );
 
     return (Object.values(LeaveType) as LeaveType[]).map((type) => {
-      const entitledDays =
-        (entitledPerYearByType[type] ?? 0) * entitlementYears;
-      const usedDays = usedByType[type] ?? 0;
-      const remainingDays = Math.max(entitledDays - usedDays, 0);
+      if (type === LeaveType.PAID_LEAVE) {
+        return {
+          type,
+          entitledDays: paidEntitledDays,
+          usedDays: usedPaidDays,
+          remainingDays: remainingPaidDays,
+          isUnlimited: false,
+        };
+      }
+
       return {
         type,
-        entitledDays,
-        usedDays,
-        remainingDays,
+        entitledDays: 0,
+        usedDays: usedByType[type] ?? 0,
+        remainingDays: 0,
+        isUnlimited: true,
       };
     });
-  }
-
-  async updateEntitlements(
-    dto: UpdateLeaveEntitlementsDto,
-  ): Promise<LeaveEntitlementDto[]> {
-    if (dto.entitlements.length === 0) {
-      return [];
-    }
-
-    await this.prisma.$transaction(
-      dto.entitlements.map((entitlement) =>
-        this.prisma.leaveEntitlement.upsert({
-          where: {
-            type: entitlement.type,
-          },
-          update: {
-            entitledDays: entitlement.entitledDays,
-          },
-          create: {
-            type: entitlement.type,
-            entitledDays: entitlement.entitledDays,
-          },
-        }),
-      ),
-    );
-
-    const updated = await this.prisma.leaveEntitlement.findMany({
-      select: {
-        type: true,
-        entitledDays: true,
-      },
-      orderBy: {
-        type: "asc",
-      },
-    });
-
-    return updated.map((entitlement) => ({
-      type: entitlement.type,
-      entitledDays: entitlement.entitledDays,
-    }));
-  }
-
-  async getEntitlements(): Promise<LeaveEntitlementDto[]> {
-    const entitlements = await this.prisma.leaveEntitlement.findMany({
-      select: {
-        type: true,
-        entitledDays: true,
-      },
-      orderBy: {
-        type: "asc",
-      },
-    });
-
-    return entitlements.map((entitlement) => ({
-      type: entitlement.type,
-      entitledDays: entitlement.entitledDays,
-    }));
   }
 
   async findRecentApprovals(limit = 10): Promise<LeaveRequestResponseDto[]> {
@@ -400,26 +310,6 @@ export class LeaveRequestsService {
     }
   }
 
-  private buildDateRangeFilter(
-    startDate?: string,
-    endDate?: string,
-  ): Prisma.DateTimeFilter | undefined {
-    if (!startDate && !endDate) {
-      return undefined;
-    }
-
-    const range: Prisma.DateTimeFilter = {};
-    if (startDate) {
-      range.gte = new Date(startDate);
-    }
-
-    if (endDate) {
-      range.lte = new Date(endDate);
-    }
-
-    return range;
-  }
-
   private mapLeaveRequest(
     request: Omit<LeaveRequestResponseDto, "days">,
   ): LeaveRequestResponseDto {
@@ -449,9 +339,140 @@ export class LeaveRequestsService {
     return Math.floor(diffMs / (24 * 60 * 60 * 1000)) + 1;
   }
 
-  private getEntitlementYears(startDate: Date): number {
+  private async getEntitlementContext(userId: number): Promise<{
+    entitlementStart: Date;
+    entitlementMonths: number;
+    extraPaidLeaveDays: number;
+  }> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        startDate: true,
+        createdAt: true,
+        extraPaidLeaveDays: true,
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+
+    const entitlementStart = user.startDate ?? user.createdAt;
+    const entitlementMonths = this.getEntitlementMonths(entitlementStart);
+
+    return {
+      entitlementStart,
+      entitlementMonths,
+      extraPaidLeaveDays: user.extraPaidLeaveDays ?? 0,
+    };
+  }
+
+  private async getApprovedLeaveUsageByType(
+    userId: number,
+    entitlementStart: Date,
+  ): Promise<Record<LeaveType, number>> {
+    const approvedLeaves = await this.prisma.leaveRequest.findMany({
+      where: {
+        userId,
+        status: LeaveStatus.APPROVED,
+        startDate: {
+          gte: entitlementStart,
+        },
+      },
+      select: {
+        type: true,
+        startDate: true,
+        endDate: true,
+      },
+    });
+
+    return approvedLeaves.reduce<Record<LeaveType, number>>(
+      (acc, leave) => {
+        const days = this.calculateLeaveDays(leave.startDate, leave.endDate);
+        acc[leave.type] = (acc[leave.type] ?? 0) + days;
+        return acc;
+      },
+      {
+        [LeaveType.PAID_LEAVE]: 0,
+        [LeaveType.UNPAID_LEAVE]: 0,
+        [LeaveType.SICK_LEAVE]: 0,
+        [LeaveType.URGENT_LEAVE]: 0,
+      },
+    );
+  }
+
+  private async getPaidLeaveRemaining(userId: number): Promise<number> {
+    const { entitlementStart, entitlementMonths, extraPaidLeaveDays } =
+      await this.getEntitlementContext(userId);
+    const usedByType = await this.getApprovedLeaveUsageByType(
+      userId,
+      entitlementStart,
+    );
+    const entitledDays = this.roundToTwoDecimals(
+      entitlementMonths * PAID_LEAVE_DAYS_PER_MONTH + extraPaidLeaveDays,
+    );
+    const usedPaidDays = usedByType[LeaveType.PAID_LEAVE] ?? 0;
+    return this.roundToTwoDecimals(Math.max(entitledDays - usedPaidDays, 0));
+  }
+
+  private async getPaidLeaveRemainingTx(
+    tx: TransactionClient,
+    userId: number,
+  ): Promise<number> {
+    const user = await tx.user.findUnique({
+      where: { id: userId },
+      select: {
+        startDate: true,
+        createdAt: true,
+        extraPaidLeaveDays: true,
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+
+    const entitlementStart = user.startDate ?? user.createdAt;
+    const entitlementMonths = this.getEntitlementMonths(entitlementStart);
+    const extraPaidLeaveDays = user.extraPaidLeaveDays ?? 0;
+
+    const approvedLeaves = await tx.leaveRequest.findMany({
+      where: {
+        userId,
+        status: LeaveStatus.APPROVED,
+        type: LeaveType.PAID_LEAVE,
+        startDate: { gte: entitlementStart },
+      },
+      select: {
+        startDate: true,
+        endDate: true,
+      },
+    });
+
+    const usedPaidDays = approvedLeaves.reduce((sum, leave) => {
+      return sum + this.calculateLeaveDays(leave.startDate, leave.endDate);
+    }, 0);
+
+    const entitledDays = this.roundToTwoDecimals(
+      entitlementMonths * PAID_LEAVE_DAYS_PER_MONTH + extraPaidLeaveDays,
+    );
+
+    return this.roundToTwoDecimals(Math.max(entitledDays - usedPaidDays, 0));
+  }
+
+  private getEntitlementMonths(startDate: Date, now = new Date()): number {
     const startYear = startDate.getUTCFullYear();
-    const currentYear = new Date().getUTCFullYear();
-    return Math.max(currentYear - startYear + 1, 1);
+    const startMonth = startDate.getUTCMonth();
+    const currentYear = now.getUTCFullYear();
+    const currentMonth = now.getUTCMonth();
+
+    const months =
+      (currentYear - startYear) * 12 + (currentMonth - startMonth) + 1;
+
+    return Math.max(months, 0);
+  }
+
+  private roundToTwoDecimals(value: number): number {
+    return Math.round(value * 100) / 100;
   }
 }
