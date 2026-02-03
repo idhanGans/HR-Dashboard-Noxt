@@ -8,6 +8,7 @@ export { Sidebar } from "./Sidebar";
 export { Topbar } from "./Topbar";
 export { DashboardLayout } from "./DashboardLayout";
 export { DropdownSelect } from "./DropdownSelect";
+export { PaginationControls } from "./PaginationControls";
 
 // Dashboard Components
 export * from "./dashboard";
