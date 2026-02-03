@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { DashboardLayout, DropdownSelect } from "../components";
+import {
+  DashboardLayout,
+  DropdownSelect,
+  LeaveBalanceGridSkeleton,
+  TodayAttendanceSkeleton,
+} from "../components";
 import {
   CheckInCard,
   CheckOutCard,
@@ -160,13 +165,25 @@ const PaginationControls = ({
 /**
  * LeaveBalanceGrid - Grid of leave balance cards
  */
-const LeaveBalanceGrid = ({ balances }: { balances: LeaveBalance[] }) => (
-  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-    {balances.map((leave) => (
-      <LeaveBalanceCard key={leave.type} leave={leave} />
-    ))}
-  </div>
-);
+const LeaveBalanceGrid = ({
+  balances,
+  isLoading = false,
+}: {
+  balances: LeaveBalance[];
+  isLoading?: boolean;
+}) => {
+  if (isLoading) {
+    return <LeaveBalanceGridSkeleton />;
+  }
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+      {balances.map((leave) => (
+        <LeaveBalanceCard key={leave.type} leave={leave} />
+      ))}
+    </div>
+  );
+};
 
 const RowsSelector = ({
   value,
@@ -359,9 +376,15 @@ const AttendanceFilterSection = ({
  */
 const TodayAttendanceSection = ({
   todayRecord,
+  isLoading = false,
 }: {
   todayRecord?: AttendanceRecord;
+  isLoading?: boolean;
 }) => {
+  if (isLoading) {
+    return <TodayAttendanceSkeleton />;
+  }
+
   if (!todayRecord) {
     return (
       <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-6 mb-8">
@@ -547,6 +570,7 @@ export const AttendancePage = ({
     total: attendanceTotal,
     totalPages: attendanceTotalPages,
     isLoading: attendanceLoading,
+    isFetching: attendanceFetching,
     activeCheckInAt,
     currentUserId: attendanceUserId,
   } = useAttendanceRecords({
@@ -594,8 +618,17 @@ export const AttendancePage = ({
     setPage: setLeavePage,
     limit: leaveLimit,
     setLimit: setLeaveLimit,
-    isLoading: leaveLoading,
+    requestsLoading: leaveRequestsLoading,
+    balancesLoading: leaveBalancesLoading,
+    approvalsLoading: leaveApprovalsLoading,
   } = useLeaveManagement({ employeeId: leaveEmployeeId ?? undefined });
+
+  const attendanceBusy = attendanceLoading || attendanceFetching;
+  const leaveRequestsBusy = leaveRequestsLoading;
+  const leaveBalancesBusy = leaveBalancesLoading;
+  const leaveApprovalsBusy = isSuperadminRole
+    ? leaveApprovalsLoading
+    : leaveRequestsLoading;
 
   const handleLeaveFormChange = (updates: Partial<LeaveRecord>) => {
     setLeaveForm((prev) => {
@@ -720,6 +753,10 @@ export const AttendancePage = ({
       : recentApprovals
     : leaveRecords;
 
+  const approvedApprovalsForDisplay = approvalsForDisplay.filter(
+    (approval) => String(approval.status).toLowerCase() === "approved",
+  );
+
   return (
     <DashboardLayout
       userRole={userRole}
@@ -764,7 +801,10 @@ export const AttendancePage = ({
           />
 
           {/* Today's Attendance */}
-          <TodayAttendanceSection todayRecord={todayRecord} />
+          <TodayAttendanceSection
+            todayRecord={todayRecord}
+            isLoading={attendanceBusy}
+          />
 
           {/* Filter Section */}
           <AttendanceFilterSection
@@ -787,6 +827,7 @@ export const AttendancePage = ({
             <AttendanceTable
               records={filteredRecords}
               showEmployeeColumn={canFilterEmployees}
+              isLoading={attendanceBusy}
               headerContent={
                 <RowsSelector
                   value={attendanceLimit}
@@ -801,7 +842,7 @@ export const AttendancePage = ({
               page={attendancePage}
               totalPages={attendanceTotalPages}
               totalItems={attendanceTotal}
-              isLoading={attendanceLoading}
+              isLoading={attendanceBusy}
               onPageChange={(nextPage) =>
                 setAttendancePage(Math.max(1, nextPage))
               }
@@ -845,7 +886,10 @@ export const AttendancePage = ({
           )}
 
           {(!isSuperadminRole || leaveEmployeeId !== null) && (
-            <LeaveBalanceGrid balances={leaveBalancesForDisplay} />
+            <LeaveBalanceGrid
+              balances={leaveBalancesForDisplay}
+              isLoading={leaveBalancesBusy}
+            />
           )}
 
           <LeaveRequestsTable
@@ -854,6 +898,7 @@ export const AttendancePage = ({
             onApprove={onApproveRequest}
             onReject={onRejectRequest}
             canReview={isSuperadminRole}
+            isLoading={leaveRequestsBusy}
             headerContent={
               <RowsSelector
                 value={leaveLimit}
@@ -868,14 +913,15 @@ export const AttendancePage = ({
             page={leavePage}
             totalPages={leaveTotalPages}
             totalItems={leaveTotal}
-            isLoading={leaveLoading}
+            isLoading={leaveRequestsBusy}
             onPageChange={(nextPage) => setLeavePage(Math.max(1, nextPage))}
           />
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
             <LeavePolicyCard />
             <RecentApprovalsCard
-              approvals={approvalsForDisplay}
+              approvals={approvedApprovalsForDisplay}
+              isLoading={leaveApprovalsBusy}
             />
           </div>
 

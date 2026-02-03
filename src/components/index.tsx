@@ -24,6 +24,9 @@ export * from "./leave";
 // Payroll Components
 export * from "./payroll";
 
+// Skeleton Components
+export * from "./skeletons";
+
 // KPI Components
 export * from "./kpi";
 

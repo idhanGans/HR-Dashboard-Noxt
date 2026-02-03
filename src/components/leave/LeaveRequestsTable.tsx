@@ -2,6 +2,7 @@ import { Card } from "../Card";
 import { Table } from "../Table";
 import { StatusBadge } from "../StatusBadge";
 import { Eye, Check, X } from "lucide-react";
+import { TableSkeleton } from "../skeletons";
 import type { ReactNode } from "react";
 import type { LeaveRecord } from "../../types";
 import { formatLeaveType } from "../../utils/leave";
@@ -14,6 +15,7 @@ interface LeaveRequestsTableProps {
   canReview?: boolean;
   title?: string;
   headerContent?: ReactNode;
+  isLoading?: boolean;
 }
 
 /**
@@ -31,9 +33,11 @@ export const LeaveRequestsTable = ({
   canReview = false,
   title = "Leave Requests",
   headerContent,
+  isLoading = false,
 }: LeaveRequestsTableProps) => {
   const columns = [
-    { key: "employeeName", label: "Employee Name" },
+    // Only show employee name for superadmins who can review requests
+    ...(canReview ? [{ key: "employeeName", label: "Employee Name" }] : []),
     { key: "date", label: "Date Range" },
     {
       key: "type",
@@ -95,6 +99,22 @@ export const LeaveRequestsTable = ({
         ]
       : []),
   ];
+
+  if (isLoading) {
+    const skeletonColumns = columns.map(({ key, label }) => ({
+      key: String(key),
+      label,
+    }));
+    return (
+      <Card className="overflow-hidden">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-bold text-white">{title}</h2>
+          {headerContent}
+        </div>
+        <TableSkeleton columns={skeletonColumns} />
+      </Card>
+    );
+  }
 
   return (
     <Card className="overflow-hidden">

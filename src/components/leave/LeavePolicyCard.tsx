@@ -26,7 +26,7 @@ export const LeavePolicyCard = ({
     policies && policies.length ? policies : DEFAULT_POLICIES;
 
   return (
-    <Card>
+    <Card className="self-start">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-bold text-white">Leave Policy</h2>
       </div>

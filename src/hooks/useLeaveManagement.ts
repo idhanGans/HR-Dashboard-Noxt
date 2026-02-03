@@ -184,6 +184,9 @@ export const useLeaveManagement = (options?: UseLeaveManagementOptions) => {
 
   const isLoading =
     requestsQuery.isLoading || balancesQuery.isLoading || approvalsQuery.isLoading;
+  const requestsLoading = requestsQuery.isLoading || requestsQuery.isFetching;
+  const balancesLoading = balancesQuery.isLoading || balancesQuery.isFetching;
+  const approvalsLoading = approvalsQuery.isLoading || approvalsQuery.isFetching;
   const error =
     requestsQuery.error?.message ??
     balancesQuery.error?.message ??
@@ -325,6 +328,9 @@ export const useLeaveManagement = (options?: UseLeaveManagementOptions) => {
     pendingRequests,
     approvedRequests,
     isLoading,
+    requestsLoading,
+    balancesLoading,
+    approvalsLoading,
     error,
     isSubmitting: createMutation.isPending,
     isApproving: approveMutation.isPending,

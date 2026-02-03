@@ -13,6 +13,7 @@ import {
   clearTokens,
 } from "../lib/axios";
 import { getProfile } from "../services/auth";
+import { queryClient } from "../lib/queryClient";
 import type { AuthContextValue, AuthPayload, AuthState } from "../types/auth";
 
 const defaultAuth: AuthState = {
@@ -90,6 +91,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signOut = useCallback(() => {
     clearTokens();
+    queryClient.clear(); // Clear all cached data to prevent data leakage between users
     setAuth({ ...defaultAuth, isInitializing: false });
   }, []);
 
