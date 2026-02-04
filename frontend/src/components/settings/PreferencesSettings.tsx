@@ -1,4 +1,5 @@
 import { Card } from "../Card";
+import { DropdownSelect } from "../DropdownSelect";
 import type { SettingsState } from "../../types";
 
 /**
@@ -16,6 +17,17 @@ export const PreferencesSettings = ({
     value: SettingsState[K],
   ) => void;
 }) => {
+  const themeOptions = [
+    { value: "dark", label: "Dark Mode" },
+    { value: "light", label: "Light Mode" },
+  ];
+  const languageOptions = [
+    { value: "english", label: "English" },
+    { value: "spanish", label: "Spanish" },
+    { value: "french", label: "French" },
+    { value: "german", label: "German" },
+  ];
+
   return (
     <Card>
       <h2 className="text-lg font-bold text-white mb-6">Preferences</h2>
@@ -24,29 +36,37 @@ export const PreferencesSettings = ({
           <label className="block text-sm font-medium text-white mb-2">
             Theme
           </label>
-          <select
+          <DropdownSelect
             value={preferences.theme}
-            onChange={(e) => onPreferenceChange("theme", e.target.value)}
-            className="glass-input w-full"
-          >
-            <option value="dark">Dark Mode</option>
-            <option value="light">Light Mode</option>
-          </select>
+            onChange={(value) => {
+              if (value !== null) {
+                onPreferenceChange(
+                  "theme",
+                  String(value) as SettingsState["theme"],
+                );
+              }
+            }}
+            options={themeOptions}
+            ariaLabel="Select theme"
+          />
         </div>
         <div>
           <label className="block text-sm font-medium text-white mb-2">
             Language
           </label>
-          <select
+          <DropdownSelect
             value={preferences.language}
-            onChange={(e) => onPreferenceChange("language", e.target.value)}
-            className="glass-input w-full"
-          >
-            <option value="english">English</option>
-            <option value="spanish">Spanish</option>
-            <option value="french">French</option>
-            <option value="german">German</option>
-          </select>
+            onChange={(value) => {
+              if (value !== null) {
+                onPreferenceChange(
+                  "language",
+                  String(value) as SettingsState["language"],
+                );
+              }
+            }}
+            options={languageOptions}
+            ariaLabel="Select language"
+          />
         </div>
       </div>
     </Card>

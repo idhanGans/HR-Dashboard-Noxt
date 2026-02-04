@@ -1,5 +1,6 @@
 import { Modal } from "../Modal";
 import { Button } from "../Button";
+import { DropdownSelect } from "../DropdownSelect";
 import type { Dispatch, SetStateAction } from "react";
 import type { EmployeeForm } from "../../types";
 
@@ -12,6 +13,46 @@ interface EmployeeFormModalProps {
   onSave: () => void;
   saving?: boolean;
 }
+
+const genderOptions = [
+  { value: "MALE", label: "Male" },
+  { value: "FEMALE", label: "Female" },
+];
+
+const typeOfWorkOptions = [
+  { value: "FULL_TIME", label: "Full-time" },
+  { value: "PART_TIME", label: "Part-time" },
+  { value: "CONTRACT", label: "Contract" },
+  { value: "FREELANCE", label: "Freelance" },
+];
+
+const workStatusOptions = [
+  { value: "ACTIVE", label: "Active" },
+  { value: "ON_LEAVE", label: "On Leave" },
+  { value: "INACTIVE", label: "Inactive" },
+  { value: "TERMINATED", label: "Terminated" },
+];
+
+const levelOptions = [
+  { value: "JUNIOR", label: "Junior" },
+  { value: "MID", label: "Mid-level" },
+  { value: "SENIOR", label: "Senior" },
+  { value: "LEAD", label: "Lead" },
+  { value: "MANAGER", label: "Manager" },
+  { value: "DIRECTOR", label: "Director" },
+];
+
+const employmentTypeOptions = [
+  { value: "PERMANENT", label: "Permanent" },
+  { value: "TEMPORARY", label: "Temporary" },
+  { value: "FORMER", label: "Former" },
+];
+
+const currentStatusOptions = [
+  { value: "present", label: "Present" },
+  { value: "late", label: "Late" },
+  { value: "absent", label: "Absent" },
+];
 
 /**
  * EmployeeFormModal - Modal form for adding/editing employees
@@ -35,6 +76,13 @@ export const EmployeeFormModal = ({
   const handleChange = (field: string, value: string) => {
     onFormChange({ ...form, [field]: value });
   };
+
+  const toSelectValue = (value?: string) =>
+    value && value.length > 0 ? value : null;
+  const handleSelectChange =
+    (field: string) => (value: string | number | null) => {
+      handleChange(field, value === null ? "" : String(value));
+    };
 
   return (
     <Modal
@@ -91,15 +139,14 @@ export const EmployeeFormModal = ({
               <label className="block text-xs font-semibold text-lightGrey mb-2 uppercase">
                 Gender
               </label>
-              <select
-                className="glass-input w-full"
-                value={form.gender || ""}
-                onChange={(e) => handleChange("gender", e.target.value)}
-              >
-                <option value="">Select Gender</option>
-                <option value="MALE">Male</option>
-                <option value="FEMALE">Female</option>
-              </select>
+              <DropdownSelect
+                value={toSelectValue(form.gender)}
+                onChange={handleSelectChange("gender")}
+                options={genderOptions}
+                placeholder="Select Gender"
+                showEmptyOption
+                ariaLabel="Select gender"
+              />
             </div>
           </div>
 
@@ -197,33 +244,27 @@ export const EmployeeFormModal = ({
               <label className="block text-xs font-semibold text-lightGrey mb-2 uppercase">
                 Type of Work
               </label>
-              <select
-                className="glass-input w-full"
-                value={form.typeOfWork || ""}
-                onChange={(e) => handleChange("typeOfWork", e.target.value)}
-              >
-                <option value="">Select Type</option>
-                <option value="FULL_TIME">Full-time</option>
-                <option value="PART_TIME">Part-time</option>
-                <option value="CONTRACT">Contract</option>
-                <option value="FREELANCE">Freelance</option>
-              </select>
+              <DropdownSelect
+                value={toSelectValue(form.typeOfWork)}
+                onChange={handleSelectChange("typeOfWork")}
+                options={typeOfWorkOptions}
+                placeholder="Select Type"
+                showEmptyOption
+                ariaLabel="Select type of work"
+              />
             </div>
             <div>
               <label className="block text-xs font-semibold text-lightGrey mb-2 uppercase">
                 Work Status
               </label>
-              <select
-                className="glass-input w-full"
-                value={form.workStatus || ""}
-                onChange={(e) => handleChange("workStatus", e.target.value)}
-              >
-                <option value="">Select Status</option>
-                <option value="ACTIVE">Active</option>
-                <option value="ON_LEAVE">On Leave</option>
-                <option value="INACTIVE">Inactive</option>
-                <option value="TERMINATED">Terminated</option>
-              </select>
+              <DropdownSelect
+                value={toSelectValue(form.workStatus)}
+                onChange={handleSelectChange("workStatus")}
+                options={workStatusOptions}
+                placeholder="Select Status"
+                showEmptyOption
+                ariaLabel="Select work status"
+              />
             </div>
           </div>
 
@@ -257,34 +298,27 @@ export const EmployeeFormModal = ({
               <label className="block text-xs font-semibold text-lightGrey mb-2 uppercase">
                 Level
               </label>
-              <select
-                className="glass-input w-full"
-                value={form.level || ""}
-                onChange={(e) => handleChange("level", e.target.value)}
-              >
-                <option value="">Select Level</option>
-                <option value="JUNIOR">Junior</option>
-                <option value="MID">Mid-level</option>
-                <option value="SENIOR">Senior</option>
-                <option value="LEAD">Lead</option>
-                <option value="MANAGER">Manager</option>
-                <option value="DIRECTOR">Director</option>
-              </select>
+              <DropdownSelect
+                value={toSelectValue(form.level)}
+                onChange={handleSelectChange("level")}
+                options={levelOptions}
+                placeholder="Select Level"
+                showEmptyOption
+                ariaLabel="Select level"
+              />
             </div>
             <div>
               <label className="block text-xs font-semibold text-lightGrey mb-2 uppercase">
                 Employment Type
               </label>
-              <select
-                className="glass-input w-full"
-                value={form.employmentType || ""}
-                onChange={(e) => handleChange("employmentType", e.target.value)}
-              >
-                <option value="">Select Type</option>
-                <option value="PERMANENT">Permanent</option>
-                <option value="TEMPORARY">Temporary</option>
-                <option value="FORMER">Former</option>
-              </select>
+              <DropdownSelect
+                value={toSelectValue(form.employmentType)}
+                onChange={handleSelectChange("employmentType")}
+                options={employmentTypeOptions}
+                placeholder="Select Type"
+                showEmptyOption
+                ariaLabel="Select employment type"
+              />
             </div>
           </div>
 
@@ -304,16 +338,14 @@ export const EmployeeFormModal = ({
               <label className="block text-xs font-semibold text-lightGrey mb-2 uppercase">
                 Current Status
               </label>
-              <select
-                className="glass-input w-full"
-                value={form.status || ""}
-                onChange={(e) => handleChange("status", e.target.value)}
-              >
-                <option value="">Select Status</option>
-                <option value="present">Present</option>
-                <option value="late">Late</option>
-                <option value="absent">Absent</option>
-              </select>
+              <DropdownSelect
+                value={toSelectValue(form.status)}
+                onChange={handleSelectChange("status")}
+                options={currentStatusOptions}
+                placeholder="Select Status"
+                showEmptyOption
+                ariaLabel="Select current status"
+              />
             </div>
           </div>
         </div>
