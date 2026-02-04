@@ -50,25 +50,6 @@ export const LeaveRequestModal = ({
     }
   }, [leaveRequest]);
 
-  // Update form field
-  const handleFieldChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    // Also update the leaveRequest object for parent component
-    if (leaveRequest) {
-      leaveRequest[field] = value;
-
-      // Update available balance when leave type changes
-      if (field === "type") {
-        const balances = {
-          "Paid Leave": 8,
-          "Sick Leave": 5,
-          Vacation: 6,
-          "Unpaid Leave": 999,
-        };
-        leaveRequest.availableBalance = balances[value] || 0;
-      }
-    }
-  };
   const getLeaveTypeColor = (type: string) => {
     switch (type?.toLowerCase()) {
       case "paid leave":
