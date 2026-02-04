@@ -204,6 +204,7 @@ export const PayrollPage = ({ onLogout, userName, userRole }: LayoutProps) => {
     isSelfPayrollView,
     canDownloadPayslip,
     applyPayrollResponse,
+    refreshPayroll,
   } = usePayrollData();
   const [isPayrollModalOpen, setIsPayrollModalOpen] = useState(false);
   const [isSavingPayroll, setIsSavingPayroll] = useState(false);
@@ -311,6 +312,16 @@ export const PayrollPage = ({ onLogout, userName, userRole }: LayoutProps) => {
       pensionFund: payrollFormData.pension,
       otherDeductions: payrollFormData.otherDeductions,
     };
+    const computedTotalDeductions =
+      (payload.tax || 0) +
+      (payload.insurance || 0) +
+      (payload.pensionFund || 0) +
+      (payload.otherDeductions || 0);
+    const computedTotalEarnings =
+      (payload.baseSalary || 0) +
+      (payload.allowance || 0) +
+      (payload.bonuses || 0);
+    const computedNetPay = computedTotalEarnings - computedTotalDeductions;
 
     try {
       let response: PayrollApiResponse;
@@ -325,7 +336,24 @@ export const PayrollPage = ({ onLogout, userName, userRole }: LayoutProps) => {
       );
       response = result.data;
 
-      applyPayrollResponse(selectedEmployeeId, response);
+      const mergedResponse: PayrollApiResponse = {
+        ...response,
+        month: payloadMonth,
+        year: payloadYear,
+        baseSalary: payload.baseSalary,
+        allowance: payload.allowance,
+        bonuses: payload.bonuses,
+        tax: payload.tax ?? 0,
+        insurance: payload.insurance ?? 0,
+        pensionFund: payload.pensionFund ?? 0,
+        otherDeductions: payload.otherDeductions ?? 0,
+        totalDeductions: response.totalDeductions ?? computedTotalDeductions,
+        totalEarnings: response.totalEarnings ?? computedTotalEarnings,
+        netPay: response.netPay ?? computedNetPay,
+      };
+
+      applyPayrollResponse(selectedEmployeeId, mergedResponse);
+      refreshPayroll();
       setSelectedMonth(payloadMonth);
       setSelectedYear(payloadYear);
 

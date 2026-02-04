@@ -82,8 +82,11 @@ export class PayslipsService {
     const insurance = this.toNumber(payroll.insurance);
     const pensionFund = this.toNumber(payroll.pensionFund);
     const otherDeductions = this.toNumber(payroll.otherDeductions);
+    const bonus = this.toNumber(payroll.bonuses);
+    const hasBonus = bonus > 0;
 
-    const totalEarning = baseSalary + allowance + tax;
+    const totalEarning =
+      baseSalary + allowance + (hasBonus ? bonus : 0) + tax;
     const totalDeduction = tax + insurance + pensionFund + otherDeductions;
     const takeHomePay = totalEarning - totalDeduction;
 
@@ -99,6 +102,8 @@ export class PayslipsService {
       insurance: this.formatCurrency(insurance),
       pensionFund: this.formatCurrency(pensionFund),
       otherDeductions: this.formatCurrency(otherDeductions),
+      Bonus: hasBonus ? "Bonus" : "",
+      bonus: hasBonus ? `IDR ${this.formatCurrency(bonus)},00` : "",
       totalEarning: this.formatCurrency(totalEarning),
       totalDeduction: this.formatCurrency(totalDeduction),
       takeHomePay: this.formatCurrency(takeHomePay),

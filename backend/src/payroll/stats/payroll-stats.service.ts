@@ -61,8 +61,7 @@ export class PayrollStatsService {
       _sum: {
         baseSalary: true,
         allowance: true,
-        // bonuses excluded for now
-        // bonuses: true,
+        bonuses: true,
         tax: true,
         insurance: true,
         pensionFund: true,
@@ -73,6 +72,7 @@ export class PayrollStatsService {
     const totalEarnings =
       this.toNumber(totals._sum.baseSalary) +
       this.toNumber(totals._sum.allowance) +
+      this.toNumber(totals._sum.bonuses) +
       this.toNumber(totals._sum.tax);
     const totalDeductions =
       this.toNumber(totals._sum.tax) +
