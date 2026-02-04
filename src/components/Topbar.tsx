@@ -1,4 +1,4 @@
-import { Search, Bell, User, Menu } from "lucide-react";
+import { Search, Bell, Menu } from "lucide-react";
 import { AvatarDisplay } from "./AvatarDisplay";
 import { getUserAvatar } from "../utils/avatarUtils";
 
