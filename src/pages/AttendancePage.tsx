@@ -8,6 +8,8 @@ import {
   CheckInModal,
   CheckOutModal,
   AttendanceHeader,
+  AttendanceSummaryCard,
+  AttendanceSummaryGrid,
 } from "../components/attendance";
 import {
   LeaveBalanceCard,
@@ -20,6 +22,10 @@ import {
 import { useAttendanceSession } from "../hooks/useAttendanceSession";
 import { useEmployees } from "../hooks/useEmployees";
 import { useLeaveManagement } from "../hooks/useLeaveManagement";
+import {
+  calculateMonthlySummary,
+  calculateMonthlyAllEmployeesSummary,
+} from "../utils/attendanceUtils";
 import { Calendar, Filter } from "lucide-react";
 
 /**
@@ -366,22 +372,52 @@ export const AttendancePage = ({ onLogout, userName, userRole }) => {
     });
   }, [records, employees, employeeLookup]);
 
-  // Get today's date
-  const today = new Date().toISOString().slice(0, 10);
+  // Get today's date in DD-MM-YYYY format
+  const getTodayDateFormatted = () => {
+    const today = new Date();
+    const day = String(today.getDate()).padStart(2, "0");
+    const month = String(today.getMonth() + 1).padStart(2, "0");
+    const year = today.getFullYear();
+    return `${day}-${month}-${year}`;
+  };
+
+  const today = getTodayDateFormatted();
 
   // Separate today's record from past records
   const todayRecord = recordsWithEmployee.find((r) => r.date === today);
   const pastRecords = recordsWithEmployee.filter((r) => r.date !== today);
+
+  // Helper function to convert DD-MM-YYYY to Date for comparison
+  const dateStringToDate = (dateStr: string): Date => {
+    const [day, month, year] = dateStr.split("-");
+    return new Date(`${year}-${month}-${day}`);
+  };
+
+  // Helper function to convert date input (YYYY-MM) to month-year for filtering
+  const getMonthYearFromInput = (monthInput: string) => {
+    const [year, month] = monthInput.split("-");
+    return { year, month };
+  };
 
   // Filter past records based on selected filters
   const filteredRecords = useMemo(() => {
     let filtered = [...pastRecords];
 
     if (filterType === "date" && dateFrom && dateTo) {
-      filtered = filtered.filter((r) => r.date >= dateFrom && r.date <= dateTo);
+      const fromDate = dateStringToDate(dateFrom);
+      const toDate = dateStringToDate(dateTo);
+      filtered = filtered.filter((r) => {
+        const recordDate = dateStringToDate(r.date);
+        return recordDate >= fromDate && recordDate <= toDate;
+      });
     } else if (filterType === "month" && dateFrom) {
-      // dateFrom format: YYYY-MM for month input
-      filtered = filtered.filter((r) => r.date.startsWith(dateFrom));
+      // dateFrom format: YYYY-MM from month input
+      const { year, month } = getMonthYearFromInput(dateFrom);
+      filtered = filtered.filter((r) => {
+        // Record date is DD-MM-YYYY
+        const [day, recordMonth, recordYear] = r.date.split("-");
+        return recordYear === year && recordMonth === month;
+      });
     }
 
     if (statusFilter !== "all") {
@@ -402,6 +438,72 @@ export const AttendancePage = ({ onLogout, userName, userRole }) => {
 
     return filtered;
   }, [pastRecords, filterType, dateFrom, dateTo, statusFilter, employeeFilter]);
+
+  // Calculate attendance summary when employee and month are selected
+  const attendanceSummary = useMemo(() => {
+    // If employee is selected and month is selected, show single employee monthly summary
+    if (employeeFilter !== "all" && filterType === "month" && dateFrom) {
+      const [year, month] = dateFrom.split("-");
+      return calculateMonthlySummary(
+        recordsWithEmployee,
+        parseInt(employeeFilter),
+        parseInt(year),
+        parseInt(month),
+      );
+    }
+
+    // If employee is selected and filtering by date range, show single employee summary for that range
+    if (employeeFilter !== "all" && filterType === "date" && dateFrom && dateTo) {
+      const fromDate = dateStringToDate(dateFrom);
+      const toDate = dateStringToDate(dateTo);
+      
+      const filtered = recordsWithEmployee.filter((r) => {
+        if (r.employeeId !== parseInt(employeeFilter)) return false;
+        const recordDate = dateStringToDate(r.date);
+        return recordDate >= fromDate && recordDate <= toDate;
+      });
+
+      if (filtered.length === 0) return null;
+
+      const presentDays = filtered.filter((r) => r.status === "present").length;
+      const absentDays = filtered.filter((r) => r.status === "absent").length;
+      const lateDays = filtered.filter((r) => r.status === "late").length;
+      const totalDays = filtered.length;
+
+      return {
+        period: `${dateFrom} to ${dateTo}`,
+        employeeName: filtered[0]?.employeeName || "Unknown",
+        employeeId: parseInt(employeeFilter),
+        presentDays,
+        absentDays,
+        lateDays,
+        totalDays,
+        expectedWorkingDays: totalDays, // Rough estimate
+        attendanceRate: Math.round((presentDays / totalDays) * 100) || 0,
+        records: filtered,
+      };
+    }
+
+    return null;
+  }, [recordsWithEmployee, employeeFilter, filterType, dateFrom, dateTo]);
+
+  // Calculate all employees monthly summary when only month is selected
+  const allEmployeesSummaries = useMemo(() => {
+    if (
+      employeeFilter === "all" &&
+      filterType === "month" &&
+      dateFrom &&
+      employeeFilter === "all"
+    ) {
+      const [year, month] = dateFrom.split("-");
+      return calculateMonthlyAllEmployeesSummary(
+        recordsWithEmployee,
+        parseInt(year),
+        parseInt(month),
+      );
+    }
+    return [];
+  }, [recordsWithEmployee, employeeFilter, filterType, dateFrom]);
 
   // Get leave balances for display
   const leaveBalancesForDisplay = Object.keys(leaveBalanceData).map((type) => ({
@@ -471,6 +573,21 @@ export const AttendancePage = ({ onLogout, userName, userRole }) => {
             setEmployeeFilter={setEmployeeFilter}
             employees={employees}
           />
+
+          {/* Attendance Summary - Show single employee monthly summary */}
+          {attendanceSummary && (
+            <AttendanceSummaryCard summary={attendanceSummary} />
+          )}
+
+          {/* Attendance Summaries - Show all employees monthly summary */}
+          {allEmployeesSummaries.length > 0 && (
+            <div>
+              <h3 className="text-lg font-semibold text-white mb-4">
+                Monthly Summary for All Employees
+              </h3>
+              <AttendanceSummaryGrid summaries={allEmployeesSummaries} />
+            </div>
+          )}
 
           {/* Past Attendance Records */}
           <div>
