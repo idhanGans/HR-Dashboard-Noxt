@@ -112,6 +112,12 @@ export class UserResponseDto {
   })
   photoUrl?: string;
 
+  @ApiPropertyOptional({
+    description: "Extra paid leave days per year",
+    example: 2,
+  })
+  extraPaidLeaveDays?: number | null;
+
   @ApiPropertyOptional({ description: "Organization ID", example: 1 })
   organizationId?: number;
 

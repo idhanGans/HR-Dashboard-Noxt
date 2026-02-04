@@ -7,6 +7,8 @@ export { Table } from "./Table";
 export { Sidebar } from "./Sidebar";
 export { Topbar } from "./Topbar";
 export { DashboardLayout } from "./DashboardLayout";
+export { DropdownSelect } from "./DropdownSelect";
+export { PaginationControls } from "./PaginationControls";
 export { AvatarDisplay } from "./AvatarDisplay";
 export { EmployeeAvatarManager } from "./EmployeeAvatarManager";
 
@@ -24,6 +26,9 @@ export * from "./leave";
 
 // Payroll Components
 export * from "./payroll";
+
+// Skeleton Components
+export * from "./skeletons";
 
 // KPI Components
 export * from "./kpi";

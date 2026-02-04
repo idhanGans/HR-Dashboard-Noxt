@@ -1,7 +1,7 @@
 import type { AttendanceRecord } from "../types";
 
 export interface AttendanceSummary {
-  period: string; // "2025-01" for monthly, "2025" for yearly
+  period: string; // "YYYY-MM" for monthly (e.g., "2025-01"), "YYYY" for yearly
   employeeName: string;
   employeeId?: number;
   presentDays: number;
@@ -49,6 +49,17 @@ export function getWorkingDaysInYear(year: number): number {
 }
 
 /**
+ * Parse date string to extract year and month
+ * Expects YYYY-MM-DD format (ISO 8601 standard)
+ * @param dateStr - Date string in YYYY-MM-DD format
+ * @returns Object with year and month strings
+ */
+function parseDateYearMonth(dateStr: string): { year: string; month: string } {
+  const [year, month] = dateStr.split("-");
+  return { year, month };
+}
+
+/**
  * Group attendance records by employee and month
  * @param records - Array of attendance records
  * @returns Map of "YYYY-MM-employeeId" to array of records
@@ -59,8 +70,7 @@ export function groupAttendanceByEmployeeAndMonth(
   const grouped = new Map<string, AttendanceRecord[]>();
 
   records.forEach((record) => {
-    // Parse DD-MM-YYYY format
-    const [_day, month, year] = record.date.split("-");
+    const { year, month } = parseDateYearMonth(record.date);
     const key = `${year}-${month}-${record.employeeId || "unassigned"}`;
 
     if (!grouped.has(key)) {
@@ -87,14 +97,13 @@ export function calculateMonthlySummary(
   month: number,
 ): AttendanceSummary {
   const monthStr = String(month).padStart(2, "0");
-  const periodStr = `${monthStr}-${year}`;
+  const periodStr = `${year}-${monthStr}`;
 
   const filtered = records.filter((r) => {
-    // Parse DD-MM-YYYY format
-    const [_day, recordMonth, recordYear] = r.date.split("-");
+    const parsed = parseDateYearMonth(r.date);
     return (
-      recordYear === String(year) &&
-      recordMonth === monthStr &&
+      parsed.year === String(year) &&
+      parsed.month === monthStr &&
       r.employeeId === employeeId
     );
   });
@@ -140,9 +149,8 @@ export function calculateYearlySummary(
   year: number,
 ): AttendanceSummary {
   const filtered = records.filter((r) => {
-    // Parse DD-MM-YYYY format
-    const [_day, _month, recordYear] = r.date.split("-");
-    return recordYear === String(year) && r.employeeId === employeeId;
+    const parsed = parseDateYearMonth(r.date);
+    return parsed.year === String(year) && r.employeeId === employeeId;
   });
 
   const employeeName =
@@ -186,12 +194,11 @@ export function calculateMonthlyAllEmployeesSummary(
   month: number,
 ): AttendanceSummary[] {
   const monthStr = String(month).padStart(2, "0");
-  const periodStr = `${monthStr}-${year}`;
+  const periodStr = `${year}-${monthStr}`;
 
   const filtered = records.filter((r) => {
-    // Parse DD-MM-YYYY format
-    const [_day, recordMonth, recordYear] = r.date.split("-");
-    return recordYear === String(year) && recordMonth === monthStr;
+    const parsed = parseDateYearMonth(r.date);
+    return parsed.year === String(year) && parsed.month === monthStr;
   });
 
   // Group by employee

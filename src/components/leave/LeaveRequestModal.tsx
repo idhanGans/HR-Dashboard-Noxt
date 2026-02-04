@@ -1,12 +1,13 @@
 import { Modal } from "../Modal";
+import { DropdownSelect } from "../DropdownSelect";
 import { AlertCircle, CheckCircle, XCircle } from "lucide-react";
 import type { LeaveRecord } from "../../types";
+import { formatLeaveType, LEAVE_TYPE_OPTIONS } from "../../utils/leave";
 
 type LeaveRequest = LeaveRecord & {
   availableBalance?: number;
   requestedDate?: string;
 };
-import { useMemo } from "react";
 
 /**
  * LeaveRequestModal - Modal for requesting, reviewing, and approving/rejecting leaves
@@ -30,25 +31,16 @@ export const LeaveRequestModal = ({
   onReject: () => void;
   employeeName?: string;
 }) => {
-  // Derive form data from leaveRequest prop
-  const formData = useMemo(
-    () => ({
-      startDate: leaveRequest?.startDate || "",
-      endDate: leaveRequest?.endDate || "",
-      type: leaveRequest?.type || "",
-      reason: leaveRequest?.reason || "",
-    }),
-    [leaveRequest],
-  );
-
   const getLeaveTypeColor = (type: string) => {
-    switch (type?.toLowerCase()) {
-      case "paid leave":
+    switch (type?.toUpperCase()) {
+      case "PAID_LEAVE":
         return "text-blue-400 bg-blue-400/10";
-      case "sick leave":
+      case "SICK_LEAVE":
         return "text-red-400 bg-red-400/10";
-      case "vacation":
+      case "URGENT_LEAVE":
         return "text-purple-400 bg-purple-400/10";
+      case "UNPAID_LEAVE":
+        return "text-yellow-400 bg-yellow-400/10";
       default:
         return "text-gray-400 bg-gray-400/10";
     }
@@ -69,15 +61,24 @@ export const LeaveRequestModal = ({
     return days > 0 ? days : 0;
   };
 
-  const daysRequested = calculateDays(formData.startDate, formData.endDate);
+  const daysRequested = calculateDays(
+    leaveRequest?.startDate,
+    leaveRequest?.endDate,
+  );
+  const availableBalance = leaveRequest?.availableBalance;
+  const isUnlimited =
+    typeof availableBalance === "number" && !Number.isFinite(availableBalance);
 
   // Validation checks
   const getValidationStatus = () => {
     const validations = {
-      dateRange: formData.startDate && formData.endDate && daysRequested > 0,
-      leaveType: formData.type && formData.type !== "",
-      reason: formData.reason?.trim().length > 0,
-      sufficient: (leaveRequest?.availableBalance || 0) >= daysRequested,
+      dateRange: leaveRequest?.startDate && leaveRequest?.endDate,
+      leaveType: leaveRequest?.type,
+      reason: (leaveRequest?.reason?.trim()?.length ?? 0) > 0,
+      sufficient:
+        mode === "review"
+          ? true
+          : isUnlimited || (availableBalance || 0) >= daysRequested,
     };
     return validations;
   };
@@ -117,7 +118,7 @@ export const LeaveRequestModal = ({
               </label>
               <input
                 type="date"
-                value={formData.startDate}
+                value={leaveRequest?.startDate || ""}
                 onChange={(e) => handleFieldChange({ startDate: e.target.value })}
                 disabled={mode === "review"}
                 className={`w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors ${
@@ -133,10 +134,10 @@ export const LeaveRequestModal = ({
               </label>
               <input
                 type="date"
-                value={formData.endDate}
+                value={leaveRequest?.endDate || ""}
                 onChange={(e) => handleFieldChange({ endDate: e.target.value })}
                 disabled={mode === "review"}
-                min={formData.startDate}
+                min={leaveRequest?.startDate}
                 className={`w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors ${
                   mode === "review" ? "cursor-not-allowed opacity-70" : ""
                 }`}
@@ -149,30 +150,14 @@ export const LeaveRequestModal = ({
             <label className="block text-sm font-medium text-gray-300 mb-2">
               Leave Type
             </label>
-            <select
-              value={formData.type}
-              onChange={(e) => handleFieldChange({ type: e.target.value })}
+            <DropdownSelect
+              value={leaveRequest?.type || null}
+              onChange={(val) => handleFieldChange({ type: val ? String(val) : "" })}
+              options={LEAVE_TYPE_OPTIONS}
+              placeholder="Select leave type"
               disabled={mode === "review"}
-              className={`w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors ${
-                mode === "review" ? "cursor-not-allowed opacity-70" : ""
-              }`}
-            >
-              <option value="" className="bg-gray-800">
-                Select leave type
-              </option>
-              <option value="Paid Leave" className="bg-gray-800">
-                Paid Leave
-              </option>
-              <option value="Sick Leave" className="bg-gray-800">
-                Sick Leave
-              </option>
-              <option value="Vacation" className="bg-gray-800">
-                Vacation
-              </option>
-              <option value="Unpaid Leave" className="bg-gray-800">
-                Unpaid Leave
-              </option>
-            </select>
+              ariaLabel="Leave type"
+            />
           </div>
 
           {/* Reason */}
@@ -181,7 +166,7 @@ export const LeaveRequestModal = ({
               Reason
             </label>
             <textarea
-              value={formData.reason}
+              value={leaveRequest?.reason || ""}
               onChange={(e) => handleFieldChange({ reason: e.target.value })}
               disabled={mode === "review"}
               rows={3}
@@ -270,7 +255,9 @@ export const LeaveRequestModal = ({
                   </p>
                   <p className="text-xs text-gray-400">
                     {daysRequested} days requested,{" "}
-                    {leaveRequest?.availableBalance || 0} days available
+                    {isUnlimited
+                      ? "Unlimited"
+                      : `${leaveRequest?.availableBalance || 0} days available`}
                   </p>
                 </div>
               </div>
@@ -279,7 +266,7 @@ export const LeaveRequestModal = ({
         </div>
 
         {/* Summary */}
-        {formData.type && daysRequested > 0 && (
+        {leaveRequest?.type && daysRequested > 0 && (
           <div className="grid grid-cols-3 gap-3">
             <div className="bg-white/5 rounded-lg p-3 border border-white/10">
               <p className="text-xs text-gray-400 mb-1">Duration</p>
@@ -291,15 +278,17 @@ export const LeaveRequestModal = ({
             <div className="bg-white/5 rounded-lg p-3 border border-white/10">
               <p className="text-xs text-gray-400 mb-1">Type</p>
               <div
-                className={`inline-block px-2 py-1 rounded-full text-xs font-medium capitalize ${getLeaveTypeColor(formData.type)}`}
+                className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getLeaveTypeColor(leaveRequest?.type)}`}
               >
-                {formData.type}
+                {formatLeaveType(leaveRequest?.type)}
               </div>
             </div>
             <div className="bg-white/5 rounded-lg p-3 border border-white/10">
               <p className="text-xs text-gray-400 mb-1">Available</p>
               <p className="text-lg font-semibold text-white">
-                {leaveRequest?.availableBalance || 0}
+                {isUnlimited
+                  ? "Unlimited"
+                  : leaveRequest?.availableBalance || 0}
               </p>
               <p className="text-xs text-gray-500">days</p>
             </div>

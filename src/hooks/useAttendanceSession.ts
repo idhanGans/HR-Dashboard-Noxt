@@ -1,128 +1,108 @@
-import { useEffect, useMemo, useState } from "react";
-import { attendanceRecords as seedRecords } from "../utils/dummyData";
-import type { AttendanceRecord } from "../types";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { attendanceService } from "../services/attendance";
+import { attendanceKeys } from "./useAttendanceRecords";
 
-const STORAGE_KEY = "hrdash-attendance-session";
+export interface UseAttendanceSessionOptions {
+  currentUserId?: number;
+  initialCheckInAt?: number | null;
+}
 
-/**
- * useAttendanceSession - Custom hook for attendance session management
- */
-export const useAttendanceSession = (currentEmployee?: {
-  id?: number;
-  name?: string;
-}) => {
-  const [records, setRecords] = useState<AttendanceRecord[]>(seedRecords);
-  const [checkInTime, setCheckInTime] = useState<number | null>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const { checkInTime: savedTs } = JSON.parse(saved);
-        return savedTs || null;
-      }
-    } catch {
-      // ignore parse errors
+export const useAttendanceSession = (options?: UseAttendanceSessionOptions) => {
+  const queryClient = useQueryClient();
+
+  const currentUserId = options?.currentUserId;
+  const initialCheckInAt = options?.initialCheckInAt ?? null;
+
+  const [localOverride, setLocalOverride] = useState<number | "cleared" | null>(null);
+
+  const checkInTime = useMemo(() => {
+    if (localOverride === "cleared") return null;
+    if (localOverride !== null) return localOverride;
+    return initialCheckInAt;
+  }, [localOverride, initialCheckInAt]);
+
+  const prevInitialRef = useRef(initialCheckInAt);
+  if (prevInitialRef.current !== initialCheckInAt) {
+    prevInitialRef.current = initialCheckInAt;
+    if (localOverride !== null) {
+      setLocalOverride(null);
     }
-    return null;
-  });
-  const [elapsed, setElapsed] = useState(0);
+  }
 
-  const isCheckedIn = useMemo(() => !!checkInTime, [checkInTime]);
-  const todayKey = new Date().toISOString().slice(0, 10);
+  const isCheckedIn = !!checkInTime;
 
-  // Tick elapsed timer while checked in
+  const [elapsedState, setElapsedState] = useState(0);
+
   useEffect(() => {
     if (!checkInTime) return;
-    const id = setInterval(() => setElapsed(Date.now() - checkInTime), 1000);
-    return () => clearInterval(id);
+
+    const updateElapsed = () => setElapsedState(Date.now() - checkInTime);
+    const initialId = setTimeout(updateElapsed, 0);
+    const intervalId = setInterval(updateElapsed, 1000);
+
+    return () => {
+      clearTimeout(initialId);
+      clearInterval(intervalId);
+    };
   }, [checkInTime]);
 
-  const handleCheckIn = () => {
-    const now = Date.now();
-    setCheckInTime(now);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ checkInTime: now }));
+  const elapsed = checkInTime ? elapsedState : 0;
 
-    const employeeId = currentEmployee?.id;
-    const employeeName = currentEmployee?.name ?? "Current User";
+  const checkInMutation = useMutation({
+    mutationFn: () => {
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      return attendanceService.checkIn(timezone ? { timezone } : undefined);
+    },
+    onSuccess: (data) => {
+      const checkInDate = new Date(data.checkInAt);
+      setLocalOverride(checkInDate.getTime());
+      queryClient.invalidateQueries({ queryKey: attendanceKeys.records() });
+    },
+  });
 
-    // Upsert today's record
-    setRecords((prev) => {
-      const existingIdx = prev.findIndex((r) => r.date === todayKey);
-      const record: AttendanceRecord = {
-        date: todayKey,
-        checkIn: new Date(now).toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-        checkOut: "-",
-        status: "present",
-        employeeId,
-        employeeName,
-      };
-      if (existingIdx >= 0) {
-        const next = [...prev];
-        next[existingIdx] = { ...next[existingIdx], ...record };
-        return next;
-      }
-      return [record, ...prev];
-    });
-  };
+  const checkOutMutation = useMutation({
+    mutationFn: () => attendanceService.checkOut(),
+    onSuccess: () => {
+      setLocalOverride("cleared");
+      queryClient.invalidateQueries({ queryKey: attendanceKeys.records() });
+    },
+  });
 
-  const handleCheckOut = () => {
-    const now = Date.now();
-    const fmtTime = (ts: number | null) =>
-      ts
-        ? new Date(ts).toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          })
-        : "-";
+  const handleCheckIn = useCallback(async (): Promise<string | null> => {
+    if (!currentUserId) {
+      return "Unable to determine user for check-in.";
+    }
 
-    // Update today's record
-    setRecords((prev) => {
-      const existingIdx = prev.findIndex((r) => r.date === todayKey);
-      if (existingIdx >= 0) {
-        const next = [...prev];
-        next[existingIdx] = {
-          ...next[existingIdx],
-          employeeId: next[existingIdx].employeeId ?? currentEmployee?.id,
-          employeeName:
-            next[existingIdx].employeeName ??
-            currentEmployee?.name ??
-            "Current User",
-          checkOut: new Date(now).toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
-          status: "present",
-        };
-        return next;
-      }
-      // If no record exists yet, create one with current times
-      const newRecord: AttendanceRecord = {
-          date: todayKey,
-          checkIn: fmtTime(checkInTime),
-          checkOut: new Date(now).toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
-          status: "present",
-          employeeId: currentEmployee?.id,
-          employeeName: currentEmployee?.name ?? "Current User",
-      };
-      return [newRecord, ...prev];
-    });
+    try {
+      await checkInMutation.mutateAsync();
+      return null;
+    } catch (err) {
+      return err instanceof Error ? err.message : "Check-in failed";
+    }
+  }, [currentUserId, checkInMutation]);
 
-    // Clear session
-    setCheckInTime(null);
-    setElapsed(0);
-    localStorage.removeItem(STORAGE_KEY);
-  };
+  const handleCheckOut = useCallback(async (): Promise<string | null> => {
+    if (!currentUserId) {
+      return "Unable to determine user for check-out.";
+    }
+
+    try {
+      await checkOutMutation.mutateAsync();
+      return null;
+    } catch (err) {
+      return err instanceof Error ? err.message : "Check-out failed";
+    }
+  }, [currentUserId, checkOutMutation]);
 
   return {
-    records,
     checkInTime,
     elapsed,
     isCheckedIn,
+    isCheckingIn: checkInMutation.isPending,
+    isCheckingOut: checkOutMutation.isPending,
+    checkInError: checkInMutation.error?.message ?? null,
+    checkOutError: checkOutMutation.error?.message ?? null,
     handleCheckIn,
     handleCheckOut,
   };

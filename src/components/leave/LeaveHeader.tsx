@@ -7,8 +7,10 @@ import { Button } from "../Button";
  */
 export const LeaveHeader = ({
   onRequestLeave,
+  canRequest = true,
 }: {
   onRequestLeave: () => void;
+  canRequest?: boolean;
 }) => {
   return (
     <div className="mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
@@ -18,13 +20,15 @@ export const LeaveHeader = ({
         </h1>
         <p className="text-lightGrey">Track and manage employee leaves.</p>
       </div>
-      <Button
-        onClick={onRequestLeave}
-        className="flex items-center gap-2 w-full sm:w-auto"
-      >
-        <Plus size={18} />
-        Request Leave
-      </Button>
+      {canRequest && (
+        <Button
+          onClick={onRequestLeave}
+          className="flex items-center gap-2 w-full sm:w-auto"
+        >
+          <Plus size={18} />
+          Request Leave
+        </Button>
+      )}
     </div>
   );
 };

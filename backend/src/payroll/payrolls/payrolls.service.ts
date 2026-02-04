@@ -106,7 +106,7 @@ export class PayrollsService {
     const pensionFund = this.toNumber(payroll.pensionFund);
     const otherDeductions = this.toNumber(payroll.otherDeductions);
 
-    const totalEarnings = baseSalary + allowance + bonuses;
+    const totalEarnings = baseSalary + allowance + bonuses + tax;
     const totalDeductions = tax + insurance + pensionFund + otherDeductions;
     const netPay = totalEarnings - totalDeductions;
 

@@ -166,7 +166,8 @@ const mapFormToUpdateRequest = (form: EmployeeForm): UpdateUserRequest => ({
  * - useMutation for create/update operations with automatic cache invalidation
  * - Optimistic updates for better UX on mark as former
  */
-export const useEmployeeManagement = () => {
+export const useEmployeeManagement = (options?: { enabled?: boolean }) => {
+  const isEnabled = options?.enabled ?? true;
   const queryClient = useQueryClient();
 
   // Filter and search state (UI state, not server state)
@@ -222,6 +223,7 @@ export const useEmployeeManagement = () => {
         employmentType: filters.employmentType,
       }),
     select: (data) => data.map(mapUserToEmployee),
+    enabled: isEnabled,
   });
 
   /**
@@ -230,6 +232,7 @@ export const useEmployeeManagement = () => {
   const statisticsQuery = useQuery({
     queryKey: employeeKeys.statistics(),
     queryFn: employeeService.getEmployeeStatistics,
+    enabled: isEnabled,
   });
 
   // ============ Mutations ============

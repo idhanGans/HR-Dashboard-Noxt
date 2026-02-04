@@ -35,6 +35,7 @@ export const PayslipCard = ({
       <EarningsSection
         basicSalary={salaryBreakdown.basicSalary ?? 0}
         allowances={salaryBreakdown.allowances ?? 0}
+        taxAllowance={payrollData?.tax ?? 0}
         bonus={salaryBreakdown.bonus ?? 0}
         total={totalEarnings}
       />
@@ -95,11 +96,13 @@ const PayslipHeader = ({ employee }: { employee?: Employee }) => {
 const EarningsSection = ({
   basicSalary,
   allowances,
+  taxAllowance,
   bonus,
   total,
 }: {
   basicSalary: number;
   allowances: number;
+  taxAllowance: number;
   bonus: number;
   total: number;
 }) => {
@@ -120,9 +123,17 @@ const EarningsSection = ({
           </span>
         </div>
         <div className="flex justify-between">
+          <span className="text-lightGrey">Tax Allowance</span>
+          <span className="text-white font-semibold">
+            {formatIDR(taxAllowance)}
+          </span>
+        </div>
+        {bonus > 0 &&         
+          <div className="flex justify-between">
           <span className="text-lightGrey">Bonus</span>
           <span className="text-white font-semibold">{formatIDR(bonus)}</span>
-        </div>
+          </div>
+        }
       </div>
       <div className="border-t border-white/10 mt-4 pt-4 flex justify-between">
         <span className="text-white font-semibold">Total Earnings</span>

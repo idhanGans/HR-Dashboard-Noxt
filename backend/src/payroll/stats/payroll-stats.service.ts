@@ -28,7 +28,6 @@ export class PayrollStatsService {
         o.name AS "organizationName",
         COALESCE(SUM(p."baseSalary"), 0)
           + COALESCE(SUM(p."allowance"), 0)
-          + COALESCE(SUM(p."bonuses"), 0)
           - COALESCE(SUM(p."tax"), 0)
           - COALESCE(SUM(p."insurance"), 0)
           - COALESCE(SUM(p."pensionFund"), 0)
@@ -73,7 +72,8 @@ export class PayrollStatsService {
     const totalEarnings =
       this.toNumber(totals._sum.baseSalary) +
       this.toNumber(totals._sum.allowance) +
-      this.toNumber(totals._sum.bonuses);
+      this.toNumber(totals._sum.bonuses) +
+      this.toNumber(totals._sum.tax);
     const totalDeductions =
       this.toNumber(totals._sum.tax) +
       this.toNumber(totals._sum.insurance) +

@@ -1,7 +1,71 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "../contexts/AuthContext";
+import { leaveService, type LeaveQueryParams } from "../services/leave";
+import { LEAVE_TYPES } from "../utils/leave";
 import type { LeaveRecord } from "../types";
+import type {
+  LeaveApiRequest,
+  LeaveBalanceResponse,
+  LeaveType,
+} from "../types/api/leave";
 
-type LeaveBalanceMap = Record<string, { total: number; used: number }>;
+export const leaveKeys = {
+  all: ["leave"] as const,
+  requests: () => [...leaveKeys.all, "requests"] as const,
+  requestList: (params: LeaveQueryParams, isSuperadmin: boolean) =>
+    [...leaveKeys.requests(), { params, isSuperadmin }] as const,
+  balances: () => [...leaveKeys.all, "balances"] as const,
+  balance: (userId?: number) => [...leaveKeys.balances(), userId] as const,
+  recentApprovals: () => [...leaveKeys.all, "recentApprovals"] as const,
+};
+
+type LeaveBalanceMap = Record<
+  string,
+  { total: number; used: number; isUnlimited?: boolean }
+>;
+
+const toDateOnly = (value?: string | null) => {
+  if (!value) return "";
+  if (value.length <= 10) return value;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return "";
+  return parsed.toISOString().split("T")[0];
+};
+
+const mapLeaveRecord = (
+  record: LeaveApiRequest,
+  fallbackName?: string
+): LeaveRecord => {
+  const startDate = toDateOnly(record.startDate);
+  const endDate = toDateOnly(record.endDate);
+  return {
+    id: record.id,
+    employeeId: record.userId,
+    employeeName: record.user?.fullName ?? fallbackName,
+    type: record.type,
+    startDate,
+    endDate,
+    date: startDate && endDate ? `${startDate} to ${endDate}` : undefined,
+    reason: record.reason,
+    status: record.status,
+    days: record.days,
+    requestedDate: toDateOnly(record.createdAt),
+    approvalDate: record.reviewedAt ? toDateOnly(record.reviewedAt) : null,
+    approvedBy: record.reviewedBy?.fullName ?? null,
+  };
+};
+
+const buildBalanceMap = (balances: LeaveBalanceResponse[]): LeaveBalanceMap =>
+  LEAVE_TYPES.reduce<LeaveBalanceMap>((acc, type) => {
+    const match = balances.find((entry) => entry.type === type);
+    acc[type] = {
+      total: match?.entitledDays ?? 0,
+      used: match?.usedDays ?? 0,
+      isUnlimited: match?.isUnlimited ?? type !== "PAID_LEAVE",
+    };
+    return acc;
+  }, {});
 
 const EMPTY_LEAVE_REQUEST: LeaveRecord = {
   id: null,
@@ -10,228 +74,248 @@ const EMPTY_LEAVE_REQUEST: LeaveRecord = {
   startDate: "",
   endDate: "",
   reason: "",
-  status: "pending",
+  status: "PENDING",
   requestedDate: new Date().toISOString().split("T")[0],
   approvalDate: null,
   approvedBy: null,
   availableBalance: 0,
 };
 
-const INITIAL_LEAVE_RECORDS: LeaveRecord[] = [
-  {
-    id: 1,
-    employeeId: 1,
-    employeeName: "Alice Johnson",
-    date: "2024-12-25 to 2024-12-26",
-    startDate: "2024-12-25",
-    endDate: "2024-12-26",
-    type: "Paid Leave",
-    status: "approved",
-    days: 2,
-    requestedDate: "2024-12-15",
-    approvalDate: "2024-12-16",
-  },
-  {
-    id: 2,
-    employeeId: 2,
-    employeeName: "Bob Smith",
-    date: "2024-11-20 to 2024-11-22",
-    startDate: "2024-11-20",
-    endDate: "2024-11-22",
-    type: "Sick Leave",
-    status: "approved",
-    days: 3,
-    requestedDate: "2024-11-18",
-    approvalDate: "2024-11-19",
-  },
-  {
-    id: 3,
-    employeeId: 3,
-    employeeName: "Carol White",
-    date: "2024-10-15 to 2024-10-18",
-    startDate: "2024-10-15",
-    endDate: "2024-10-18",
-    type: "Vacation",
-    status: "approved",
-    days: 4,
-    requestedDate: "2024-10-01",
-    approvalDate: "2024-10-05",
-  },
-  {
-    id: 4,
-    employeeId: 4,
-    employeeName: "David Martinez",
-    date: "2025-01-15 to 2025-01-18",
-    startDate: "2025-01-15",
-    endDate: "2025-01-18",
-    type: "Vacation",
-    status: "pending",
-    days: 4,
-    requestedDate: "2025-01-10",
-    approvalDate: null,
-  },
-];
+export interface UseLeaveManagementOptions {
+  employeeId?: number;
+}
 
-/**
- * useLeaveManagement - Custom hook for leave request management
- */
-export const useLeaveManagement = () => {
-  const [leaveRecords, setLeaveRecords] = useState<LeaveRecord[]>(
-    INITIAL_LEAVE_RECORDS,
-  );
+export const useLeaveManagement = (options?: UseLeaveManagementOptions) => {
+  const { auth } = useAuth();
+  const queryClient = useQueryClient();
+
+  const employeeId = options?.employeeId;
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(50);
+
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
-  const [selectedRequest, setSelectedRequest] = useState<LeaveRecord | null>(
-    null,
-  );
+  const [selectedRequest, setSelectedRequest] = useState<LeaveRecord | null>(null);
   const [leaveForm, setLeaveForm] = useState<LeaveRecord>(EMPTY_LEAVE_REQUEST);
 
-  // Leave balances by type
-  const [leaveBalance] = useState<LeaveBalanceMap>({
-    "Paid Leave": { total: 12, used: 4 },
-    "Sick Leave": { total: 8, used: 3 },
-    Vacation: { total: 10, used: 4 },
-    "Unpaid Leave": { total: 0, used: 0 }, // Unlimited
+  const isSuperadmin = auth.role === "SUPERADMIN";
+  const canRequestLeave = auth.role === "EMPLOYEE" || auth.role === "SUPERVISOR";
+  const fallbackName = auth.userName ?? "Current User";
+
+  const queryParams: LeaveQueryParams = useMemo(
+    () => ({
+      page,
+      limit,
+      userId: isSuperadmin ? employeeId : undefined,
+    }),
+    [page, limit, isSuperadmin, employeeId]
+  );
+
+  const requestsQuery = useQuery({
+    queryKey: leaveKeys.requestList(queryParams, isSuperadmin),
+    queryFn: () =>
+      isSuperadmin
+        ? leaveService.getRequests(queryParams)
+        : leaveService.getMyRequests({ page, limit }),
+    select: (response) => ({
+      records: response.data.map((r) => mapLeaveRecord(r, fallbackName)),
+      total: response.total ?? response.data.length,
+      totalPages: response.totalPages ?? 1,
+    }),
+    enabled: auth.isAuthenticated && !auth.isInitializing,
   });
 
-  // Calculate available balance for a specific leave type
-  const getAvailableBalance = (leaveType: string) => {
-    const balance = leaveBalance[leaveType];
-    if (!balance) return 0;
-    if (leaveType === "Unpaid Leave") return 999; // Unlimited
-    return balance.total - balance.used;
-  };
+  const balancesQuery = useQuery({
+    queryKey: leaveKeys.balance(isSuperadmin ? employeeId : undefined),
+    queryFn: () => leaveService.getBalances(isSuperadmin ? employeeId : undefined),
+    select: buildBalanceMap,
+    enabled:
+      auth.isAuthenticated &&
+      !auth.isInitializing &&
+      (canRequestLeave || (isSuperadmin && !!employeeId)),
+  });
 
-  // Calculate days between two dates
-  const calculateDays = (startDate?: string, endDate?: string) => {
+  const approvalsQuery = useQuery({
+    queryKey: leaveKeys.recentApprovals(),
+    queryFn: () => leaveService.getRecentApprovals(10),
+    select: (data) => data.map((r) => mapLeaveRecord(r, fallbackName)),
+    enabled: auth.isAuthenticated && !auth.isInitializing && isSuperadmin,
+  });
+
+  const createMutation = useMutation({
+    mutationFn: leaveService.createRequest,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: leaveKeys.requests() });
+      queryClient.invalidateQueries({ queryKey: leaveKeys.balances() });
+    },
+  });
+
+  const approveMutation = useMutation({
+    mutationFn: leaveService.approveRequest,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: leaveKeys.requests() });
+      queryClient.invalidateQueries({ queryKey: leaveKeys.recentApprovals() });
+      queryClient.invalidateQueries({ queryKey: leaveKeys.balances() });
+    },
+  });
+
+  const rejectMutation = useMutation({
+    mutationFn: leaveService.rejectRequest,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: leaveKeys.requests() });
+      queryClient.invalidateQueries({ queryKey: leaveKeys.recentApprovals() });
+    },
+  });
+
+  const leaveRecords = useMemo(
+    () => requestsQuery.data?.records ?? [],
+    [requestsQuery.data?.records]
+  );
+  const total = requestsQuery.data?.total ?? 0;
+  const totalPages = requestsQuery.data?.totalPages ?? 1;
+  const leaveBalance = useMemo(
+    () => balancesQuery.data ?? buildBalanceMap([]),
+    [balancesQuery.data]
+  );
+  const recentApprovals = useMemo(
+    () => approvalsQuery.data ?? [],
+    [approvalsQuery.data]
+  );
+
+  const isLoading =
+    requestsQuery.isLoading || balancesQuery.isLoading || approvalsQuery.isLoading;
+  const requestsLoading = requestsQuery.isLoading || requestsQuery.isFetching;
+  const balancesLoading = balancesQuery.isLoading || balancesQuery.isFetching;
+  const approvalsLoading = approvalsQuery.isLoading || approvalsQuery.isFetching;
+  const error =
+    requestsQuery.error?.message ??
+    balancesQuery.error?.message ??
+    approvalsQuery.error?.message ??
+    null;
+
+  const getAvailableBalance = useCallback(
+    (leaveType: string) => {
+      if (leaveType !== "PAID_LEAVE") return Number.POSITIVE_INFINITY;
+      const balance = leaveBalance[leaveType];
+      if (!balance) return 0;
+      if (balance.isUnlimited) return Number.POSITIVE_INFINITY;
+      return balance.total - balance.used;
+    },
+    [leaveBalance]
+  );
+
+  const calculateDays = useCallback((startDate?: string, endDate?: string) => {
     if (!startDate || !endDate) return 0;
     const start = new Date(startDate);
     const end = new Date(endDate);
-    return (
-      Math.ceil((end.getTime() - start.getTime()) / (1000 * 3600 * 24)) + 1
-    );
-  };
+    return Math.ceil((end.getTime() - start.getTime()) / (1000 * 3600 * 24)) + 1;
+  }, []);
 
-  // Handle request leave button click
-  const handleRequestLeave = () => {
+  const pendingRequests = useMemo(
+    () => leaveRecords.filter((r) => String(r.status).toLowerCase() === "pending"),
+    [leaveRecords]
+  );
+
+  const approvedRequests = useMemo(
+    () => leaveRecords.filter((r) => String(r.status).toLowerCase() === "approved"),
+    [leaveRecords]
+  );
+
+  const handleRequestLeave = useCallback(() => {
     setLeaveForm({
       ...EMPTY_LEAVE_REQUEST,
       availableBalance: 12, // Default to Paid Leave balance
     });
     setIsRequestModalOpen(true);
-  };
+  }, []);
 
-  // Handle review leave request
-  const handleReviewRequest = (record: LeaveRecord) => {
-    setSelectedRequest(record);
-    setLeaveForm({
-      ...record,
-      availableBalance: getAvailableBalance(record.type),
-    });
-    setIsReviewModalOpen(true);
-  };
+  const handleReviewRequest = useCallback(
+    (record: LeaveRecord) => {
+      setSelectedRequest(record);
+      setLeaveForm({
+        ...record,
+        availableBalance: getAvailableBalance(record.type),
+      });
+      setIsReviewModalOpen(true);
+    },
+    [getAvailableBalance]
+  );
 
-  // Handle approve leave request
-  const handleApproveRequest = (record: LeaveRecord) => {
-    setLeaveRecords((prev) =>
-      prev.map((r) =>
-        r.id === record.id
-          ? {
-              ...r,
-              status: "approved",
-              approvalDate: new Date().toISOString().split("T")[0],
-            }
-          : r,
-      ),
-    );
-    setIsReviewModalOpen(false);
-    setSelectedRequest(null);
-  };
+  const handleApproveRequest = useCallback(
+    async (record: LeaveRecord): Promise<string | null> => {
+      if (!record.id) return "Leave request not found.";
+      try {
+        await approveMutation.mutateAsync(record.id);
+        setIsReviewModalOpen(false);
+        setSelectedRequest(null);
+        return null;
+      } catch (err) {
+        return err instanceof Error ? err.message : "Approval failed";
+      }
+    },
+    [approveMutation]
+  );
 
-  // Handle reject leave request
-  const handleRejectRequest = (record: LeaveRecord) => {
-    setLeaveRecords((prev) =>
-      prev.map((r) =>
-        r.id === record.id
-          ? {
-              ...r,
-              status: "rejected",
-              approvalDate: new Date().toISOString().split("T")[0],
-            }
-          : r,
-      ),
-    );
-    setIsReviewModalOpen(false);
-    setSelectedRequest(null);
-  };
+  const handleRejectRequest = useCallback(
+    async (record: LeaveRecord): Promise<string | null> => {
+      if (!record.id) return "Leave request not found.";
+      try {
+        await rejectMutation.mutateAsync(record.id);
+        setIsReviewModalOpen(false);
+        setSelectedRequest(null);
+        return null;
+      } catch (err) {
+        return err instanceof Error ? err.message : "Rejection failed";
+      }
+    },
+    [rejectMutation]
+  );
 
-  // Handle submit new leave request
-  const handleSubmitLeaveRequest = () => {
-    if (!leaveForm.type || !leaveForm.startDate || !leaveForm.endDate) {
-      alert("Please fill all required fields");
-      return;
+  const handleSubmitLeaveRequest = useCallback(async (): Promise<string | null> => {
+    if (
+      !leaveForm.type ||
+      !leaveForm.startDate ||
+      !leaveForm.endDate ||
+      !leaveForm.reason?.trim()
+    ) {
+      return "Please fill all required fields";
     }
 
-    if (!leaveForm.reason || leaveForm.reason.trim().length === 0) {
-      alert("Please provide a reason for your leave request");
-      return;
-    }
-
+    const reason = leaveForm.reason.trim();
     const days = calculateDays(leaveForm.startDate, leaveForm.endDate);
 
     if (days <= 0) {
-      alert(
-        "Invalid date range. End date must be after or equal to start date.",
-      );
-      return;
+      return "Invalid date range. End date must be after or equal to start date.";
     }
 
     const available = getAvailableBalance(leaveForm.type);
 
-    if (days > available && leaveForm.type !== "Unpaid Leave") {
-      alert(
-        `Insufficient leave balance. You have ${available} days available but need ${days} days.`,
-      );
-      return;
+    if (leaveForm.type === "PAID_LEAVE" && days > available) {
+      return `Insufficient paid leave balance. You have ${available} days available but need ${days} days.`;
     }
 
-    const newRequest: LeaveRecord = {
-      id: Math.max(...leaveRecords.map((r) => r.id ?? 0), 0) + 1,
-      employeeId: 1, // Assuming current user
-      employeeName: "You",
-      date: `${leaveForm.startDate} to ${leaveForm.endDate}`,
-      startDate: leaveForm.startDate,
-      endDate: leaveForm.endDate,
-      type: leaveForm.type,
-      reason: leaveForm.reason,
-      status: "pending",
-      days,
-      requestedDate: new Date().toISOString().split("T")[0],
-      approvalDate: null,
-      approvedBy: null,
-    };
-
-    setLeaveRecords((prev) => [newRequest, ...prev]);
-    setIsRequestModalOpen(false);
-    setLeaveForm(EMPTY_LEAVE_REQUEST);
-    alert("Leave request submitted successfully!");
-  };
-
-  // Get pending requests for admin
-  const pendingRequests = useMemo(
-    () => leaveRecords.filter((r) => r.status === "pending"),
-    [leaveRecords],
-  );
-
-  // Get approved requests for employees
-  const approvedRequests = useMemo(
-    () => leaveRecords.filter((r) => r.status === "approved"),
-    [leaveRecords],
-  );
+    try {
+      await createMutation.mutateAsync({
+        type: leaveForm.type as LeaveType,
+        startDate: leaveForm.startDate,
+        endDate: leaveForm.endDate,
+        reason,
+      });
+      setIsRequestModalOpen(false);
+      setLeaveForm(EMPTY_LEAVE_REQUEST);
+      if (page !== 1) {
+        setPage(1);
+      }
+      return null;
+    } catch (err) {
+      return err instanceof Error ? err.message : "Request failed";
+    }
+  }, [leaveForm, calculateDays, getAvailableBalance, createMutation, page]);
 
   return {
     leaveRecords,
     leaveBalance,
+    recentApprovals,
     isRequestModalOpen,
     setIsRequestModalOpen,
     isReviewModalOpen,
@@ -248,5 +332,24 @@ export const useLeaveManagement = () => {
     calculateDays,
     pendingRequests,
     approvedRequests,
+    isLoading,
+    requestsLoading,
+    balancesLoading,
+    approvalsLoading,
+    error,
+    isSubmitting: createMutation.isPending,
+    isApproving: approveMutation.isPending,
+    isRejecting: rejectMutation.isPending,
+    canRequestLeave,
+    isSuperadmin,
+    page,
+    total,
+    totalPages,
+    setPage,
+    limit,
+    setLimit,
+    refreshLeaveData: () => {
+      queryClient.invalidateQueries({ queryKey: leaveKeys.all });
+    },
   };
 };

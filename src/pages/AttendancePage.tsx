@@ -1,6 +1,12 @@
-import { useMemo, useState } from "react";
-import type { Dispatch, SetStateAction } from "react";
-import { DashboardLayout } from "../components";
+import { useCallback, useMemo, useState } from "react";
+import {
+  DashboardLayout,
+  DropdownSelect,
+  LeaveBalanceGridSkeleton,
+  PaginationControls,
+  TodayAttendanceSkeleton,
+  AttendanceGroupedSummarySkeleton,
+} from "../components";
 import {
   CheckInCard,
   CheckOutCard,
@@ -9,8 +15,6 @@ import {
   CheckInModal,
   CheckOutModal,
   AttendanceHeader,
-  AttendanceSummaryCard,
-  AttendanceSummaryGrid,
   AttendanceGroupedSummary,
 } from "../components/attendance";
 import {
@@ -21,15 +25,17 @@ import {
   LeaveHeader,
   LeaveRequestModal,
 } from "../components/leave";
+import { EmployeeSelector } from "../components/employees";
+import { useAttendanceRecords } from "../hooks/useAttendanceRecords";
 import { useAttendanceSession } from "../hooks/useAttendanceSession";
+import { useEmployeeManagement } from "../hooks/useEmployeeManagement";
 import { useEmployees } from "../hooks/useEmployees";
 import { useLeaveManagement } from "../hooks/useLeaveManagement";
-import {
-  calculateMonthlySummary,
-  calculateMonthlyAllEmployeesSummary,
-  createGroupedSummaries,
-} from "../utils/attendanceUtils";
+import { useAuth } from "../contexts/AuthContext";
+import { hasRequiredRole } from "../utils/roles";
+import { createGroupedSummaries } from "../utils/attendanceUtils";
 import { Calendar, Filter } from "lucide-react";
+import { useMediaQuery } from "../hooks/useMediaQuery";
 import type {
   AttendanceRecord,
   Employee,
@@ -67,15 +73,54 @@ const ActionCardsGrid = ({
   </div>
 );
 
+
 /**
  * LeaveBalanceGrid - Grid of leave balance cards
  */
-const LeaveBalanceGrid = ({ balances }: { balances: LeaveBalance[] }) => (
-  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-    {balances.map((leave) => (
-      <LeaveBalanceCard key={leave.type} leave={leave} />
-    ))}
-  </div>
+const LeaveBalanceGrid = ({
+  balances,
+  isLoading = false,
+}: {
+  balances: LeaveBalance[];
+  isLoading?: boolean;
+}) => {
+  if (isLoading) {
+    return <LeaveBalanceGridSkeleton />;
+  }
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+      {balances.map((leave) => (
+        <LeaveBalanceCard key={leave.type} leave={leave} />
+      ))}
+    </div>
+  );
+};
+
+const RowsSelector = ({
+  value,
+  onChange,
+}: {
+  value: number;
+  onChange: (nextSize: number) => void;
+}) => (
+  <label className="flex items-center gap-2 text-sm text-lightGrey">
+    <span>Rows</span>
+    <DropdownSelect
+      value={value}
+      onChange={(nextValue) => {
+        if (nextValue !== null) {
+          onChange(Number(nextValue));
+        }
+      }}
+      options={[25, 50, 100].map((s) => ({
+        value: s,
+        label: `${s}`,
+      }))}
+      ariaLabel="Rows per page"
+      size="compact"
+    />
+  </label>
 );
 
 /**
@@ -83,19 +128,32 @@ const LeaveBalanceGrid = ({ balances }: { balances: LeaveBalance[] }) => (
  */
 interface AttendanceFilterSectionProps {
   filterType: string;
-  setFilterType: Dispatch<SetStateAction<string>>;
+  setFilterType: (value: string) => void;
   dateFrom: string;
-  setDateFrom: Dispatch<SetStateAction<string>>;
+  setDateFrom: (value: string) => void;
   dateTo: string;
-  setDateTo: Dispatch<SetStateAction<string>>;
+  setDateTo: (value: string) => void;
   statusFilter: string;
-  setStatusFilter: Dispatch<SetStateAction<string>>;
+  setStatusFilter: (value: string) => void;
   employeeFilter: string;
-  setEmployeeFilter: Dispatch<SetStateAction<string>>;
-  yearFilter: string;
-  setYearFilter: Dispatch<SetStateAction<string>>;
+  setEmployeeFilter: (value: string) => void;
   employees: Employee[];
+  showEmployeeFilter: boolean;
 }
+
+const filterTypeOptions = [
+  { value: "all", label: "All Records" },
+  { value: "date", label: "Date Range" },
+  { value: "month", label: "Month" },
+  { value: "status", label: "Status" },
+];
+
+const statusOptions = [
+  { value: "all", label: "All Status" },
+  { value: "present", label: "Present" },
+  { value: "late", label: "Late" },
+  { value: "absent", label: "Absent" },
+];
 
 const AttendanceFilterSection = ({
   filterType,
@@ -108,178 +166,137 @@ const AttendanceFilterSection = ({
   setStatusFilter,
   employeeFilter,
   setEmployeeFilter,
-  yearFilter,
-  setYearFilter,
   employees,
-}: AttendanceFilterSectionProps) => (
-  <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-6 mb-8">
-    <div className="flex items-center gap-2 mb-6">
-      <Filter size={20} className="text-blue-400" />
-      <h3 className="text-lg font-semibold text-white">
-        Filter Attendance Records
-      </h3>
-    </div>
+  showEmployeeFilter,
+}: AttendanceFilterSectionProps) => {
+  const employeeOptions = [
+    { value: "all", label: "All Employees" },
+    ...(employees?.map((emp) => ({
+      value: String(emp.id),
+      label: emp.name,
+    })) ?? []),
+  ];
 
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-      {/* Filter Type */}
-      <div>
-        <label className="block text-sm font-medium text-gray-300 mb-2">
-          Filter By
-        </label>
-        <select
-          value={filterType}
-          onChange={(e) => setFilterType(e.target.value)}
-          className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors"
-        >
-          <option value="all" className="bg-gray-800">
-            All Records
-          </option>
-          <option value="date" className="bg-gray-800">
-            Date Range
-          </option>
-          <option value="month" className="bg-gray-800">
-            Month
-          </option>
-          <option value="year" className="bg-gray-800">
-            Year
-          </option>
-          <option value="status" className="bg-gray-800">
-            Status
-          </option>
-        </select>
+  return (
+    <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-6 mb-8">
+      <div className="flex items-center gap-2 mb-6">
+        <Filter size={20} className="text-blue-400" />
+        <h3 className="text-lg font-semibold text-white">
+          Filter Attendance Records
+        </h3>
       </div>
 
-      {/* Employee Filter */}
-      <div>
-        <label className="block text-sm font-medium text-gray-300 mb-2">
-          Employee
-        </label>
-        <select
-          value={employeeFilter}
-          onChange={(e) => setEmployeeFilter(e.target.value)}
-          className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors"
-        >
-          <option value="all" className="bg-gray-800">
-            All Employees
-          </option>
-          {employees?.map((emp) => (
-            <option key={emp.id} value={String(emp.id)} className="bg-gray-800">
-              {emp.name}
-            </option>
-          ))}
-        </select>
+      <div
+        className={`grid grid-cols-1 sm:grid-cols-2 ${
+          showEmployeeFilter ? "lg:grid-cols-5" : "lg:grid-cols-4"
+        } gap-4`}
+      >
+        {/* Filter Type */}
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">
+            Filter By
+          </label>
+          <DropdownSelect
+            value={filterType}
+            onChange={(val) => setFilterType(String(val ?? "all"))}
+            options={filterTypeOptions}
+            ariaLabel="Filter type"
+          />
+        </div>
+
+        {/* Employee Filter */}
+        {showEmployeeFilter && (
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Employee
+            </label>
+            <DropdownSelect
+              value={employeeFilter}
+              onChange={(val) => setEmployeeFilter(String(val ?? "all"))}
+              options={employeeOptions}
+              ariaLabel="Filter by employee"
+            />
+          </div>
+        )}
+
+        {/* Date Range - From */}
+        {(filterType === "date" || filterType === "all") && (
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              From Date
+            </label>
+            <input
+              type="date"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              className="w-full h-11 px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors"
+            />
+          </div>
+        )}
+
+        {/* Date Range - To */}
+        {(filterType === "date" || filterType === "all") && (
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              To Date
+            </label>
+            <input
+              type="date"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+              className="w-full h-11 px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors"
+            />
+          </div>
+        )}
+
+        {/* Month Filter */}
+        {filterType === "month" && (
+          <div className="lg:col-span-2">
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Select Month & Year
+            </label>
+            <input
+              type="month"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              className="w-full h-11 px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors"
+            />
+          </div>
+        )}
+
+        {/* Status Filter */}
+        {(filterType === "status" || filterType === "all") && (
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Status
+            </label>
+            <DropdownSelect
+              value={statusFilter}
+              onChange={(val) => setStatusFilter(String(val ?? "all"))}
+              options={statusOptions}
+              ariaLabel="Filter by status"
+            />
+          </div>
+        )}
       </div>
-
-      {/* Date Range - From */}
-      {(filterType === "date" || filterType === "all") && (
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">
-            From Date
-          </label>
-          <input
-            type="date"
-            value={dateFrom}
-            onChange={(e) => setDateFrom(e.target.value)}
-            className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors"
-          />
-        </div>
-      )}
-
-      {/* Date Range - To */}
-      {(filterType === "date" || filterType === "all") && (
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">
-            To Date
-          </label>
-          <input
-            type="date"
-            value={dateTo}
-            onChange={(e) => setDateTo(e.target.value)}
-            className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors"
-          />
-        </div>
-      )}
-
-      {/* Month Filter */}
-      {filterType === "month" && (
-        <div className="lg:col-span-2">
-          <label className="block text-sm font-medium text-gray-300 mb-2">
-            Select Month & Year
-          </label>
-          <input
-            type="month"
-            value={dateFrom}
-            onChange={(e) => setDateFrom(e.target.value)}
-            className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors"
-          />
-        </div>
-      )}
-
-      {/* Year Filter */}
-      {filterType === "year" && (
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">
-            Select Year
-          </label>
-          <select
-            value={yearFilter}
-            onChange={(e) => setYearFilter(e.target.value)}
-            className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors"
-          >
-            <option value="all" className="bg-gray-800">
-              All Years
-            </option>
-            <option value="2026" className="bg-gray-800">
-              2026
-            </option>
-            <option value="2025" className="bg-gray-800">
-              2025
-            </option>
-            <option value="2024" className="bg-gray-800">
-              2024
-            </option>
-          </select>
-        </div>
-      )}
-
-      {/* Status Filter */}
-      {(filterType === "status" || filterType === "all") && (
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">
-            Status
-          </label>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors"
-          >
-            <option value="all" className="bg-gray-800">
-              All Status
-            </option>
-            <option value="present" className="bg-gray-800">
-              Present
-            </option>
-            <option value="late" className="bg-gray-800">
-              Late
-            </option>
-            <option value="absent" className="bg-gray-800">
-              Absent
-            </option>
-          </select>
-        </div>
-      )}
     </div>
-  </div>
-);
+  );
+};
 
 /**
  * TodayAttendanceSection - Displays only today's attendance record
  */
 const TodayAttendanceSection = ({
   todayRecord,
+  isLoading = false,
 }: {
   todayRecord?: AttendanceRecord;
+  isLoading?: boolean;
 }) => {
+  if (isLoading) {
+    return <TodayAttendanceSkeleton />;
+  }
+
   if (!todayRecord) {
     return (
       <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-6 mb-8">
@@ -314,7 +331,7 @@ const TodayAttendanceSection = ({
         <h3 className="text-lg font-semibold text-white">Today's Attendance</h3>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
         <div className="bg-white/5 rounded-lg p-4 border border-white/10">
           <p className="text-sm text-gray-400 mb-1">Date</p>
           <p className="text-lg font-semibold text-white">{todayRecord.date}</p>
@@ -329,6 +346,12 @@ const TodayAttendanceSection = ({
           <p className="text-sm text-gray-400 mb-1">Check-out</p>
           <p className="text-lg font-semibold text-white">
             {todayRecord.checkOut}
+          </p>
+        </div>
+        <div className="bg-white/5 rounded-lg p-4 border border-white/10">
+          <p className="text-sm text-gray-400 mb-1">Timezone</p>
+          <p className="text-lg font-semibold text-white">
+            {todayRecord.timezoneLabel || "-"}
           </p>
         </div>
         <div className="bg-white/5 rounded-lg p-4 border border-white/10">
@@ -352,6 +375,7 @@ export const AttendancePage = ({
   userName,
   userRole,
 }: LayoutProps) => {
+  const { auth } = useAuth();
   const [activeTab, setActiveTab] = useState<"attendance" | "leave">(
     "attendance",
   );
@@ -359,30 +383,133 @@ export const AttendancePage = ({
   const [isCheckOutModalOpen, setIsCheckOutModalOpen] = useState(false);
 
   // Filter states
-  const [filterType, setFilterType] = useState("all");
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [employeeFilter, setEmployeeFilter] = useState("all");
-  const [yearFilter, setYearFilter] = useState("all");
+  const [filterType, setFilterTypeRaw] = useState("all");
+  const [dateFrom, setDateFromRaw] = useState("");
+  const [dateTo, setDateToRaw] = useState("");
+  const [statusFilter, setStatusFilterRaw] = useState("all");
+  const [employeeFilter, setEmployeeFilterRaw] = useState("all");
+  const [leaveEmployeeId, setLeaveEmployeeId] = useState<number | null>(null);
+  const [attendancePage, setAttendancePage] = useState(1);
+  const [attendanceLimit, setAttendanceLimit] = useState(50);
+
+  // Wrapper setters that reset page to 1 when filter changes
+  const setFilterType = useCallback((value: string) => {
+    setFilterTypeRaw(value);
+    setAttendancePage(1);
+  }, []);
+  const setDateFrom = useCallback((value: string) => {
+    setDateFromRaw(value);
+    setAttendancePage(1);
+  }, []);
+  const setDateTo = useCallback((value: string) => {
+    setDateToRaw(value);
+    setAttendancePage(1);
+  }, []);
+  const setStatusFilter = useCallback((value: string) => {
+    setStatusFilterRaw(value);
+    setAttendancePage(1);
+  }, []);
+  const setEmployeeFilter = useCallback((value: string) => {
+    setEmployeeFilterRaw(value);
+    setAttendancePage(1);
+  }, []);
 
   const { employees, updateEmployeeStatus } = useEmployees();
+  const canFilterEmployees = hasRequiredRole(auth.role, ["SUPERADMIN"]);
+  const isSuperadminRole = canFilterEmployees;
+  const isCompactLabel = useMediaQuery("(max-width: 639px)");
+  const {
+    employeeList: employeeOptions,
+    loading: employeeOptionsLoading,
+    error: employeeOptionsError,
+  } = useEmployeeManagement({ enabled: isSuperadminRole });
+
+  // Parse month input (YYYY-MM) into month and year for backend
+  const parsedMonth = useMemo(() => {
+    if (filterType !== "month" || !dateFrom) return null;
+    const [yearStr, monthStr] = dateFrom.split("-");
+    const year = parseInt(yearStr, 10);
+    const month = parseInt(monthStr, 10);
+    if (Number.isFinite(year) && Number.isFinite(month)) {
+      return { month, year };
+    }
+    return null;
+  }, [filterType, dateFrom]);
+
+  // Build attendance filters for backend
+  const attendanceFilters = useMemo(() => {
+    const filters: {
+      status?: "present" | "late" | "absent" | "all";
+      month?: number;
+      year?: number;
+      startDate?: string;
+      endDate?: string;
+      userId?: number | "all";
+    } = {};
+
+    // Status filter
+    if (statusFilter !== "all") {
+      filters.status = statusFilter as "present" | "late" | "absent";
+    }
+
+    // Date filters based on filterType
+    if (filterType === "month" && parsedMonth) {
+      filters.month = parsedMonth.month;
+      filters.year = parsedMonth.year;
+    } else if (filterType === "date" || filterType === "all") {
+      // Send date range for both "date" and "all" filter types
+      if (dateFrom) {
+        filters.startDate = dateFrom;
+      }
+      if (dateTo) {
+        filters.endDate = dateTo;
+      }
+    }
+
+    // Employee filter (only for superadmin)
+    if (canFilterEmployees && employeeFilter !== "all") {
+      const userId = parseInt(employeeFilter, 10);
+      if (Number.isFinite(userId)) {
+        filters.userId = userId;
+      }
+    }
+
+    return filters;
+  }, [filterType, statusFilter, parsedMonth, dateFrom, dateTo, employeeFilter, canFilterEmployees]);
 
   const {
     records,
+    total: attendanceTotal,
+    totalPages: attendanceTotalPages,
+    isLoading: attendanceLoading,
+    isFetching: attendanceFetching,
+    activeCheckInAt,
+    currentUserId: attendanceUserId,
+  } = useAttendanceRecords({
+    currentEmployee: employees[0]
+      ? { id: employees[0].id, name: employees[0].name }
+      : undefined,
+    page: attendancePage,
+    limit: attendanceLimit,
+    filters: attendanceFilters,
+  });
+
+  const {
     checkInTime,
     elapsed,
     isCheckedIn,
     handleCheckIn,
     handleCheckOut,
-  } = useAttendanceSession(
-    employees[0] ? { id: employees[0].id, name: employees[0].name } : undefined,
-  );
+  } = useAttendanceSession({
+    currentUserId: attendanceUserId,
+    initialCheckInAt: activeCheckInAt,
+  });
 
   // Leave management
   const {
     leaveRecords,
     leaveBalance: leaveBalanceData,
+    recentApprovals,
     isRequestModalOpen,
     setIsRequestModalOpen,
     isReviewModalOpen,
@@ -396,7 +523,24 @@ export const AttendancePage = ({
     handleRejectRequest,
     handleSubmitLeaveRequest,
     getAvailableBalance,
-  } = useLeaveManagement();
+    canRequestLeave,
+    page: leavePage,
+    total: leaveTotal,
+    totalPages: leaveTotalPages,
+    setPage: setLeavePage,
+    limit: leaveLimit,
+    setLimit: setLeaveLimit,
+    requestsLoading: leaveRequestsLoading,
+    balancesLoading: leaveBalancesLoading,
+    approvalsLoading: leaveApprovalsLoading,
+  } = useLeaveManagement({ employeeId: leaveEmployeeId ?? undefined });
+
+  const attendanceBusy = attendanceLoading || attendanceFetching;
+  const leaveRequestsBusy = leaveRequestsLoading;
+  const leaveBalancesBusy = leaveBalancesLoading;
+  const leaveApprovalsBusy = isSuperadminRole
+    ? leaveApprovalsLoading
+    : leaveRequestsLoading;
 
   const handleLeaveFormChange = (updates: Partial<LeaveRecord>) => {
     setLeaveForm((prev) => {
@@ -408,8 +552,12 @@ export const AttendancePage = ({
     });
   };
 
-  const onConfirmCheckIn = () => {
-    handleCheckIn();
+  const onConfirmCheckIn = async () => {
+    const errorMessage = await handleCheckIn();
+    if (errorMessage) {
+      alert(errorMessage);
+      return;
+    }
     // Update employee status in context (assuming first employee is logged-in user)
     if (employees.length > 0) {
       updateEmployeeStatus(employees[0].id, "present");
@@ -417,14 +565,42 @@ export const AttendancePage = ({
     setIsCheckInModalOpen(false);
   };
 
-  const onConfirmCheckOut = () => {
-    handleCheckOut();
+  const onConfirmCheckOut = async () => {
+    const errorMessage = await handleCheckOut();
+    if (errorMessage) {
+      alert(errorMessage);
+      return;
+    }
     // Status remains "present" after checkout
     setIsCheckOutModalOpen(false);
   };
 
   const handleRequestLeave = () => {
+    if (!canRequestLeave) return;
     openRequestModal();
+  };
+
+  const onSubmitLeaveRequest = async () => {
+    const message = await handleSubmitLeaveRequest();
+    if (message) {
+      alert(message);
+      return;
+    }
+    alert("Leave request submitted successfully!");
+  };
+
+  const onApproveRequest = async (record: LeaveRecord) => {
+    const message = await handleApproveRequest(record);
+    if (message) {
+      alert(message);
+    }
+  };
+
+  const onRejectRequest = async (record: LeaveRecord) => {
+    const message = await handleRejectRequest(record);
+    if (message) {
+      alert(message);
+    }
   };
 
   const employeeLookup = useMemo(
@@ -457,185 +633,60 @@ export const AttendancePage = ({
     });
   }, [records, employees, employeeLookup]);
 
-  // Get today's date in DD-MM-YYYY format
-  const getTodayDateFormatted = () => {
-    const today = new Date();
-    const day = String(today.getDate()).padStart(2, "0");
-    const month = String(today.getMonth() + 1).padStart(2, "0");
-    const year = today.getFullYear();
-    return `${day}-${month}-${year}`;
-  };
-
-  const today = getTodayDateFormatted();
+  const today = new Date();
+  const todayKey = `${today.getFullYear()}-${String(
+    today.getMonth() + 1,
+  ).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 
   // Separate today's record from past records
-  const todayRecord = recordsWithEmployee.find((r) => r.date === today);
-  const pastRecords = recordsWithEmployee.filter((r) => r.date !== today);
+  const todayRecord = recordsWithEmployee.find((r) => r.date === todayKey);
 
-  // Helper function to convert DD-MM-YYYY to Date for comparison
-  const dateStringToDate = (dateStr: string): Date => {
-    const [day, month, year] = dateStr.split("-");
-    return new Date(`${year}-${month}-${day}`);
-  };
+  // Records are now filtered by backend, just use recordsWithEmployee directly
+  const filteredRecords = recordsWithEmployee;
 
-  // Helper function to convert date input (YYYY-MM) to month-year for filtering
-  const getMonthYearFromInput = (monthInput: string) => {
-    const [year, month] = monthInput.split("-");
-    return { year, month };
-  };
-
-  // Filter past records based on selected filters
-  const filteredRecords = useMemo(() => {
-    let filtered = [...pastRecords];
-
-    if (filterType === "date" && dateFrom && dateTo) {
-      const fromDate = dateStringToDate(dateFrom);
-      const toDate = dateStringToDate(dateTo);
-      filtered = filtered.filter((r) => {
-        const recordDate = dateStringToDate(r.date);
-        return recordDate >= fromDate && recordDate <= toDate;
-      });
-    } else if (filterType === "month" && dateFrom) {
-      // dateFrom format: YYYY-MM from month input
-      const { year, month } = getMonthYearFromInput(dateFrom);
-      filtered = filtered.filter((r) => {
-        // Record date is DD-MM-YYYY
-        const [_day, recordMonth, recordYear] = r.date.split("-");
-        return recordYear === year && recordMonth === month;
-      });
-    } else if (filterType === "year" && yearFilter !== "all") {
-      // Filter by year only
-      filtered = filtered.filter((r) => {
-        // Record date is DD-MM-YYYY
-        const [_day, _month, recordYear] = r.date.split("-");
-        return recordYear === yearFilter;
-      });
-    }
-
-    if (statusFilter !== "all") {
-      filtered = filtered.filter((r) => r.status === statusFilter);
-    }
-
-    if (employeeFilter !== "all") {
-      filtered = filtered.filter((r) => {
-        const idMatch = r.employeeId
-          ? String(r.employeeId) === employeeFilter
-          : false;
-        const nameMatch = r.employeeName
-          ? r.employeeName.toLowerCase() === employeeFilter.toLowerCase()
-          : false;
-        return idMatch || nameMatch;
-      });
-    }
-
-    return filtered;
-  }, [
-    pastRecords,
-    filterType,
-    dateFrom,
-    dateTo,
-    statusFilter,
-    employeeFilter,
-    yearFilter,
-  ]);
-
-  // Calculate attendance summary when employee and month are selected
-  const attendanceSummary = useMemo(() => {
-    // If employee is selected and month is selected, show single employee monthly summary
-    if (employeeFilter !== "all" && filterType === "month" && dateFrom) {
-      const [year, month] = dateFrom.split("-");
-      return calculateMonthlySummary(
-        recordsWithEmployee,
-        parseInt(employeeFilter),
-        parseInt(year),
-        parseInt(month),
-      );
-    }
-
-    // If employee is selected and filtering by date range, show single employee summary for that range
-    if (
-      employeeFilter !== "all" &&
-      filterType === "date" &&
-      dateFrom &&
-      dateTo
-    ) {
-      const fromDate = dateStringToDate(dateFrom);
-      const toDate = dateStringToDate(dateTo);
-
-      const filtered = recordsWithEmployee.filter((r) => {
-        if (r.employeeId !== parseInt(employeeFilter)) return false;
-        const recordDate = dateStringToDate(r.date);
-        return recordDate >= fromDate && recordDate <= toDate;
-      });
-
-      if (filtered.length === 0) return null;
-
-      const presentDays = filtered.filter((r) => r.status === "present").length;
-      const absentDays = filtered.filter((r) => r.status === "absent").length;
-      const lateDays = filtered.filter((r) => r.status === "late").length;
-      const totalDays = filtered.length;
-
-      return {
-        period: `${dateFrom} to ${dateTo}`,
-        employeeName: filtered[0]?.employeeName || "Unknown",
-        employeeId: parseInt(employeeFilter),
-        presentDays,
-        absentDays,
-        lateDays,
-        totalDays,
-        expectedWorkingDays: totalDays, // Rough estimate
-        attendanceRate: Math.round((presentDays / totalDays) * 100) || 0,
-        records: filtered,
-      };
-    }
-
-    return null;
-  }, [recordsWithEmployee, employeeFilter, filterType, dateFrom, dateTo]);
-
-  // Calculate all employees monthly summary when only month is selected
-  const allEmployeesSummaries = useMemo(() => {
-    if (
-      employeeFilter === "all" &&
-      filterType === "month" &&
-      dateFrom &&
-      employeeFilter === "all"
-    ) {
-      const [year, month] = dateFrom.split("-");
-      return calculateMonthlyAllEmployeesSummary(
-        recordsWithEmployee,
-        parseInt(year),
-        parseInt(month),
-      );
-    }
-    return [];
-  }, [recordsWithEmployee, employeeFilter, filterType, dateFrom]);
-
-  // Determine if we should show grouped summary view
-  // Show grouped summary when: All Records + All Employees (no specific filters applied)
+  // Show grouped summary when: All Records + All Employees + All Status (no specific filters applied)
   const shouldShowGroupedSummary = useMemo(() => {
     return (
       filterType === "all" &&
       employeeFilter === "all" &&
       statusFilter === "all" &&
-      yearFilter === "all"
+      !dateFrom &&
+      !dateTo
     );
-  }, [filterType, employeeFilter, statusFilter, yearFilter]);
+  }, [filterType, employeeFilter, statusFilter, dateFrom, dateTo]);
 
   // Calculate grouped summaries for "All Records" view
   const groupedSummaries = useMemo(() => {
-    if (shouldShowGroupedSummary) {
+    if (shouldShowGroupedSummary && filteredRecords.length > 0) {
       return createGroupedSummaries(filteredRecords);
     }
     return [];
   }, [shouldShowGroupedSummary, filteredRecords]);
 
   // Get leave balances for display
-  const leaveBalancesForDisplay = Object.keys(leaveBalanceData).map((type) => ({
-    type,
-    balance: leaveBalanceData[type].total - leaveBalanceData[type].used,
-    used: leaveBalanceData[type].used,
-    total: leaveBalanceData[type].total,
-  }));
+  const leaveBalancesForDisplay = Object.keys(leaveBalanceData).map((type) => {
+    const balance = leaveBalanceData[type];
+    const isUnlimited = balance?.isUnlimited ?? false;
+    return {
+      type,
+      balance: isUnlimited ? 0 : balance.total - balance.used,
+      used: balance.used,
+      total: balance.total,
+      isUnlimited,
+    };
+  });
+
+  const approvalsForDisplay = isSuperadminRole
+    ? leaveEmployeeId !== null
+      ? recentApprovals.filter(
+          (approval) => approval.employeeId === leaveEmployeeId,
+        )
+      : recentApprovals
+    : leaveRecords;
+
+  const approvedApprovalsForDisplay = approvalsForDisplay.filter(
+    (approval) => String(approval.status).toLowerCase() === "approved",
+  );
 
   return (
     <DashboardLayout
@@ -681,7 +732,10 @@ export const AttendancePage = ({
           />
 
           {/* Today's Attendance */}
-          <TodayAttendanceSection todayRecord={todayRecord} />
+          <TodayAttendanceSection
+            todayRecord={todayRecord}
+            isLoading={attendanceBusy}
+          />
 
           {/* Filter Section */}
           <AttendanceFilterSection
@@ -695,50 +749,63 @@ export const AttendancePage = ({
             setStatusFilter={setStatusFilter}
             employeeFilter={employeeFilter}
             setEmployeeFilter={setEmployeeFilter}
-            yearFilter={yearFilter}
-            setYearFilter={setYearFilter}
-            employees={employees}
+            employees={employeeOptions}
+            showEmployeeFilter={canFilterEmployees}
           />
 
-          {/* Attendance Summary - Show single employee monthly summary */}
-          {attendanceSummary && (
-            <AttendanceSummaryCard summary={attendanceSummary} />
-          )}
-
-          {/* Attendance Summaries - Show all employees monthly summary */}
-          {allEmployeesSummaries.length > 0 && (
-            <div>
-              <h3 className="text-lg font-semibold text-white mb-4">
-                Monthly Summary for All Employees
-              </h3>
-              <AttendanceSummaryGrid summaries={allEmployeesSummaries} />
-            </div>
-          )}
-
-          {/* Grouped Summary View - Show when "All Records" selected */}
-          {shouldShowGroupedSummary && groupedSummaries.length > 0 && (
-            <div>
-              <h3 className="text-lg font-semibold text-white mb-4">
-                Attendance Summary by Employee ({groupedSummaries.length}{" "}
-                employee{groupedSummaries.length !== 1 ? "s" : ""})
+          {/* Grouped Summary View - Show when no filters applied */}
+          {shouldShowGroupedSummary && (
+            <div className="mb-8">
+              <h3 className="text-lg font-semibold text-white mb-2">
+                {attendanceBusy
+                  ? "Loading Attendance Summary..."
+                  : isSuperadminRole
+                    ? `Attendance Summary by Employee (${groupedSummaries.length} employee${groupedSummaries.length !== 1 ? "s" : ""})`
+                    : "Attendance Summary"}
               </h3>
               <p className="text-sm text-lightGrey mb-4">
-                Showing overall attendance with monthly breakdowns. Click "Show
-                Monthly Breakdown" to expand details.
+                {isSuperadminRole
+                  ? "Showing overall attendance with monthly breakdowns. Click \"Show Monthly Breakdown\" to expand details. Apply filters above to see individual records."
+                  : "Your attendance overview with monthly breakdown. Apply filters above to see detailed records."}
               </p>
-              <AttendanceGroupedSummary summaries={groupedSummaries} />
+              {attendanceBusy ? (
+                <AttendanceGroupedSummarySkeleton />
+              ) : groupedSummaries.length > 0 ? (
+                <AttendanceGroupedSummary summaries={groupedSummaries} />
+              ) : (
+                <div className="text-center text-lightGrey py-8">
+                  No attendance records found.
+                </div>
+              )}
             </div>
           )}
 
-          {/* Past Attendance Records - Show detailed table only when NOT showing grouped summary */}
+          {/* Attendance Records Table - Show when filters are applied */}
           {!shouldShowGroupedSummary && (
             <div>
-              <h3 className="text-lg font-semibold text-white mb-4">
-                Attendance History{" "}
-                {filteredRecords.length > 0 &&
-                  `(${filteredRecords.length} records)`}
-              </h3>
-              <AttendanceTable records={filteredRecords} />
+              <AttendanceTable
+                records={filteredRecords}
+                showEmployeeColumn={canFilterEmployees}
+                isLoading={attendanceBusy}
+                headerContent={
+                  <RowsSelector
+                    value={attendanceLimit}
+                    onChange={(nextSize) => {
+                      setAttendanceLimit(nextSize);
+                      setAttendancePage(1);
+                    }}
+                  />
+                }
+              />
+              <PaginationControls
+                page={attendancePage}
+                totalPages={attendanceTotalPages}
+                totalItems={attendanceTotal}
+                isLoading={attendanceBusy}
+                onPageChange={(nextPage) =>
+                  setAttendancePage(Math.max(1, nextPage))
+                }
+              />
             </div>
           )}
 
@@ -759,20 +826,63 @@ export const AttendancePage = ({
       {/* Leave Tab */}
       {activeTab === "leave" && (
         <>
-          <LeaveHeader onRequestLeave={handleRequestLeave} />
+          <LeaveHeader
+            onRequestLeave={handleRequestLeave}
+            canRequest={canRequestLeave}
+          />
 
-          <LeaveBalanceGrid balances={leaveBalancesForDisplay} />
+          {isSuperadminRole && (
+            <EmployeeSelector
+              employees={employeeOptions}
+              selectedId={leaveEmployeeId}
+              onChange={(employeeId) => {
+                setLeaveEmployeeId(employeeId);
+                setLeavePage(1);
+              }}
+              isCompactLabel={isCompactLabel}
+              isLoading={employeeOptionsLoading}
+              error={employeeOptionsError}
+            />
+          )}
+
+          {(!isSuperadminRole || leaveEmployeeId !== null) && (
+            <LeaveBalanceGrid
+              balances={leaveBalancesForDisplay}
+              isLoading={leaveBalancesBusy}
+            />
+          )}
 
           <LeaveRequestsTable
             records={leaveRecords}
             onReview={handleReviewRequest}
-            onApprove={(record) => handleApproveRequest(record)}
-            onReject={(record) => handleRejectRequest(record)}
+            onApprove={onApproveRequest}
+            onReject={onRejectRequest}
+            canReview={isSuperadminRole}
+            isLoading={leaveRequestsBusy}
+            headerContent={
+              <RowsSelector
+                value={leaveLimit}
+                onChange={(nextSize) => {
+                  setLeaveLimit(nextSize);
+                  setLeavePage(1);
+                }}
+              />
+            }
+          />
+          <PaginationControls
+            page={leavePage}
+            totalPages={leaveTotalPages}
+            totalItems={leaveTotal}
+            isLoading={leaveRequestsBusy}
+            onPageChange={(nextPage) => setLeavePage(Math.max(1, nextPage))}
           />
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
             <LeavePolicyCard />
-            <RecentApprovalsCard approvals={leaveRecords} />
+            <RecentApprovalsCard
+              approvals={approvedApprovalsForDisplay}
+              isLoading={leaveApprovalsBusy}
+            />
           </div>
 
           {/* Leave Request Modal */}
@@ -782,7 +892,7 @@ export const AttendancePage = ({
             mode="request"
             leaveRequest={leaveForm}
             onChange={handleLeaveFormChange}
-            onApprove={handleSubmitLeaveRequest}
+            onApprove={onSubmitLeaveRequest}
             onReject={() => setIsRequestModalOpen(false)}
           />
 
@@ -796,12 +906,12 @@ export const AttendancePage = ({
             employeeName={selectedRequest?.employeeName}
             onApprove={() => {
               if (selectedRequest) {
-                handleApproveRequest(selectedRequest);
+                onApproveRequest(selectedRequest);
               }
             }}
             onReject={() => {
               if (selectedRequest) {
-                handleRejectRequest(selectedRequest);
+                onRejectRequest(selectedRequest);
               }
             }}
           />

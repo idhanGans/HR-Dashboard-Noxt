@@ -49,6 +49,7 @@ export interface UserApiResponse {
   bankName?: string;
   bankAccountHolderName?: string;
   photoUrl?: string;
+  extraPaidLeaveDays?: number | null;
   organizationId?: number;
   organization?: OrganizationBasic;
   nickname?: string;
@@ -100,6 +101,7 @@ export interface CreateUserRequest {
   bankName?: string;
   bankAccountHolderName?: string;
   photoUrl?: string;
+  extraPaidLeaveDays?: number | null;
   organizationId?: number;
   nickname?: string;
   gender?: Gender;
@@ -127,6 +129,7 @@ export interface UpdateUserRequest {
   bankName?: string;
   bankAccountHolderName?: string;
   photoUrl?: string;
+  extraPaidLeaveDays?: number | null;
   organizationId?: number | null;
   nickname?: string;
   gender?: Gender;

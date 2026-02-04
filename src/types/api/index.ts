@@ -1,4 +1,6 @@
 export * from "./errors";
 export * from "./kpi";
+export * from "./attendance";
+export * from "./leave";
 export * from "./payroll";
 export * from "./users";

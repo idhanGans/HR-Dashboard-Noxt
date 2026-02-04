@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { DashboardLayout } from "../components";
+import { DashboardLayout, DropdownSelect } from "../components";
 import {
   PayslipCard,
   PayrollSummary,
@@ -7,7 +7,7 @@ import {
   DownloadPayslipButton,
   PayrollHeader,
 } from "../components/payroll";
-import { PayrollFormModal } from "../components/employees";
+import { EmployeeSelector, PayrollFormModal } from "../components/employees";
 import { Card } from "../components";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import { usePayrollData } from "../hooks/usePayrollData";
@@ -26,63 +26,6 @@ import type {
 } from "../types";
 import type { PayrollApiResponse } from "../types/api";
 import type { LayoutProps } from "../types/auth";
-
-/**
- * EmployeeSelector - Dropdown to select employee
- */
-const EmployeeSelector = ({
-  employees,
-  selectedId,
-  onChange,
-  isCompactLabel,
-  isLoading,
-  error,
-}: {
-  employees: Employee[];
-  selectedId: number | null;
-  onChange: (id: number | null) => void;
-  isCompactLabel: boolean;
-  isLoading?: boolean;
-  error?: string | null;
-}) => {
-  const isDisabled = Boolean(isLoading) || (!employees.length && Boolean(error));
-  const placeholder = isLoading
-    ? "Loading employees..."
-    : error
-      ? "Unable to load employees"
-      : "Choose an employee";
-
-  return (
-    <Card className="mb-6">
-      <label className="block text-sm font-medium text-gray-300 mb-2">
-        Select Employee
-      </label>
-      <select
-        value={selectedId || ""}
-        onChange={(e) =>
-          onChange(e.target.value ? Number(e.target.value) : null)
-        }
-        disabled={isDisabled}
-        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors disabled:opacity-60"
-      >
-        <option value="">{placeholder}</option>
-        {!isLoading &&
-          employees
-            .filter((emp) => emp.employmentType !== "FORMER")
-            .map((emp) => (
-              <option key={emp.id} value={emp.id}>
-                {isCompactLabel
-                  ? `${emp.name} - ${emp.department}`
-                  : `${emp.name} - ${emp.department} (${emp.role})`}
-              </option>
-            ))}
-      </select>
-      {error && !employees.length && (
-        <p className="text-xs text-red-400 mt-2">{error}</p>
-      )}
-    </Card>
-  );
-};
 
 /**
  * MonthYearFilter - Dropdown to filter by month and year
@@ -115,6 +58,14 @@ const MonthYearFilter = ({
 
   // Generate available periods from payroll history
   const availablePeriods = employee?.payrollHistory || [];
+  const monthOptions = months.map((month, index) => ({
+    value: index + 1,
+    label: month,
+  }));
+  const yearOptions = [2024, 2025, 2026].map((year) => ({
+    value: year,
+    label: `${year}`,
+  }));
 
   return (
     <Card className="mb-6">
@@ -129,28 +80,26 @@ const MonthYearFilter = ({
         )}
       </div>
       <div className="grid grid-cols-2 gap-4 mt-2">
-        <select
+        <DropdownSelect
           value={selectedMonth}
-          onChange={(e) => onChange(parseInt(e.target.value), selectedYear)}
-          className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors"
-        >
-          {months.map((month, index) => (
-            <option key={index} value={index + 1}>
-              {month}
-            </option>
-          ))}
-        </select>
-        <select
+          onChange={(nextValue) => {
+            if (nextValue !== null) {
+              onChange(Number(nextValue), selectedYear);
+            }
+          }}
+          options={monthOptions}
+          ariaLabel="Select month"
+        />
+        <DropdownSelect
           value={selectedYear}
-          onChange={(e) => onChange(selectedMonth, parseInt(e.target.value))}
-          className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors"
-        >
-          {[2024, 2025, 2026].map((year) => (
-            <option key={year} value={year}>
-              {year}
-            </option>
-          ))}
-        </select>
+          onChange={(nextValue) => {
+            if (nextValue !== null) {
+              onChange(selectedMonth, Number(nextValue));
+            }
+          }}
+          options={yearOptions}
+          ariaLabel="Select year"
+        />
       </div>
     </Card>
   );
@@ -255,6 +204,7 @@ export const PayrollPage = ({ onLogout, userName, userRole }: LayoutProps) => {
     isSelfPayrollView,
     canDownloadPayslip,
     applyPayrollResponse,
+    refreshPayroll,
   } = usePayrollData();
   const [isPayrollModalOpen, setIsPayrollModalOpen] = useState(false);
   const [isSavingPayroll, setIsSavingPayroll] = useState(false);
@@ -362,6 +312,16 @@ export const PayrollPage = ({ onLogout, userName, userRole }: LayoutProps) => {
       pensionFund: payrollFormData.pension,
       otherDeductions: payrollFormData.otherDeductions,
     };
+    const computedTotalDeductions =
+      (payload.tax || 0) +
+      (payload.insurance || 0) +
+      (payload.pensionFund || 0) +
+      (payload.otherDeductions || 0);
+    const computedTotalEarnings =
+      (payload.baseSalary || 0) +
+      (payload.allowance || 0) +
+      (payload.bonuses || 0);
+    const computedNetPay = computedTotalEarnings - computedTotalDeductions;
 
     try {
       let response: PayrollApiResponse;
@@ -376,10 +336,24 @@ export const PayrollPage = ({ onLogout, userName, userRole }: LayoutProps) => {
       );
       response = result.data;
 
-      applyPayrollResponse(selectedEmployeeId, response, {
-        bankName: payrollFormData.bankName,
-        bankAccount: payrollFormData.bankAccount,
-      });
+      const mergedResponse: PayrollApiResponse = {
+        ...response,
+        month: payloadMonth,
+        year: payloadYear,
+        baseSalary: payload.baseSalary,
+        allowance: payload.allowance,
+        bonuses: payload.bonuses,
+        tax: payload.tax ?? 0,
+        insurance: payload.insurance ?? 0,
+        pensionFund: payload.pensionFund ?? 0,
+        otherDeductions: payload.otherDeductions ?? 0,
+        totalDeductions: response.totalDeductions ?? computedTotalDeductions,
+        totalEarnings: response.totalEarnings ?? computedTotalEarnings,
+        netPay: response.netPay ?? computedNetPay,
+      };
+
+      applyPayrollResponse(selectedEmployeeId, mergedResponse);
+      refreshPayroll();
       setSelectedMonth(payloadMonth);
       setSelectedYear(payloadYear);
 

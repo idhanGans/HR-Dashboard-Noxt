@@ -113,6 +113,8 @@ export interface AttendanceRecord {
   status: "present" | "absent" | "late";
   employeeId?: number;
   employeeName?: string;
+  timezone?: string | null;
+  timezoneLabel?: string;
 }
 
 export interface AttendanceSession {
@@ -153,7 +155,16 @@ export interface LeaveRecord {
   startDate?: string;
   endDate?: string;
   days?: number;
-  status: "Approved" | "Pending" | "Rejected" | "approved" | "pending" | "rejected";
+  status:
+    | "Approved"
+    | "Pending"
+    | "Rejected"
+    | "approved"
+    | "pending"
+    | "rejected"
+    | "APPROVED"
+    | "PENDING"
+    | "REJECTED";
   reason?: string;
   employeeId?: number | null;
   employeeName?: string;
@@ -170,6 +181,7 @@ export interface LeaveBalance {
   used: number;
   remaining?: number;
   balance: number;
+  isUnlimited?: boolean;
 }
 
 // Hiring types

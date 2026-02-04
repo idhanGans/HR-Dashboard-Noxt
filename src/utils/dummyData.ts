@@ -73,7 +73,7 @@ export const payrollByDepartment: PayrollByDepartment = {
 export const attendanceRecords: AttendanceRecord[] = [
   // January 2025 - Alice Johnson
   {
-    date: "31-01-2025",
+    date: "2025-01-31",
     checkIn: "08:55 AM",
     checkOut: "05:15 PM",
     status: "present",
@@ -81,7 +81,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Alice Johnson",
   },
   {
-    date: "30-01-2025",
+    date: "2025-01-30",
     checkIn: "08:50 AM",
     checkOut: "05:20 PM",
     status: "present",
@@ -89,7 +89,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Alice Johnson",
   },
   {
-    date: "29-01-2025",
+    date: "2025-01-29",
     checkIn: "08:58 AM",
     checkOut: "05:10 PM",
     status: "present",
@@ -97,7 +97,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Alice Johnson",
   },
   {
-    date: "28-01-2025",
+    date: "2025-01-28",
     checkIn: "09:05 AM",
     checkOut: "05:40 PM",
     status: "late",
@@ -105,7 +105,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Alice Johnson",
   },
   {
-    date: "27-01-2025",
+    date: "2025-01-27",
     checkIn: "08:52 AM",
     checkOut: "05:25 PM",
     status: "present",
@@ -113,7 +113,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Alice Johnson",
   },
   {
-    date: "24-01-2025",
+    date: "2025-01-24",
     checkIn: "08:55 AM",
     checkOut: "05:15 PM",
     status: "present",
@@ -121,7 +121,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Alice Johnson",
   },
   {
-    date: "23-01-2025",
+    date: "2025-01-23",
     checkIn: "08:48 AM",
     checkOut: "05:30 PM",
     status: "present",
@@ -129,7 +129,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Alice Johnson",
   },
   {
-    date: "22-01-2025",
+    date: "2025-01-22",
     checkIn: "09:10 AM",
     checkOut: "05:35 PM",
     status: "late",
@@ -137,7 +137,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Alice Johnson",
   },
   {
-    date: "21-01-2025",
+    date: "2025-01-21",
     checkIn: "08:50 AM",
     checkOut: "05:20 PM",
     status: "present",
@@ -145,7 +145,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Alice Johnson",
   },
   {
-    date: "20-01-2025",
+    date: "2025-01-20",
     checkIn: "08:55 AM",
     checkOut: "05:15 PM",
     status: "present",
@@ -153,7 +153,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Alice Johnson",
   },
   {
-    date: "17-01-2025",
+    date: "2025-01-17",
     checkIn: "08:52 AM",
     checkOut: "05:25 PM",
     status: "present",
@@ -161,7 +161,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Alice Johnson",
   },
   {
-    date: "16-01-2025",
+    date: "2025-01-16",
     checkIn: "08:58 AM",
     checkOut: "05:18 PM",
     status: "present",
@@ -169,7 +169,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Alice Johnson",
   },
   {
-    date: "15-01-2025",
+    date: "2025-01-15",
     checkIn: "-",
     checkOut: "-",
     status: "absent",
@@ -177,7 +177,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Alice Johnson",
   },
   {
-    date: "14-01-2025",
+    date: "2025-01-14",
     checkIn: "08:55 AM",
     checkOut: "05:15 PM",
     status: "present",
@@ -185,7 +185,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Alice Johnson",
   },
   {
-    date: "13-01-2025",
+    date: "2025-01-13",
     checkIn: "08:50 AM",
     checkOut: "05:20 PM",
     status: "present",
@@ -193,7 +193,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Alice Johnson",
   },
   {
-    date: "10-01-2025",
+    date: "2025-01-10",
     checkIn: "08:55 AM",
     checkOut: "05:15 PM",
     status: "present",
@@ -201,7 +201,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Alice Johnson",
   },
   {
-    date: "09-01-2025",
+    date: "2025-01-09",
     checkIn: "09:00 AM",
     checkOut: "05:30 PM",
     status: "late",
@@ -209,7 +209,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Alice Johnson",
   },
   {
-    date: "08-01-2025",
+    date: "2025-01-08",
     checkIn: "08:52 AM",
     checkOut: "05:22 PM",
     status: "present",
@@ -217,7 +217,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Alice Johnson",
   },
   {
-    date: "07-01-2025",
+    date: "2025-01-07",
     checkIn: "08:48 AM",
     checkOut: "05:28 PM",
     status: "present",
@@ -225,7 +225,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Alice Johnson",
   },
   {
-    date: "06-01-2025",
+    date: "2025-01-06",
     checkIn: "08:55 AM",
     checkOut: "05:15 PM",
     status: "present",
@@ -233,7 +233,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Alice Johnson",
   },
   {
-    date: "03-01-2025",
+    date: "2025-01-03",
     checkIn: "08:50 AM",
     checkOut: "05:20 PM",
     status: "present",
@@ -241,7 +241,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Alice Johnson",
   },
   {
-    date: "02-01-2025",
+    date: "2025-01-02",
     checkIn: "08:55 AM",
     checkOut: "05:15 PM",
     status: "present",
@@ -251,7 +251,7 @@ export const attendanceRecords: AttendanceRecord[] = [
 
   // December 2024 - Alice Johnson
   {
-    date: "31-12-2024",
+    date: "2024-12-31",
     checkIn: "08:52 AM",
     checkOut: "05:25 PM",
     status: "present",
@@ -259,7 +259,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Alice Johnson",
   },
   {
-    date: "30-12-2024",
+    date: "2024-12-30",
     checkIn: "08:58 AM",
     checkOut: "05:10 PM",
     status: "present",
@@ -267,7 +267,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Alice Johnson",
   },
   {
-    date: "27-12-2024",
+    date: "2024-12-27",
     checkIn: "09:05 AM",
     checkOut: "05:40 PM",
     status: "late",
@@ -275,7 +275,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Alice Johnson",
   },
   {
-    date: "26-12-2024",
+    date: "2024-12-26",
     checkIn: "08:50 AM",
     checkOut: "05:20 PM",
     status: "present",
@@ -283,7 +283,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Alice Johnson",
   },
   {
-    date: "23-12-2024",
+    date: "2024-12-23",
     checkIn: "08:55 AM",
     checkOut: "05:15 PM",
     status: "present",
@@ -291,7 +291,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Alice Johnson",
   },
   {
-    date: "20-12-2024",
+    date: "2024-12-20",
     checkIn: "08:48 AM",
     checkOut: "05:30 PM",
     status: "present",
@@ -301,7 +301,7 @@ export const attendanceRecords: AttendanceRecord[] = [
 
   // January 2025 - Bob Smith
   {
-    date: "31-01-2025",
+    date: "2025-01-31",
     checkIn: "09:15 AM",
     checkOut: "05:45 PM",
     status: "late",
@@ -309,7 +309,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Bob Smith",
   },
   {
-    date: "30-01-2025",
+    date: "2025-01-30",
     checkIn: "08:58 AM",
     checkOut: "05:20 PM",
     status: "present",
@@ -317,7 +317,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Bob Smith",
   },
   {
-    date: "29-01-2025",
+    date: "2025-01-29",
     checkIn: "09:10 AM",
     checkOut: "05:35 PM",
     status: "late",
@@ -325,7 +325,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Bob Smith",
   },
   {
-    date: "28-01-2025",
+    date: "2025-01-28",
     checkIn: "-",
     checkOut: "-",
     status: "absent",
@@ -333,7 +333,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Bob Smith",
   },
   {
-    date: "27-01-2025",
+    date: "2025-01-27",
     checkIn: "08:55 AM",
     checkOut: "05:15 PM",
     status: "present",
@@ -341,7 +341,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Bob Smith",
   },
   {
-    date: "24-01-2025",
+    date: "2025-01-24",
     checkIn: "09:05 AM",
     checkOut: "05:40 PM",
     status: "late",
@@ -349,7 +349,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Bob Smith",
   },
   {
-    date: "23-01-2025",
+    date: "2025-01-23",
     checkIn: "08:50 AM",
     checkOut: "05:25 PM",
     status: "present",
@@ -357,7 +357,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Bob Smith",
   },
   {
-    date: "22-01-2025",
+    date: "2025-01-22",
     checkIn: "08:58 AM",
     checkOut: "05:15 PM",
     status: "present",
@@ -365,7 +365,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Bob Smith",
   },
   {
-    date: "21-01-2025",
+    date: "2025-01-21",
     checkIn: "09:12 AM",
     checkOut: "05:35 PM",
     status: "late",
@@ -373,7 +373,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Bob Smith",
   },
   {
-    date: "20-01-2025",
+    date: "2025-01-20",
     checkIn: "08:55 AM",
     checkOut: "05:20 PM",
     status: "present",
@@ -381,7 +381,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Bob Smith",
   },
   {
-    date: "17-01-2025",
+    date: "2025-01-17",
     checkIn: "-",
     checkOut: "-",
     status: "absent",
@@ -389,7 +389,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Bob Smith",
   },
   {
-    date: "16-01-2025",
+    date: "2025-01-16",
     checkIn: "08:50 AM",
     checkOut: "05:30 PM",
     status: "present",
@@ -397,7 +397,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Bob Smith",
   },
   {
-    date: "15-01-2025",
+    date: "2025-01-15",
     checkIn: "09:08 AM",
     checkOut: "05:25 PM",
     status: "late",
@@ -405,7 +405,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Bob Smith",
   },
   {
-    date: "14-01-2025",
+    date: "2025-01-14",
     checkIn: "08:55 AM",
     checkOut: "05:15 PM",
     status: "present",
@@ -413,7 +413,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Bob Smith",
   },
   {
-    date: "13-01-2025",
+    date: "2025-01-13",
     checkIn: "08:58 AM",
     checkOut: "05:20 PM",
     status: "present",
@@ -421,7 +421,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Bob Smith",
   },
   {
-    date: "10-01-2025",
+    date: "2025-01-10",
     checkIn: "09:00 AM",
     checkOut: "05:35 PM",
     status: "late",
@@ -429,7 +429,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Bob Smith",
   },
   {
-    date: "09-01-2025",
+    date: "2025-01-09",
     checkIn: "08:52 AM",
     checkOut: "05:22 PM",
     status: "present",
@@ -437,7 +437,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Bob Smith",
   },
   {
-    date: "08-01-2025",
+    date: "2025-01-08",
     checkIn: "09:05 AM",
     checkOut: "05:40 PM",
     status: "late",
@@ -445,7 +445,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Bob Smith",
   },
   {
-    date: "07-01-2025",
+    date: "2025-01-07",
     checkIn: "08:50 AM",
     checkOut: "05:25 PM",
     status: "present",
@@ -453,7 +453,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Bob Smith",
   },
   {
-    date: "06-01-2025",
+    date: "2025-01-06",
     checkIn: "08:55 AM",
     checkOut: "05:15 PM",
     status: "present",
@@ -461,7 +461,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Bob Smith",
   },
   {
-    date: "03-01-2025",
+    date: "2025-01-03",
     checkIn: "09:10 AM",
     checkOut: "05:40 PM",
     status: "late",
@@ -469,7 +469,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Bob Smith",
   },
   {
-    date: "02-01-2025",
+    date: "2025-01-02",
     checkIn: "08:50 AM",
     checkOut: "05:30 PM",
     status: "present",
@@ -479,7 +479,7 @@ export const attendanceRecords: AttendanceRecord[] = [
 
   // December 2024 - Bob Smith
   {
-    date: "31-12-2024",
+    date: "2024-12-31",
     checkIn: "09:12 AM",
     checkOut: "05:45 PM",
     status: "late",
@@ -487,7 +487,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Bob Smith",
   },
   {
-    date: "30-12-2024",
+    date: "2024-12-30",
     checkIn: "08:58 AM",
     checkOut: "05:20 PM",
     status: "present",
@@ -495,7 +495,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Bob Smith",
   },
   {
-    date: "27-12-2024",
+    date: "2024-12-27",
     checkIn: "-",
     checkOut: "-",
     status: "absent",
@@ -503,7 +503,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Bob Smith",
   },
   {
-    date: "26-12-2024",
+    date: "2024-12-26",
     checkIn: "08:55 AM",
     checkOut: "05:15 PM",
     status: "present",
@@ -511,7 +511,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Bob Smith",
   },
   {
-    date: "23-12-2024",
+    date: "2024-12-23",
     checkIn: "09:05 AM",
     checkOut: "05:40 PM",
     status: "late",
@@ -519,7 +519,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Bob Smith",
   },
   {
-    date: "20-12-2024",
+    date: "2024-12-20",
     checkIn: "08:50 AM",
     checkOut: "05:25 PM",
     status: "present",
@@ -529,7 +529,7 @@ export const attendanceRecords: AttendanceRecord[] = [
 
   // January 2025 - Carol White
   {
-    date: "31-01-2025",
+    date: "2025-01-31",
     checkIn: "08:50 AM",
     checkOut: "05:20 PM",
     status: "present",
@@ -537,7 +537,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Carol White",
   },
   {
-    date: "30-01-2025",
+    date: "2025-01-30",
     checkIn: "08:55 AM",
     checkOut: "05:15 PM",
     status: "present",
@@ -545,7 +545,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Carol White",
   },
   {
-    date: "29-01-2025",
+    date: "2025-01-29",
     checkIn: "08:52 AM",
     checkOut: "05:25 PM",
     status: "present",
@@ -553,7 +553,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Carol White",
   },
   {
-    date: "28-01-2025",
+    date: "2025-01-28",
     checkIn: "08:58 AM",
     checkOut: "05:18 PM",
     status: "present",
@@ -561,7 +561,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Carol White",
   },
   {
-    date: "27-01-2025",
+    date: "2025-01-27",
     checkIn: "08:50 AM",
     checkOut: "05:30 PM",
     status: "present",
@@ -569,7 +569,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Carol White",
   },
   {
-    date: "24-01-2025",
+    date: "2025-01-24",
     checkIn: "08:55 AM",
     checkOut: "05:15 PM",
     status: "present",
@@ -577,7 +577,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Carol White",
   },
   {
-    date: "23-01-2025",
+    date: "2025-01-23",
     checkIn: "08:52 AM",
     checkOut: "05:20 PM",
     status: "present",
@@ -585,7 +585,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Carol White",
   },
   {
-    date: "22-01-2025",
+    date: "2025-01-22",
     checkIn: "08:48 AM",
     checkOut: "05:35 PM",
     status: "present",
@@ -593,7 +593,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Carol White",
   },
   {
-    date: "21-01-2025",
+    date: "2025-01-21",
     checkIn: "08:55 AM",
     checkOut: "05:25 PM",
     status: "present",
@@ -601,7 +601,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Carol White",
   },
   {
-    date: "20-01-2025",
+    date: "2025-01-20",
     checkIn: "08:50 AM",
     checkOut: "05:20 PM",
     status: "present",
@@ -609,7 +609,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Carol White",
   },
   {
-    date: "17-01-2025",
+    date: "2025-01-17",
     checkIn: "08:55 AM",
     checkOut: "05:15 PM",
     status: "present",
@@ -617,7 +617,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Carol White",
   },
   {
-    date: "16-01-2025",
+    date: "2025-01-16",
     checkIn: "08:58 AM",
     checkOut: "05:18 PM",
     status: "present",
@@ -625,7 +625,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Carol White",
   },
   {
-    date: "15-01-2025",
+    date: "2025-01-15",
     checkIn: "08:50 AM",
     checkOut: "05:30 PM",
     status: "present",
@@ -633,7 +633,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Carol White",
   },
   {
-    date: "14-01-2025",
+    date: "2025-01-14",
     checkIn: "08:55 AM",
     checkOut: "05:15 PM",
     status: "present",
@@ -641,7 +641,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Carol White",
   },
   {
-    date: "13-01-2025",
+    date: "2025-01-13",
     checkIn: "08:52 AM",
     checkOut: "05:25 PM",
     status: "present",
@@ -649,7 +649,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Carol White",
   },
   {
-    date: "10-01-2025",
+    date: "2025-01-10",
     checkIn: "08:58 AM",
     checkOut: "05:20 PM",
     status: "present",
@@ -657,7 +657,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Carol White",
   },
   {
-    date: "09-01-2025",
+    date: "2025-01-09",
     checkIn: "08:50 AM",
     checkOut: "05:35 PM",
     status: "present",
@@ -665,7 +665,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Carol White",
   },
   {
-    date: "08-01-2025",
+    date: "2025-01-08",
     checkIn: "08:55 AM",
     checkOut: "05:15 PM",
     status: "present",
@@ -673,7 +673,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Carol White",
   },
   {
-    date: "07-01-2025",
+    date: "2025-01-07",
     checkIn: "09:05 AM",
     checkOut: "05:40 PM",
     status: "late",
@@ -681,7 +681,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Carol White",
   },
   {
-    date: "06-01-2025",
+    date: "2025-01-06",
     checkIn: "08:50 AM",
     checkOut: "05:25 PM",
     status: "present",
@@ -689,7 +689,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Carol White",
   },
   {
-    date: "03-01-2025",
+    date: "2025-01-03",
     checkIn: "08:55 AM",
     checkOut: "05:20 PM",
     status: "present",
@@ -697,7 +697,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Carol White",
   },
   {
-    date: "02-01-2025",
+    date: "2025-01-02",
     checkIn: "08:58 AM",
     checkOut: "05:15 PM",
     status: "present",
@@ -707,7 +707,7 @@ export const attendanceRecords: AttendanceRecord[] = [
 
   // December 2024 - Carol White
   {
-    date: "31-12-2024",
+    date: "2024-12-31",
     checkIn: "08:55 AM",
     checkOut: "05:20 PM",
     status: "present",
@@ -715,7 +715,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Carol White",
   },
   {
-    date: "30-12-2024",
+    date: "2024-12-30",
     checkIn: "08:50 AM",
     checkOut: "05:15 PM",
     status: "present",
@@ -723,7 +723,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Carol White",
   },
   {
-    date: "27-12-2024",
+    date: "2024-12-27",
     checkIn: "08:58 AM",
     checkOut: "05:25 PM",
     status: "present",
@@ -731,7 +731,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Carol White",
   },
   {
-    date: "26-12-2024",
+    date: "2024-12-26",
     checkIn: "08:55 AM",
     checkOut: "05:18 PM",
     status: "present",
@@ -739,7 +739,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Carol White",
   },
   {
-    date: "23-12-2024",
+    date: "2024-12-23",
     checkIn: "08:50 AM",
     checkOut: "05:30 PM",
     status: "present",
@@ -747,7 +747,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "Carol White",
   },
   {
-    date: "20-12-2024",
+    date: "2024-12-20",
     checkIn: "08:55 AM",
     checkOut: "05:15 PM",
     status: "present",
@@ -757,7 +757,7 @@ export const attendanceRecords: AttendanceRecord[] = [
 
   // January 2025 - David Brown
   {
-    date: "31-01-2025",
+    date: "2025-01-31",
     checkIn: "08:55 AM",
     checkOut: "05:15 PM",
     status: "present",
@@ -765,7 +765,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "David Brown",
   },
   {
-    date: "30-01-2025",
+    date: "2025-01-30",
     checkIn: "09:00 AM",
     checkOut: "05:35 PM",
     status: "late",
@@ -773,7 +773,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "David Brown",
   },
   {
-    date: "29-01-2025",
+    date: "2025-01-29",
     checkIn: "08:50 AM",
     checkOut: "05:20 PM",
     status: "present",
@@ -781,7 +781,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "David Brown",
   },
   {
-    date: "28-01-2025",
+    date: "2025-01-28",
     checkIn: "08:58 AM",
     checkOut: "05:25 PM",
     status: "present",
@@ -789,7 +789,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "David Brown",
   },
   {
-    date: "27-01-2025",
+    date: "2025-01-27",
     checkIn: "08:52 AM",
     checkOut: "05:15 PM",
     status: "present",
@@ -797,7 +797,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "David Brown",
   },
   {
-    date: "24-01-2025",
+    date: "2025-01-24",
     checkIn: "08:55 AM",
     checkOut: "05:20 PM",
     status: "present",
@@ -805,7 +805,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "David Brown",
   },
   {
-    date: "23-01-2025",
+    date: "2025-01-23",
     checkIn: "09:05 AM",
     checkOut: "05:40 PM",
     status: "late",
@@ -813,7 +813,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "David Brown",
   },
   {
-    date: "22-01-2025",
+    date: "2025-01-22",
     checkIn: "08:50 AM",
     checkOut: "05:25 PM",
     status: "present",
@@ -821,7 +821,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "David Brown",
   },
   {
-    date: "21-01-2025",
+    date: "2025-01-21",
     checkIn: "-",
     checkOut: "-",
     status: "absent",
@@ -829,7 +829,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "David Brown",
   },
   {
-    date: "20-01-2025",
+    date: "2025-01-20",
     checkIn: "08:55 AM",
     checkOut: "05:15 PM",
     status: "present",
@@ -837,7 +837,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "David Brown",
   },
   {
-    date: "17-01-2025",
+    date: "2025-01-17",
     checkIn: "08:58 AM",
     checkOut: "05:20 PM",
     status: "present",
@@ -845,7 +845,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "David Brown",
   },
   {
-    date: "16-01-2025",
+    date: "2025-01-16",
     checkIn: "08:52 AM",
     checkOut: "05:30 PM",
     status: "present",
@@ -853,7 +853,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "David Brown",
   },
   {
-    date: "15-01-2025",
+    date: "2025-01-15",
     checkIn: "08:55 AM",
     checkOut: "05:15 PM",
     status: "present",
@@ -861,7 +861,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "David Brown",
   },
   {
-    date: "14-01-2025",
+    date: "2025-01-14",
     checkIn: "09:10 AM",
     checkOut: "05:35 PM",
     status: "late",
@@ -869,7 +869,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "David Brown",
   },
   {
-    date: "13-01-2025",
+    date: "2025-01-13",
     checkIn: "08:50 AM",
     checkOut: "05:25 PM",
     status: "present",
@@ -877,7 +877,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "David Brown",
   },
   {
-    date: "10-01-2025",
+    date: "2025-01-10",
     checkIn: "08:55 AM",
     checkOut: "05:20 PM",
     status: "present",
@@ -885,7 +885,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "David Brown",
   },
   {
-    date: "09-01-2025",
+    date: "2025-01-09",
     checkIn: "08:58 AM",
     checkOut: "05:15 PM",
     status: "present",
@@ -893,7 +893,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "David Brown",
   },
   {
-    date: "08-01-2025",
+    date: "2025-01-08",
     checkIn: "08:48 AM",
     checkOut: "05:35 PM",
     status: "present",
@@ -901,7 +901,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "David Brown",
   },
   {
-    date: "07-01-2025",
+    date: "2025-01-07",
     checkIn: "08:55 AM",
     checkOut: "05:20 PM",
     status: "present",
@@ -909,7 +909,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "David Brown",
   },
   {
-    date: "06-01-2025",
+    date: "2025-01-06",
     checkIn: "08:50 AM",
     checkOut: "05:25 PM",
     status: "present",
@@ -917,7 +917,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "David Brown",
   },
   {
-    date: "03-01-2025",
+    date: "2025-01-03",
     checkIn: "08:55 AM",
     checkOut: "05:15 PM",
     status: "present",
@@ -925,7 +925,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "David Brown",
   },
   {
-    date: "02-01-2025",
+    date: "2025-01-02",
     checkIn: "08:52 AM",
     checkOut: "05:10 PM",
     status: "present",
@@ -935,7 +935,7 @@ export const attendanceRecords: AttendanceRecord[] = [
 
   // December 2024 - David Brown
   {
-    date: "31-12-2024",
+    date: "2024-12-31",
     checkIn: "08:55 AM",
     checkOut: "05:15 PM",
     status: "present",
@@ -943,7 +943,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "David Brown",
   },
   {
-    date: "30-12-2024",
+    date: "2024-12-30",
     checkIn: "08:50 AM",
     checkOut: "05:25 PM",
     status: "present",
@@ -951,7 +951,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "David Brown",
   },
   {
-    date: "27-12-2024",
+    date: "2024-12-27",
     checkIn: "09:05 AM",
     checkOut: "05:40 PM",
     status: "late",
@@ -959,7 +959,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "David Brown",
   },
   {
-    date: "26-12-2024",
+    date: "2024-12-26",
     checkIn: "08:55 AM",
     checkOut: "05:15 PM",
     status: "present",
@@ -967,7 +967,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "David Brown",
   },
   {
-    date: "23-12-2024",
+    date: "2024-12-23",
     checkIn: "08:50 AM",
     checkOut: "05:30 PM",
     status: "present",
@@ -975,7 +975,7 @@ export const attendanceRecords: AttendanceRecord[] = [
     employeeName: "David Brown",
   },
   {
-    date: "20-12-2024",
+    date: "2024-12-20",
     checkIn: "08:58 AM",
     checkOut: "05:20 PM",
     status: "present",

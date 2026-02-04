@@ -17,6 +17,7 @@ export interface UserPayload {
   bankName?: string;
   bankAccountHolderName?: string;
   photoUrl?: string;
+  extraPaidLeaveDays?: number;
   organizationId?: number;
   createdAt: Date;
   updatedAt: Date;

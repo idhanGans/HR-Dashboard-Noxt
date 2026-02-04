@@ -1,5 +1,18 @@
 import { Card } from "../Card";
 
+const PAID_LEAVE_DAYS_PER_MONTH = 1;
+
+const DEFAULT_POLICIES = [
+  // Leave policies descriptions are still temporary and default, TODO: Change to the final description
+  {
+    type: "Paid Leave",
+    description: `${PAID_LEAVE_DAYS_PER_MONTH} day per month, plus any extra allocation`,
+  },
+  { type: "Sick Leave", description: "Leave granted due to illness/medical condition" },
+  { type: "Urgent Leave", description: "Sudden and unforseen personal or family matters that require immediate attention" },
+  { type: "Unpaid Leave", description: "Leave without pay, must be requested at least one day before the leave itself" },
+];
+
 /**
  * LeavePolicyCard - Displays leave policy information
  * @param {Array} policies - Array of policy objects with type and description
@@ -9,17 +22,14 @@ export const LeavePolicyCard = ({
 }: {
   policies?: { type: string; description: string }[];
 }) => {
-  const defaultPolicies = [
-    { type: "Paid Leave", description: "12 days per year, fully paid" },
-    { type: "Sick Leave", description: "8 days per year, fully paid" },
-    { type: "Vacation", description: "10 days per year, must be approved" },
-  ];
-
-  const policyData = policies || defaultPolicies;
+  const policyData =
+    policies && policies.length ? policies : DEFAULT_POLICIES;
 
   return (
-    <Card>
-      <h2 className="text-lg font-bold text-white mb-4">Leave Policy</h2>
+    <Card className="self-start">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg font-bold text-white">Leave Policy</h2>
+      </div>
       <div className="space-y-4 text-sm">
         {policyData.map((policy, idx) => (
           <div
@@ -28,7 +38,9 @@ export const LeavePolicyCard = ({
               idx < policyData.length - 1 ? "pb-4 border-b border-white/10" : ""
             }
           >
-            <p className="text-white font-semibold mb-1">{policy.type}</p>
+            <p className="text-white font-semibold mb-1">
+              {policy.type}
+            </p>
             <p className="text-lightGrey">{policy.description}</p>
           </div>
         ))}

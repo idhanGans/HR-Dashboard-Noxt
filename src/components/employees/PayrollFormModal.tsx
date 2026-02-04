@@ -1,7 +1,23 @@
 import { Modal } from "../Modal";
+import { DropdownSelect } from "../DropdownSelect";
 import { formatCurrency } from "../../utils/format";
 import type { Dispatch, SetStateAction } from "react";
 import type { Employee, PayrollFormData } from "../../types";
+
+const MONTH_OPTIONS = [
+  { value: 1, label: "January" },
+  { value: 2, label: "February" },
+  { value: 3, label: "March" },
+  { value: 4, label: "April" },
+  { value: 5, label: "May" },
+  { value: 6, label: "June" },
+  { value: 7, label: "July" },
+  { value: 8, label: "August" },
+  { value: 9, label: "September" },
+  { value: 10, label: "October" },
+  { value: 11, label: "November" },
+  { value: 12, label: "December" },
+];
 
 interface PayrollFormModalProps {
   isOpen: boolean;
@@ -145,29 +161,20 @@ export const PayrollFormModal = ({
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Month
               </label>
-              <select
+              <DropdownSelect
                 value={payrollData.month || new Date().getMonth() + 1}
-                onChange={(e) =>
-                  onPayrollChange({
-                    ...payrollData,
-                    month: parseInt(e.target.value),
-                  })
-                }
-                className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors"
-              >
-                <option value="1">January</option>
-                <option value="2">February</option>
-                <option value="3">March</option>
-                <option value="4">April</option>
-                <option value="5">May</option>
-                <option value="6">June</option>
-                <option value="7">July</option>
-                <option value="8">August</option>
-                <option value="9">September</option>
-                <option value="10">October</option>
-                <option value="11">November</option>
-                <option value="12">December</option>
-              </select>
+                onChange={(nextValue) => {
+                  if (nextValue !== null) {
+                    onPayrollChange({
+                      ...payrollData,
+                      month: Number(nextValue),
+                    });
+                  }
+                }}
+                options={MONTH_OPTIONS}
+                ariaLabel="Select payroll month"
+                buttonClassName="py-2.5"
+              />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
