@@ -479,7 +479,15 @@ export const AttendancePage = ({ onLogout, userName, userRole }) => {
     }
 
     return filtered;
-  }, [pastRecords, filterType, dateFrom, dateTo, statusFilter, employeeFilter, yearFilter]);
+  }, [
+    pastRecords,
+    filterType,
+    dateFrom,
+    dateTo,
+    statusFilter,
+    employeeFilter,
+    yearFilter,
+  ]);
 
   // Calculate attendance summary when employee and month are selected
   const attendanceSummary = useMemo(() => {
@@ -661,10 +669,12 @@ export const AttendancePage = ({ onLogout, userName, userRole }) => {
           {shouldShowGroupedSummary && groupedSummaries.length > 0 && (
             <div>
               <h3 className="text-lg font-semibold text-white mb-4">
-                Attendance Summary by Employee ({groupedSummaries.length} employee{groupedSummaries.length !== 1 ? 's' : ''})
+                Attendance Summary by Employee ({groupedSummaries.length}{" "}
+                employee{groupedSummaries.length !== 1 ? "s" : ""})
               </h3>
               <p className="text-sm text-lightGrey mb-4">
-                Showing overall attendance with monthly breakdowns. Click "Show Monthly Breakdown" to expand details.
+                Showing overall attendance with monthly breakdowns. Click "Show
+                Monthly Breakdown" to expand details.
               </p>
               <AttendanceGroupedSummary summaries={groupedSummaries} />
             </div>

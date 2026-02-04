@@ -40,13 +40,13 @@ export const LeaveRequestModal = ({
     // Also update the leaveRequest object for parent component
     if (leaveRequest) {
       leaveRequest[field] = value;
-      
+
       // Update available balance when leave type changes
       if (field === "type") {
         const balances = {
           "Paid Leave": 8,
           "Sick Leave": 5,
-          "Vacation": 6,
+          Vacation: 6,
           "Unpaid Leave": 999,
         };
         leaveRequest.availableBalance = balances[value] || 0;
@@ -84,7 +84,8 @@ export const LeaveRequestModal = ({
     if (!startDate || !endDate) return 0;
     const start = new Date(startDate);
     const end = new Date(endDate);
-    const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 3600 * 24)) + 1;
+    const days =
+      Math.ceil((end.getTime() - start.getTime()) / (1000 * 3600 * 24)) + 1;
     return days > 0 ? days : 0;
   };
 

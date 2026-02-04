@@ -1,7 +1,9 @@
 # Attendance Grouped Summary Feature
 
 ## Overview
+
 The attendance page now intelligently displays attendance data in two modes:
+
 1. **Grouped Summary View** - When viewing all records without filters
 2. **Detailed Records View** - When applying specific filters
 
@@ -10,6 +12,7 @@ This prevents overwhelming users with hundreds of individual attendance entries.
 ## When Grouped Summary is Shown
 
 The grouped summary view automatically activates when **ALL** of these conditions are met:
+
 - Filter By: **All Records**
 - Employee: **All Employees**
 - Status: **All Status**
@@ -21,11 +24,13 @@ In this mode, instead of showing 112+ individual attendance records, the system 
 Each summary card shows:
 
 ### Employee Information
+
 - **Avatar/Initials**: Visual identifier for the employee
 - **Employee Name**: Full name
 - **Period**: Month and year (e.g., "January 2025")
 
 ### Attendance Statistics
+
 - **Present Days**: Number of days marked present (✓ green)
 - **Late Days**: Number of days marked late (⏰ yellow)
 - **Absent Days**: Number of days marked absent (✗ red)
@@ -33,6 +38,7 @@ Each summary card shows:
 - **Total Records**: Total number of tracked days
 
 ### Example Display
+
 ```
 Alice Johnson
 📅 January 2025
@@ -48,6 +54,7 @@ Total Records: 22 days tracked
 The detailed table view (with individual date entries) is shown when **ANY** filter is applied:
 
 ### Filter Scenarios that Show Detailed Records:
+
 1. **Specific Employee Selected**
    - Example: Employee = "Alice Johnson"
    - Shows all Alice's attendance records
@@ -71,12 +78,14 @@ The detailed table view (with individual date entries) is shown when **ANY** fil
 ## Benefits
 
 ### For Managers/HR
+
 1. **Quick Overview**: See all employees' attendance at a glance
 2. **Easy Comparison**: Compare attendance rates across employees
 3. **Monthly Insights**: Understand attendance patterns by month
 4. **Performance Tracking**: Identify attendance trends
 
 ### For Users
+
 1. **Less Overwhelming**: No more scrolling through 100+ records
 2. **Faster Loading**: Summaries render faster than large tables
 3. **Better Organization**: Grouped by employee and month logically
@@ -85,10 +94,12 @@ The detailed table view (with individual date entries) is shown when **ANY** fil
 ## Technical Implementation
 
 ### Components
+
 - **AttendanceGroupedSummary**: New component for displaying grouped summaries
 - **createGroupedSummaries()**: Utility function that groups records by employee and month
 
 ### Logic Flow
+
 ```
 1. User loads Attendance page
 2. System checks filters:
@@ -104,11 +115,14 @@ The detailed table view (with individual date entries) is shown when **ANY** fil
 ```
 
 ### Sorting
+
 Grouped summaries are sorted by:
+
 1. **Primary**: Employee name (alphabetical A-Z)
 2. **Secondary**: Period (most recent month first)
 
 Example order:
+
 - Alice Johnson - January 2025
 - Alice Johnson - December 2024
 - Bob Smith - January 2025
@@ -117,6 +131,7 @@ Example order:
 ## User Guide
 
 ### Viewing Grouped Summaries
+
 1. Navigate to **Attendance** page
 2. Set filters to:
    - Filter By: **All Records**
@@ -125,6 +140,7 @@ Example order:
 3. System automatically displays grouped summaries
 
 ### Viewing Detailed Records
+
 1. Navigate to **Attendance** page
 2. Apply any specific filter:
    - Select a specific employee, OR
@@ -134,6 +150,7 @@ Example order:
 3. System automatically switches to detailed table view
 
 ### Tips
+
 - Use grouped summary for **high-level overview**
 - Use detailed records for **specific investigations**
 - Apply month filter to see specific employee's monthly breakdown
@@ -142,9 +159,11 @@ Example order:
 ## Examples
 
 ### Scenario 1: Monthly Team Review
+
 **Goal**: Review entire team's attendance for January 2025
 
-**Action**: 
+**Action**:
+
 - Filter By: Month
 - Employee: All Employees
 - Date: January 2025
@@ -152,9 +171,11 @@ Example order:
 **Result**: Shows monthly summary cards for all employees in January
 
 ### Scenario 2: Individual Performance Check
+
 **Goal**: Check Alice Johnson's attendance details
 
 **Action**:
+
 - Filter By: All Records
 - Employee: Alice Johnson
 - Status: All Status
@@ -162,9 +183,11 @@ Example order:
 **Result**: Shows detailed table with all of Alice's attendance records
 
 ### Scenario 3: Late Arrivals Analysis
+
 **Goal**: Find all late arrivals across the team
 
 **Action**:
+
 - Filter By: All Records
 - Employee: All Employees
 - Status: Late
@@ -172,9 +195,11 @@ Example order:
 **Result**: Shows detailed table with only "Late" status records
 
 ### Scenario 4: Quick Overview
+
 **Goal**: See overall attendance health
 
 **Action**:
+
 - Filter By: All Records
 - Employee: All Employees
 - Status: All Status
@@ -184,18 +209,21 @@ Example order:
 ## Migration from Previous Version
 
 ### Before
+
 - Always showed detailed table with individual records
 - Could display 100+ rows simultaneously
 - Difficult to get quick overview
 - Required scrolling to see all data
 
 ### After
+
 - Smart view switching based on filters
 - Shows summaries when viewing all records
 - Easy to drill down with filters
 - Better performance with large datasets
 
 ### No Breaking Changes
+
 - All existing filters still work
 - Detailed records still accessible
 - Same data, better presentation

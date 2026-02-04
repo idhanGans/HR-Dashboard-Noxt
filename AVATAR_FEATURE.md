@@ -1,11 +1,13 @@
 # Avatar Upload Feature Documentation
 
 ## Overview
+
 The HR Dashboard now includes a comprehensive avatar management system that allows employees to upload and manage their profile pictures, and enables managers/admins to manage avatars for all employees.
 
 ## Features Implemented
 
 ### 1. **User Avatar Upload (Settings Page)**
+
 - Located in: Settings > Profile Settings
 - Employees can upload their own avatar
 - Supports drag-and-drop functionality
@@ -14,6 +16,7 @@ The HR Dashboard now includes a comprehensive avatar management system that allo
 - Automatic persistence to localStorage
 
 ### 2. **Employee Avatar Manager (Employees Page)**
+
 - Located in: Employees Page > Avatar Management Section
 - Managers/Admins can upload avatars for any employee
 - Select employee from list to manage their avatar
@@ -21,7 +24,9 @@ The HR Dashboard now includes a comprehensive avatar management system that allo
 - Bulk avatar management capability
 
 ### 3. **Avatar Display Components**
+
 Avatars are now displayed in multiple locations:
+
 - **Topbar**: Logged-in user's avatar in top navigation
 - **Employee Table**: Each employee row shows their avatar
 - **Top Performers Card**: Dashboard's top performers display with avatars
@@ -32,7 +37,9 @@ Avatars are now displayed in multiple locations:
 ### Components Created
 
 #### `AvatarDisplay.tsx`
+
 Reusable component for displaying avatars throughout the dashboard.
+
 - **Props**:
   - `src`: Image URL or base64 data
   - `name`: Employee/user name (for initials fallback)
@@ -45,7 +52,9 @@ Reusable component for displaying avatars throughout the dashboard.
   - Multiple size options (8x8, 10x10, 16x16, 24x24)
 
 #### `AvatarUpload.tsx`
+
 Interactive avatar upload component with validation.
+
 - **Features**:
   - Drag-and-drop upload area
   - Click to browse file selection
@@ -56,7 +65,9 @@ Interactive avatar upload component with validation.
   - Initials fallback when no avatar uploaded
 
 #### `EmployeeAvatarManager.tsx`
+
 Admin interface for managing all employee avatars.
+
 - **Features**:
   - Employee list with avatar preview
   - Search/filter employees
@@ -68,6 +79,7 @@ Admin interface for managing all employee avatars.
 ### Utility Functions (`avatarUtils.ts`)
 
 #### User Avatar Management
+
 ```typescript
 saveUserAvatar(avatarData: string): void
 getUserAvatar(): string | null
@@ -75,6 +87,7 @@ removeUserAvatar(): void
 ```
 
 #### Employee Avatar Management
+
 ```typescript
 saveEmployeeAvatar(employeeId: number, avatarData: string): void
 getEmployeeAvatar(employeeId: number): string | null
@@ -82,6 +95,7 @@ removeEmployeeAvatar(employeeId: number): void
 ```
 
 #### Helper Functions
+
 ```typescript
 getInitials(name: string): string          // Gets 2-letter initials from name
 getAvatarColor(name: string): string       // Generates gradient color from name
@@ -91,11 +105,14 @@ clearAllAvatars(): void                    // Removes all stored avatars
 ## Storage
 
 ### localStorage Keys
+
 - **User Avatar**: `hrdash-user-avatar`
 - **Employee Avatars**: `hrdash-employee-avatars` (JSON object with employeeId as key)
 
 ### Data Format
+
 Avatars are stored as base64-encoded strings:
+
 ```
 data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAA...
 ```
@@ -145,12 +162,14 @@ data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAA...
 ## File Specifications
 
 ### Supported Formats
+
 - JPEG (.jpg, .jpeg)
 - PNG (.png)
 - GIF (.gif)
 - WebP (.webp)
 
 ### Size Limits
+
 - Maximum file size: **5MB**
 - Recommended dimensions: **512x512 pixels** or higher
 - Images are displayed at:
@@ -160,6 +179,7 @@ data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAA...
   - Extra Large (xl): 96x96px
 
 ### Image Processing
+
 - Images are converted to base64 for storage
 - No server upload required (client-side only)
 - Automatic aspect ratio preservation
@@ -200,6 +220,7 @@ data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAA...
 - Edge 79+
 
 All modern browsers support:
+
 - localStorage API
 - FileReader API
 - Base64 encoding
@@ -215,6 +236,7 @@ All modern browsers support:
 ## Future Enhancements
 
 ### Potential Improvements
+
 - [ ] Server-side storage for avatar persistence across devices
 - [ ] Image compression before storage
 - [ ] Cropping tool for better avatar framing
@@ -228,6 +250,7 @@ All modern browsers support:
 ## Troubleshooting
 
 ### Avatar Not Displaying
+
 1. **Check localStorage**: Open browser DevTools > Application > localStorage
    - Look for `hrdash-user-avatar` or `hrdash-employee-avatars`
 2. **Clear and re-upload**: Remove avatar and upload again
@@ -235,11 +258,13 @@ All modern browsers support:
 4. **Check file size**: Must be under 5MB
 
 ### Upload Errors
+
 - **"File size must be less than 5MB"**: Resize or compress image before uploading
 - **"Only JPEG, PNG, GIF, and WebP images are allowed"**: Convert image to supported format
 - **Drag-and-drop not working**: Use "Choose file" button instead
 
 ### Avatar Not Updating
+
 1. Refresh the page after upload
 2. Check browser console for JavaScript errors
 3. Verify localStorage is enabled in browser settings
@@ -248,18 +273,21 @@ All modern browsers support:
 ## Technical Notes
 
 ### Performance Considerations
+
 - Base64 encoding increases file size by approximately 33%
 - localStorage has a total limit of 5-10MB
 - Large avatars may impact page load times
 - Consider implementing lazy loading for avatar-heavy pages
 
 ### Security
+
 - All avatar processing happens client-side
 - No server upload = no server-side vulnerabilities
 - File type validation prevents script injection
 - Size limits prevent storage exhaustion
 
 ### Accessibility
+
 - All avatars have alt text with employee names
 - Initials provide text fallback
 - Color contrast ratios meet WCAG AA standards
@@ -268,20 +296,17 @@ All modern browsers support:
 ## Code Examples
 
 ### Using AvatarDisplay Component
+
 ```tsx
-import { AvatarDisplay } from '../components/AvatarDisplay';
-import { getEmployeeAvatar } from '../utils/avatarUtils';
+import { AvatarDisplay } from "../components/AvatarDisplay";
+import { getEmployeeAvatar } from "../utils/avatarUtils";
 
 function EmployeeCard({ employee }) {
   const avatar = getEmployeeAvatar(employee.id);
-  
+
   return (
     <div>
-      <AvatarDisplay 
-        src={avatar}
-        name={employee.name}
-        size="lg"
-      />
+      <AvatarDisplay src={avatar} name={employee.name} size="lg" />
       <h3>{employee.name}</h3>
     </div>
   );
@@ -289,8 +314,9 @@ function EmployeeCard({ employee }) {
 ```
 
 ### Saving an Avatar
+
 ```typescript
-import { saveEmployeeAvatar } from './utils/avatarUtils';
+import { saveEmployeeAvatar } from "./utils/avatarUtils";
 
 function handleAvatarUpload(employeeId: number, file: File) {
   const reader = new FileReader();
@@ -303,6 +329,7 @@ function handleAvatarUpload(employeeId: number, file: File) {
 ```
 
 ### Retrieving an Avatar
+
 ```typescript
 import { getEmployeeAvatar, getInitials, getAvatarColor } from './utils/avatarUtils';
 
@@ -321,6 +348,7 @@ if (avatar) {
 ## Version History
 
 ### v1.0.0 (Current)
+
 - Initial avatar feature implementation
 - User avatar upload in settings
 - Employee avatar manager for admins

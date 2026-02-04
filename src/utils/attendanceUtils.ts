@@ -265,21 +265,24 @@ export function createGroupedSummaries(records: AttendanceRecord[]): Array<{
   }>;
 }> {
   const grouped = groupAttendanceByEmployeeAndMonth(records);
-  
+
   // Group by employee ID
-  const employeeMap = new Map<number, {
-    employeeName: string;
-    employeeId: number;
-    months: Array<{
-      month: string;
-      period: string;
-      presentDays: number;
-      absentDays: number;
-      lateDays: number;
-      totalRecords: number;
-      attendanceRate: number;
-    }>;
-  }>();
+  const employeeMap = new Map<
+    number,
+    {
+      employeeName: string;
+      employeeId: number;
+      months: Array<{
+        month: string;
+        period: string;
+        presentDays: number;
+        absentDays: number;
+        lateDays: number;
+        totalRecords: number;
+        attendanceRate: number;
+      }>;
+    }
+  >();
 
   grouped.forEach((empRecords, key) => {
     if (empRecords.length === 0) return;
@@ -291,8 +294,18 @@ export function createGroupedSummaries(records: AttendanceRecord[]): Array<{
 
     // Convert month number to month name
     const monthNames = [
-      "January", "February", "March", "April", "May", "June",
-      "July", "August", "September", "October", "November", "December"
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
     ];
     const monthIndex = parseInt(month) - 1;
     const monthName = monthNames[monthIndex] || month;
@@ -301,10 +314,11 @@ export function createGroupedSummaries(records: AttendanceRecord[]): Array<{
     const absentDays = empRecords.filter((r) => r.status === "absent").length;
     const lateDays = empRecords.filter((r) => r.status === "late").length;
     const totalRecords = empRecords.length;
-    
-    const attendanceRate = totalRecords > 0
-      ? Math.round(((presentDays + lateDays) / totalRecords) * 100)
-      : 0;
+
+    const attendanceRate =
+      totalRecords > 0
+        ? Math.round(((presentDays + lateDays) / totalRecords) * 100)
+        : 0;
 
     if (!employeeMap.has(employeeId)) {
       employeeMap.set(employeeId, {
@@ -331,13 +345,20 @@ export function createGroupedSummaries(records: AttendanceRecord[]): Array<{
     emp.months.sort((a, b) => b.period.localeCompare(a.period));
 
     // Calculate totals
-    const totalPresentDays = emp.months.reduce((sum, m) => sum + m.presentDays, 0);
-    const totalAbsentDays = emp.months.reduce((sum, m) => sum + m.absentDays, 0);
+    const totalPresentDays = emp.months.reduce(
+      (sum, m) => sum + m.presentDays,
+      0,
+    );
+    const totalAbsentDays = emp.months.reduce(
+      (sum, m) => sum + m.absentDays,
+      0,
+    );
     const totalLateDays = emp.months.reduce((sum, m) => sum + m.lateDays, 0);
     const totalRecords = emp.months.reduce((sum, m) => sum + m.totalRecords, 0);
-    const overallAttendanceRate = totalRecords > 0
-      ? Math.round(((totalPresentDays + totalLateDays) / totalRecords) * 100)
-      : 0;
+    const overallAttendanceRate =
+      totalRecords > 0
+        ? Math.round(((totalPresentDays + totalLateDays) / totalRecords) * 100)
+        : 0;
 
     return {
       employeeName: emp.employeeName,
@@ -354,4 +375,3 @@ export function createGroupedSummaries(records: AttendanceRecord[]): Array<{
   // Sort by employee name
   return summaries.sort((a, b) => a.employeeName.localeCompare(b.employeeName));
 }
-

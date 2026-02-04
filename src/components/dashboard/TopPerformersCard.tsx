@@ -47,19 +47,15 @@ export const TopPerformersCard = ({ performers = [] }) => {
                   index === 0
                     ? "bg-gradient-to-br from-yellow-400 to-yellow-600 text-black"
                     : index === 1
-                    ? "bg-gradient-to-br from-gray-300 to-gray-500 text-black"
-                    : "bg-gradient-to-br from-orange-400 to-orange-600 text-white"
+                      ? "bg-gradient-to-br from-gray-300 to-gray-500 text-black"
+                      : "bg-gradient-to-br from-orange-400 to-orange-600 text-white"
                 }`}
               >
                 {index + 1}
               </div>
 
               {/* Avatar */}
-              <AvatarDisplay 
-                src={avatarData} 
-                name={emp.name} 
-                size="sm"
-              />
+              <AvatarDisplay src={avatarData} name={emp.name} size="sm" />
 
               {/* Employee Info */}
               <div className="flex-1">
@@ -69,28 +65,28 @@ export const TopPerformersCard = ({ performers = [] }) => {
                 </p>
               </div>
 
-            {/* KPI Score */}
-            <div className="text-left sm:text-right">
-              <div className="text-2xl font-bold text-white">
-                {emp.kpi?.currentScore?.toFixed(1)}
+              {/* KPI Score */}
+              <div className="text-left sm:text-right">
+                <div className="text-2xl font-bold text-white">
+                  {emp.kpi?.currentScore?.toFixed(1)}
+                </div>
+                <div className="text-xs text-gray-400">KPI Score</div>
               </div>
-              <div className="text-xs text-gray-400">KPI Score</div>
-            </div>
 
-            {/* Trend */}
-            {emp.kpi?.trend && (
-              <div
-                className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                  emp.kpi.trend.startsWith("+")
-                    ? "bg-green-500/20 text-green-400"
-                    : "bg-red-500/20 text-red-400"
-                }`}
-              >
-                {emp.kpi.trend}
-              </div>
-            )}
-          </div>
-        );
+              {/* Trend */}
+              {emp.kpi?.trend && (
+                <div
+                  className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                    emp.kpi.trend.startsWith("+")
+                      ? "bg-green-500/20 text-green-400"
+                      : "bg-red-500/20 text-red-400"
+                  }`}
+                >
+                  {emp.kpi.trend}
+                </div>
+              )}
+            </div>
+          );
         })}
       </div>
     </Card>

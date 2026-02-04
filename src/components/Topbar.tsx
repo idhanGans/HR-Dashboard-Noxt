@@ -48,11 +48,7 @@ export const Topbar = ({
             <p className="text-sm font-medium text-white">{userName}</p>
             <p className="text-xs text-lightGrey">{userRole}</p>
           </div>
-          <AvatarDisplay 
-            src={userAvatar} 
-            name={userName} 
-            size="md"
-          />
+          <AvatarDisplay src={userAvatar} name={userName} size="md" />
         </div>
       </div>
     </div>

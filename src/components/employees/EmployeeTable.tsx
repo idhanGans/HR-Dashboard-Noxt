@@ -81,11 +81,7 @@ export const EmployeeTable = ({
         const avatarData = getEmployeeAvatar(row.id);
         return (
           <div className="flex items-center gap-3">
-            <AvatarDisplay 
-              src={avatarData} 
-              name={row.name} 
-              size="sm"
-            />
+            <AvatarDisplay src={avatarData} name={row.name} size="sm" />
             <span className="text-white font-medium">{row.name}</span>
           </div>
         );

@@ -25,15 +25,13 @@ export const EmployeeAvatarManager = ({
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<number | null>(
     null,
   );
-  const [avatars, setAvatars] = useState<Record<number, string | null>>(
-    () => {
-      const result: Record<number, string | null> = {};
-      employees.forEach((emp) => {
-        result[emp.id] = getEmployeeAvatar(emp.id);
-      });
-      return result;
-    },
-  );
+  const [avatars, setAvatars] = useState<Record<number, string | null>>(() => {
+    const result: Record<number, string | null> = {};
+    employees.forEach((emp) => {
+      result[emp.id] = getEmployeeAvatar(emp.id);
+    });
+    return result;
+  });
 
   const selectedEmployee = employees.find((e) => e.id === selectedEmployeeId);
 

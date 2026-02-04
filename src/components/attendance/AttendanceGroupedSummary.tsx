@@ -1,5 +1,13 @@
 import { Card } from "../Card";
-import { Calendar, CheckCircle, XCircle, Clock, TrendingUp, ChevronDown, ChevronUp } from "lucide-react";
+import {
+  Calendar,
+  CheckCircle,
+  XCircle,
+  Clock,
+  TrendingUp,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 import { useState } from "react";
 
 interface MonthlyBreakdown {
@@ -35,7 +43,9 @@ interface AttendanceGroupedSummaryProps {
 export const AttendanceGroupedSummary = ({
   summaries,
 }: AttendanceGroupedSummaryProps) => {
-  const [expandedEmployees, setExpandedEmployees] = useState<Set<number>>(new Set());
+  const [expandedEmployees, setExpandedEmployees] = useState<Set<number>>(
+    new Set(),
+  );
 
   const toggleExpand = (employeeId: number) => {
     const newExpanded = new Set(expandedEmployees);
@@ -61,7 +71,7 @@ export const AttendanceGroupedSummary = ({
     <div className="space-y-4">
       {summaries.map((summary) => {
         const isExpanded = expandedEmployees.has(summary.employeeId);
-        
+
         return (
           <Card key={summary.employeeId}>
             {/* Main Summary */}
@@ -77,7 +87,10 @@ export const AttendanceGroupedSummary = ({
                   </h4>
                   <div className="flex items-center gap-2 text-lightGrey text-sm">
                     <Calendar size={14} />
-                    <span>{summary.monthlyBreakdown.length} month{summary.monthlyBreakdown.length !== 1 ? 's' : ''} tracked</span>
+                    <span>
+                      {summary.monthlyBreakdown.length} month
+                      {summary.monthlyBreakdown.length !== 1 ? "s" : ""} tracked
+                    </span>
                   </div>
                 </div>
               </div>
@@ -140,8 +153,12 @@ export const AttendanceGroupedSummary = ({
                   onClick={() => toggleExpand(summary.employeeId)}
                   className="flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300 transition-colors"
                 >
-                  <span>{isExpanded ? 'Hide' : 'Show'} Monthly Breakdown</span>
-                  {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                  <span>{isExpanded ? "Hide" : "Show"} Monthly Breakdown</span>
+                  {isExpanded ? (
+                    <ChevronUp size={16} />
+                  ) : (
+                    <ChevronDown size={16} />
+                  )}
                 </button>
               )}
             </div>
@@ -149,7 +166,9 @@ export const AttendanceGroupedSummary = ({
             {/* Monthly Breakdown (Expandable) */}
             {isExpanded && summary.monthlyBreakdown.length > 1 && (
               <div className="mt-4 pt-4 border-t border-white/10 space-y-3">
-                <h5 className="text-sm font-semibold text-white mb-3">Monthly Breakdown</h5>
+                <h5 className="text-sm font-semibold text-white mb-3">
+                  Monthly Breakdown
+                </h5>
                 {summary.monthlyBreakdown.map((monthData, idx) => (
                   <div
                     key={`${summary.employeeId}-${monthData.period}-${idx}`}
@@ -157,7 +176,9 @@ export const AttendanceGroupedSummary = ({
                   >
                     <div className="flex items-center gap-2 text-lightGrey text-sm">
                       <Calendar size={14} />
-                      <span className="text-white font-medium">{monthData.month}</span>
+                      <span className="text-white font-medium">
+                        {monthData.month}
+                      </span>
                     </div>
                     <div className="grid grid-cols-4 gap-4">
                       <div className="text-center">

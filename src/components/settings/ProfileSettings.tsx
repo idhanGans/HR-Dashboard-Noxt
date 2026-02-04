@@ -21,7 +21,9 @@ export const ProfileSettings = ({ settings, onSettingChange }) => {
 
       {/* Profile Information Card */}
       <Card>
-        <h2 className="text-lg font-bold text-white mb-6">Profile Information</h2>
+        <h2 className="text-lg font-bold text-white mb-6">
+          Profile Information
+        </h2>
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-white mb-2">

@@ -45,9 +45,14 @@ export function removeUserAvatar(): void {
  * @param employeeId - ID of the employee
  * @param avatarData - Base64 encoded image data or URL
  */
-export function saveEmployeeAvatar(employeeId: number, avatarData: string): void {
+export function saveEmployeeAvatar(
+  employeeId: number,
+  avatarData: string,
+): void {
   try {
-    const avatars = JSON.parse(localStorage.getItem(EMPLOYEE_AVATARS_KEY) || "{}");
+    const avatars = JSON.parse(
+      localStorage.getItem(EMPLOYEE_AVATARS_KEY) || "{}",
+    );
     avatars[employeeId] = avatarData;
     localStorage.setItem(EMPLOYEE_AVATARS_KEY, JSON.stringify(avatars));
   } catch (error) {
@@ -61,7 +66,9 @@ export function saveEmployeeAvatar(employeeId: number, avatarData: string): void
  */
 export function getEmployeeAvatar(employeeId: number): string | null {
   try {
-    const avatars = JSON.parse(localStorage.getItem(EMPLOYEE_AVATARS_KEY) || "{}");
+    const avatars = JSON.parse(
+      localStorage.getItem(EMPLOYEE_AVATARS_KEY) || "{}",
+    );
     return avatars[employeeId] || null;
   } catch (error) {
     console.error("Failed to retrieve employee avatar:", error);
@@ -87,7 +94,9 @@ export function getAllEmployeeAvatars(): Record<number, string> {
  */
 export function removeEmployeeAvatar(employeeId: number): void {
   try {
-    const avatars = JSON.parse(localStorage.getItem(EMPLOYEE_AVATARS_KEY) || "{}");
+    const avatars = JSON.parse(
+      localStorage.getItem(EMPLOYEE_AVATARS_KEY) || "{}",
+    );
     delete avatars[employeeId];
     localStorage.setItem(EMPLOYEE_AVATARS_KEY, JSON.stringify(avatars));
   } catch (error) {
