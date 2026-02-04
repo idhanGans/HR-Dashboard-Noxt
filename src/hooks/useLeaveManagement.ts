@@ -285,10 +285,7 @@ export const useLeaveManagement = (options?: UseLeaveManagementOptions) => {
     const days = calculateDays(leaveForm.startDate, leaveForm.endDate);
 
     if (days <= 0) {
-      alert(
-        "Invalid date range. End date must be after or equal to start date.",
-      );
-      return;
+      return "Invalid date range. End date must be after or equal to start date.";
     }
 
     const available = getAvailableBalance(leaveForm.type);
