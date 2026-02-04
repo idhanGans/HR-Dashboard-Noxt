@@ -68,7 +68,7 @@ export class PayrollResponseDto {
   otherDeductions: number;
 
   @ApiProperty({
-    description: "Total Earnings (base + allowance + bonuses)",
+    description: "Total Earnings (base + allowance + tax allowance)",
     example: 101500,
   })
   totalEarnings: number;

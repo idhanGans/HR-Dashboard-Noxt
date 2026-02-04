@@ -15,7 +15,7 @@ import Docxtemplater from "docxtemplater";
 import PizZip from "pizzip";
 
 const execFileAsync = promisify(execFile);
-const PAYSLIP_TEMPLATE_NAME = "payslip-template.docx";
+const PAYSLIP_TEMPLATE_NAME = "payslip_template.docx";
 type DocxtemplaterDelimiters = { start: string; end: string };
 type DocxtemplaterOptions = {
   paragraphLoop?: boolean;
@@ -56,6 +56,14 @@ export class PayslipsService {
         user: {
           select: {
             fullName: true,
+            position: true,
+            startDate: true,
+            typeOfWork: true,
+            organization: {
+              select: {
+                name: true,
+              },
+            },
           },
         },
       },
@@ -67,21 +75,37 @@ export class PayslipsService {
       );
     }
 
+    // Calculate totals
+    const baseSalary = this.toNumber(payroll.baseSalary);
+    const allowance = this.toNumber(payroll.allowance);
+    const tax = this.toNumber(payroll.tax);
+    const insurance = this.toNumber(payroll.insurance);
+    const pensionFund = this.toNumber(payroll.pensionFund);
+    const otherDeductions = this.toNumber(payroll.otherDeductions);
+
+    const totalEarning = baseSalary + allowance + tax;
+    const totalDeduction = tax + insurance + pensionFund + otherDeductions;
+    const takeHomePay = totalEarning - totalDeduction;
+
     const templatePath = this.resolveTemplatePath();
     const templateBuffer = await readFile(templatePath);
     const docxBuffer = this.renderPayslipDocx(templateBuffer, {
       username: payroll.user.fullName,
-      month,
+      month: this.formatMonth(month),
       year,
-      baseSalary: this.toNumber(payroll.baseSalary),
-      allowance: this.toNumber(payroll.allowance),
-      bonuses: this.toNumber(payroll.bonuses),
-      tax: this.toNumber(payroll.tax),
-      insurance: this.toNumber(payroll.insurance),
-      pensionFund: this.toNumber(payroll.pensionFund),
-      otherDeductions: this.toNumber(payroll.otherDeductions),
-      createdAt: this.formatDate(payroll.createdAt),
-      updatedAt: this.formatDate(payroll.updatedAt),
+      baseSalary: this.formatCurrency(baseSalary),
+      allowance: this.formatCurrency(allowance),
+      tax: this.formatCurrency(tax),
+      insurance: this.formatCurrency(insurance),
+      pensionFund: this.formatCurrency(pensionFund),
+      otherDeductions: this.formatCurrency(otherDeductions),
+      totalEarning: this.formatCurrency(totalEarning),
+      totalDeduction: this.formatCurrency(totalDeduction),
+      takeHomePay: this.formatCurrency(takeHomePay),
+      designation: payroll.user.position ?? "",
+      division: payroll.user.organization?.name ?? "",
+      status: payroll.user.typeOfWork ?? "",
+      joinedDate: this.formatJoinedDate(payroll.user.startDate),
     });
 
     return this.convertDocxToPdf(
@@ -193,5 +217,38 @@ export class PayslipsService {
 
   private formatDate(value: Date): string {
     return value.toISOString().split("T")[0];
+  }
+
+  private formatJoinedDate(value: Date | null): string {
+    if (!value) return "";
+    const day = value.getDate();
+    const month = value.toLocaleString("en-US", { month: "long" });
+    const year = value.getFullYear();
+    return `${day} ${month} ${year}`;
+  }
+
+  private formatCurrency(value: number): string {
+    // Format with period as thousand separator (e.g., 2000000 -> "2.000.000")
+    return Math.round(value)
+      .toString()
+      .replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  }
+
+  private formatMonth(month: number): string {
+    const months = [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
+    ];
+    return months[month - 1] ?? "";
   }
 }
