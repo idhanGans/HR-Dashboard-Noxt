@@ -195,10 +195,7 @@ export function calculateMonthlyAllEmployeesSummary(
   });
 
   // Group by employee
-  const groupedByEmployee = new Map<
-    number | undefined,
-    AttendanceRecord[]
-  >();
+  const groupedByEmployee = new Map<number | undefined, AttendanceRecord[]>();
   filtered.forEach((record) => {
     const empId = record.employeeId;
     if (!groupedByEmployee.has(empId)) {
@@ -211,14 +208,12 @@ export function calculateMonthlyAllEmployeesSummary(
   const summaries: AttendanceSummary[] = [];
   groupedByEmployee.forEach((empRecords, empId) => {
     const employeeName =
-      empRecords.length > 0 ? empRecords[0].employeeName || "Unknown" : "Unknown";
+      empRecords.length > 0
+        ? empRecords[0].employeeName || "Unknown"
+        : "Unknown";
 
-    const presentDays = empRecords.filter(
-      (r) => r.status === "present",
-    ).length;
-    const absentDays = empRecords.filter(
-      (r) => r.status === "absent",
-    ).length;
+    const presentDays = empRecords.filter((r) => r.status === "present").length;
+    const absentDays = empRecords.filter((r) => r.status === "absent").length;
     const lateDays = empRecords.filter((r) => r.status === "late").length;
     const totalDays = empRecords.length;
 
@@ -242,7 +237,5 @@ export function calculateMonthlyAllEmployeesSummary(
     });
   });
 
-  return summaries.sort((a, b) =>
-    a.employeeName.localeCompare(b.employeeName),
-  );
+  return summaries.sort((a, b) => a.employeeName.localeCompare(b.employeeName));
 }

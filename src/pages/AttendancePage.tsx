@@ -453,10 +453,15 @@ export const AttendancePage = ({ onLogout, userName, userRole }) => {
     }
 
     // If employee is selected and filtering by date range, show single employee summary for that range
-    if (employeeFilter !== "all" && filterType === "date" && dateFrom && dateTo) {
+    if (
+      employeeFilter !== "all" &&
+      filterType === "date" &&
+      dateFrom &&
+      dateTo
+    ) {
       const fromDate = dateStringToDate(dateFrom);
       const toDate = dateStringToDate(dateTo);
-      
+
       const filtered = recordsWithEmployee.filter((r) => {
         if (r.employeeId !== parseInt(employeeFilter)) return false;
         const recordDate = dateStringToDate(r.date);

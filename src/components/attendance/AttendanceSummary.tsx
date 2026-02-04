@@ -8,7 +8,9 @@ interface AttendanceSummaryCardProps {
 /**
  * AttendanceSummaryCard - Display attendance summary statistics
  */
-export const AttendanceSummaryCard = ({ summary }: AttendanceSummaryCardProps) => {
+export const AttendanceSummaryCard = ({
+  summary,
+}: AttendanceSummaryCardProps) => {
   const getAttendanceRateColor = (rate: number) => {
     if (rate >= 95) return "text-green-400 bg-green-400/10";
     if (rate >= 85) return "text-yellow-400 bg-yellow-400/10";
@@ -95,7 +97,9 @@ export const AttendanceSummaryCard = ({ summary }: AttendanceSummaryCardProps) =
           <div className="flex items-center gap-2 mb-2">
             <p className="text-sm text-gray-400">Attendance Rate</p>
           </div>
-          <p className={`text-2xl font-bold ${getAttendanceRateColor(summary.attendanceRate)}`}>
+          <p
+            className={`text-2xl font-bold ${getAttendanceRateColor(summary.attendanceRate)}`}
+          >
             {summary.attendanceRate}%
           </p>
           <p className="text-xs text-gray-500 mt-1">of expected</p>
@@ -114,15 +118,25 @@ export const AttendanceSummaryCard = ({ summary }: AttendanceSummaryCardProps) =
           <div>
             <p className="text-gray-400 mb-1">Unrecorded Days</p>
             <p className="text-lg font-semibold text-gray-300">
-              {summary.expectedWorkingDays - summary.presentDays - summary.absentDays}
+              {summary.expectedWorkingDays -
+                summary.presentDays -
+                summary.absentDays}
             </p>
           </div>
           <div>
             <p className="text-gray-400 mb-1">Overall Status</p>
-            <p className={`text-lg font-semibold ${
-              summary.attendanceRate >= 85 ? 'text-green-400' : 'text-yellow-400'
-            }`}>
-              {summary.attendanceRate >= 95 ? 'Excellent' : summary.attendanceRate >= 85 ? 'Good' : 'Needs Attention'}
+            <p
+              className={`text-lg font-semibold ${
+                summary.attendanceRate >= 85
+                  ? "text-green-400"
+                  : "text-yellow-400"
+              }`}
+            >
+              {summary.attendanceRate >= 95
+                ? "Excellent"
+                : summary.attendanceRate >= 85
+                  ? "Good"
+                  : "Needs Attention"}
             </p>
           </div>
         </div>
@@ -154,7 +168,9 @@ export const AttendanceSummaryGrid = ({
   if (summaries.length === 0) {
     return (
       <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-6 mb-8">
-        <p className="text-gray-400">No attendance records found for the selected period.</p>
+        <p className="text-gray-400">
+          No attendance records found for the selected period.
+        </p>
       </div>
     );
   }
