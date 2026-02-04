@@ -224,7 +224,7 @@ export const useLeaveManagement = (options?: UseLeaveManagementOptions) => {
   const handleRequestLeave = useCallback(() => {
     setLeaveForm({
       ...EMPTY_LEAVE_REQUEST,
-      availableBalance: 0,
+      availableBalance: 12, // Default to Paid Leave balance
     });
     setIsRequestModalOpen(true);
   }, []);
@@ -283,6 +283,14 @@ export const useLeaveManagement = (options?: UseLeaveManagementOptions) => {
 
     const reason = leaveForm.reason.trim();
     const days = calculateDays(leaveForm.startDate, leaveForm.endDate);
+
+    if (days <= 0) {
+      alert(
+        "Invalid date range. End date must be after or equal to start date.",
+      );
+      return;
+    }
+
     const available = getAvailableBalance(leaveForm.type);
 
     if (leaveForm.type === "PAID_LEAVE" && days > available) {

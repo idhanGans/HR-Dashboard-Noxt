@@ -9,6 +9,8 @@ export { Topbar } from "./Topbar";
 export { DashboardLayout } from "./DashboardLayout";
 export { DropdownSelect } from "./DropdownSelect";
 export { PaginationControls } from "./PaginationControls";
+export { AvatarDisplay } from "./AvatarDisplay";
+export { EmployeeAvatarManager } from "./EmployeeAvatarManager";
 
 // Dashboard Components
 export * from "./dashboard";

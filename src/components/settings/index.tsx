@@ -4,3 +4,4 @@ export { NotificationSettings } from "./NotificationSettings";
 export { PreferencesSettings } from "./PreferencesSettings";
 export { SaveSettingsButton } from "./SaveSettingsButton";
 export { SettingsHeader } from "./SettingsHeader";
+export { AvatarUpload } from "./AvatarUpload";

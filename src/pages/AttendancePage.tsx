@@ -5,6 +5,7 @@ import {
   LeaveBalanceGridSkeleton,
   PaginationControls,
   TodayAttendanceSkeleton,
+  AttendanceGroupedSummarySkeleton,
 } from "../components";
 import {
   CheckInCard,
@@ -14,6 +15,7 @@ import {
   CheckInModal,
   CheckOutModal,
   AttendanceHeader,
+  AttendanceGroupedSummary,
 } from "../components/attendance";
 import {
   LeaveBalanceCard,
@@ -31,6 +33,7 @@ import { useEmployees } from "../hooks/useEmployees";
 import { useLeaveManagement } from "../hooks/useLeaveManagement";
 import { useAuth } from "../contexts/AuthContext";
 import { hasRequiredRole } from "../utils/roles";
+import { createGroupedSummaries } from "../utils/attendanceUtils";
 import { Calendar, Filter } from "lucide-react";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import type {
@@ -641,6 +644,25 @@ export const AttendancePage = ({
   // Records are now filtered by backend, just use recordsWithEmployee directly
   const filteredRecords = recordsWithEmployee;
 
+  // Show grouped summary when: All Records + All Employees + All Status (no specific filters applied)
+  const shouldShowGroupedSummary = useMemo(() => {
+    return (
+      filterType === "all" &&
+      employeeFilter === "all" &&
+      statusFilter === "all" &&
+      !dateFrom &&
+      !dateTo
+    );
+  }, [filterType, employeeFilter, statusFilter, dateFrom, dateTo]);
+
+  // Calculate grouped summaries for "All Records" view
+  const groupedSummaries = useMemo(() => {
+    if (shouldShowGroupedSummary && filteredRecords.length > 0) {
+      return createGroupedSummaries(filteredRecords);
+    }
+    return [];
+  }, [shouldShowGroupedSummary, filteredRecords]);
+
   // Get leave balances for display
   const leaveBalancesForDisplay = Object.keys(leaveBalanceData).map((type) => {
     const balance = leaveBalanceData[type];
@@ -731,32 +753,61 @@ export const AttendancePage = ({
             showEmployeeFilter={canFilterEmployees}
           />
 
-          {/* Attendance Records */}
-          <div>
-            <AttendanceTable
-              records={filteredRecords}
-              showEmployeeColumn={canFilterEmployees}
-              isLoading={attendanceBusy}
-              headerContent={
-                <RowsSelector
-                  value={attendanceLimit}
-                  onChange={(nextSize) => {
-                    setAttendanceLimit(nextSize);
-                    setAttendancePage(1);
-                  }}
-                />
-              }
-            />
-            <PaginationControls
-              page={attendancePage}
-              totalPages={attendanceTotalPages}
-              totalItems={attendanceTotal}
-              isLoading={attendanceBusy}
-              onPageChange={(nextPage) =>
-                setAttendancePage(Math.max(1, nextPage))
-              }
-            />
-          </div>
+          {/* Grouped Summary View - Show when no filters applied */}
+          {shouldShowGroupedSummary && (
+            <div className="mb-8">
+              <h3 className="text-lg font-semibold text-white mb-2">
+                {attendanceBusy
+                  ? "Loading Attendance Summary..."
+                  : isSuperadminRole
+                    ? `Attendance Summary by Employee (${groupedSummaries.length} employee${groupedSummaries.length !== 1 ? "s" : ""})`
+                    : "Attendance Summary"}
+              </h3>
+              <p className="text-sm text-lightGrey mb-4">
+                {isSuperadminRole
+                  ? "Showing overall attendance with monthly breakdowns. Click \"Show Monthly Breakdown\" to expand details. Apply filters above to see individual records."
+                  : "Your attendance overview with monthly breakdown. Apply filters above to see detailed records."}
+              </p>
+              {attendanceBusy ? (
+                <AttendanceGroupedSummarySkeleton />
+              ) : groupedSummaries.length > 0 ? (
+                <AttendanceGroupedSummary summaries={groupedSummaries} />
+              ) : (
+                <div className="text-center text-lightGrey py-8">
+                  No attendance records found.
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Attendance Records Table - Show when filters are applied */}
+          {!shouldShowGroupedSummary && (
+            <div>
+              <AttendanceTable
+                records={filteredRecords}
+                showEmployeeColumn={canFilterEmployees}
+                isLoading={attendanceBusy}
+                headerContent={
+                  <RowsSelector
+                    value={attendanceLimit}
+                    onChange={(nextSize) => {
+                      setAttendanceLimit(nextSize);
+                      setAttendancePage(1);
+                    }}
+                  />
+                }
+              />
+              <PaginationControls
+                page={attendancePage}
+                totalPages={attendanceTotalPages}
+                totalItems={attendanceTotal}
+                isLoading={attendanceBusy}
+                onPageChange={(nextPage) =>
+                  setAttendancePage(Math.max(1, nextPage))
+                }
+              />
+            </div>
+          )}
 
           <CheckInModal
             isOpen={isCheckInModalOpen}
