@@ -201,7 +201,10 @@ export class AttendanceRecordsService {
     });
 
     // Group records by their end-of-day time to batch updates
-    const recordsByEndTime = new Map<string, { ids: number[]; endOfDay: Date }>();
+    const recordsByEndTime = new Map<
+      string,
+      { ids: number[]; endOfDay: Date }
+    >();
 
     for (const record of openRecords) {
       const zone = this.normalizeTimezone(record.timezone);

@@ -1,6 +1,13 @@
 import { ApiPropertyOptional, OmitType } from "@nestjs/swagger";
 import { Type } from "class-transformer";
-import { IsDateString, IsEnum, IsInt, IsOptional, Max, Min } from "class-validator";
+import {
+  IsDateString,
+  IsEnum,
+  IsInt,
+  IsOptional,
+  Max,
+  Min,
+} from "class-validator";
 import { PaginationQueryDto } from "@/common/dto";
 import { AttendanceStatus } from "@prisma/client";
 

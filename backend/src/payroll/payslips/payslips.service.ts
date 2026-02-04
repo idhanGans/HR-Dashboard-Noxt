@@ -85,8 +85,7 @@ export class PayslipsService {
     const bonus = this.toNumber(payroll.bonuses);
     const hasBonus = bonus > 0;
 
-    const totalEarning =
-      baseSalary + allowance + (hasBonus ? bonus : 0) + tax;
+    const totalEarning = baseSalary + allowance + (hasBonus ? bonus : 0) + tax;
     const totalDeduction = tax + insurance + pensionFund + otherDeductions;
     const takeHomePay = totalEarning - totalDeduction;
 

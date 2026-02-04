@@ -12,7 +12,7 @@ export const buildDateRangeFilter = (
 
   // Current Filter Logic: Start day of startDate all the way to end day of endDate
   // Sample case: curr is 2 February, then if startDate is 2 February and endDate is also 2 February,
-  // then any records in 2 February will be included 
+  // then any records in 2 February will be included
   if (startDate) {
     range.gte = new Date(startDate);
   }
