@@ -9,3 +9,4 @@ export {
   AttendanceSummaryCard,
   AttendanceSummaryGrid,
 } from "./AttendanceSummary";
+export { AttendanceGroupedSummary } from "./AttendanceGroupedSummary";

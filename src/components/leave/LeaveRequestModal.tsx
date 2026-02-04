@@ -1,5 +1,6 @@
 import { Modal } from "../Modal";
 import { AlertCircle, CheckCircle, XCircle } from "lucide-react";
+import { useState, useEffect } from "react";
 
 /**
  * LeaveRequestModal - Modal for requesting, reviewing, and approving/rejecting leaves
@@ -13,6 +14,45 @@ export const LeaveRequestModal = ({
   onReject,
   employeeName,
 }) => {
+  // Local state for form fields
+  const [formData, setFormData] = useState({
+    startDate: "",
+    endDate: "",
+    type: "",
+    reason: "",
+  });
+
+  // Sync with leaveRequest prop when it changes
+  useEffect(() => {
+    if (leaveRequest) {
+      setFormData({
+        startDate: leaveRequest.startDate || "",
+        endDate: leaveRequest.endDate || "",
+        type: leaveRequest.type || "",
+        reason: leaveRequest.reason || "",
+      });
+    }
+  }, [leaveRequest]);
+
+  // Update form field
+  const handleFieldChange = (field: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    // Also update the leaveRequest object for parent component
+    if (leaveRequest) {
+      leaveRequest[field] = value;
+      
+      // Update available balance when leave type changes
+      if (field === "type") {
+        const balances = {
+          "Paid Leave": 8,
+          "Sick Leave": 5,
+          "Vacation": 6,
+          "Unpaid Leave": 999,
+        };
+        leaveRequest.availableBalance = balances[value] || 0;
+      }
+    }
+  };
   const getLeaveTypeColor = (type: string) => {
     switch (type?.toLowerCase()) {
       case "paid leave":
@@ -44,22 +84,18 @@ export const LeaveRequestModal = ({
     if (!startDate || !endDate) return 0;
     const start = new Date(startDate);
     const end = new Date(endDate);
-    return (
-      Math.ceil((end.getTime() - start.getTime()) / (1000 * 3600 * 24)) + 1
-    );
+    const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 3600 * 24)) + 1;
+    return days > 0 ? days : 0;
   };
 
-  const daysRequested = calculateDays(
-    leaveRequest?.startDate,
-    leaveRequest?.endDate,
-  );
+  const daysRequested = calculateDays(formData.startDate, formData.endDate);
 
   // Validation checks
   const getValidationStatus = () => {
     const validations = {
-      dateRange: leaveRequest?.startDate && leaveRequest?.endDate,
-      leaveType: leaveRequest?.type,
-      reason: leaveRequest?.reason?.trim().length > 0,
+      dateRange: formData.startDate && formData.endDate && daysRequested > 0,
+      leaveType: formData.type && formData.type !== "",
+      reason: formData.reason?.trim().length > 0,
       sufficient: (leaveRequest?.availableBalance || 0) >= daysRequested,
     };
     return validations;
@@ -100,12 +136,8 @@ export const LeaveRequestModal = ({
               </label>
               <input
                 type="date"
-                value={leaveRequest?.startDate || ""}
-                onChange={(e) => {
-                  if (mode !== "review") {
-                    leaveRequest.startDate = e.target.value;
-                  }
-                }}
+                value={formData.startDate}
+                onChange={(e) => handleFieldChange("startDate", e.target.value)}
                 disabled={mode === "review"}
                 className={`w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors ${
                   mode === "review" ? "cursor-not-allowed opacity-70" : ""
@@ -120,13 +152,10 @@ export const LeaveRequestModal = ({
               </label>
               <input
                 type="date"
-                value={leaveRequest?.endDate || ""}
-                onChange={(e) => {
-                  if (mode !== "review") {
-                    leaveRequest.endDate = e.target.value;
-                  }
-                }}
+                value={formData.endDate}
+                onChange={(e) => handleFieldChange("endDate", e.target.value)}
                 disabled={mode === "review"}
+                min={formData.startDate}
                 className={`w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors ${
                   mode === "review" ? "cursor-not-allowed opacity-70" : ""
                 }`}
@@ -140,7 +169,8 @@ export const LeaveRequestModal = ({
               Leave Type
             </label>
             <select
-              value={leaveRequest?.type || ""}
+              value={formData.type}
+              onChange={(e) => handleFieldChange("type", e.target.value)}
               disabled={mode === "review"}
               className={`w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors ${
                 mode === "review" ? "cursor-not-allowed opacity-70" : ""
@@ -167,10 +197,11 @@ export const LeaveRequestModal = ({
           {/* Reason */}
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
-              Reason (Optional)
+              Reason
             </label>
             <textarea
-              value={leaveRequest?.reason || ""}
+              value={formData.reason}
+              onChange={(e) => handleFieldChange("reason", e.target.value)}
               disabled={mode === "review"}
               rows={3}
               className={`w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors resize-none ${
@@ -223,6 +254,25 @@ export const LeaveRequestModal = ({
               </div>
             </div>
 
+            {/* Reason Check */}
+            <div className="flex items-center gap-3">
+              {validations.reason ? (
+                <CheckCircle size={18} className="text-green-400" />
+              ) : (
+                <XCircle size={18} className="text-red-400" />
+              )}
+              <div className="flex-1">
+                <p
+                  className={`text-sm font-medium ${validations.reason ? "text-green-400" : "text-red-400"}`}
+                >
+                  Reason Provided
+                </p>
+                <p className="text-xs text-gray-400">
+                  A reason for the leave is required
+                </p>
+              </div>
+            </div>
+
             {/* Sufficient Balance Check */}
             {validations.leaveType && (
               <div className="flex items-center gap-3">
@@ -248,7 +298,7 @@ export const LeaveRequestModal = ({
         </div>
 
         {/* Summary */}
-        {leaveRequest?.type && daysRequested > 0 && (
+        {formData.type && daysRequested > 0 && (
           <div className="grid grid-cols-3 gap-3">
             <div className="bg-white/5 rounded-lg p-3 border border-white/10">
               <p className="text-xs text-gray-400 mb-1">Duration</p>
@@ -260,9 +310,9 @@ export const LeaveRequestModal = ({
             <div className="bg-white/5 rounded-lg p-3 border border-white/10">
               <p className="text-xs text-gray-400 mb-1">Type</p>
               <div
-                className={`inline-block px-2 py-1 rounded-full text-xs font-medium capitalize ${getLeaveTypeColor(leaveRequest?.type)}`}
+                className={`inline-block px-2 py-1 rounded-full text-xs font-medium capitalize ${getLeaveTypeColor(formData.type)}`}
               >
-                {leaveRequest?.type}
+                {formData.type}
               </div>
             </div>
             <div className="bg-white/5 rounded-lg p-3 border border-white/10">

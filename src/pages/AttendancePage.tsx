@@ -10,6 +10,7 @@ import {
   AttendanceHeader,
   AttendanceSummaryCard,
   AttendanceSummaryGrid,
+  AttendanceGroupedSummary,
 } from "../components/attendance";
 import {
   LeaveBalanceCard,
@@ -25,6 +26,7 @@ import { useLeaveManagement } from "../hooks/useLeaveManagement";
 import {
   calculateMonthlySummary,
   calculateMonthlyAllEmployeesSummary,
+  createGroupedSummaries,
 } from "../utils/attendanceUtils";
 import { Calendar, Filter } from "lucide-react";
 
@@ -74,6 +76,8 @@ const AttendanceFilterSection = ({
   setStatusFilter,
   employeeFilter,
   setEmployeeFilter,
+  yearFilter,
+  setYearFilter,
   employees,
 }) => (
   <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-6 mb-8">
@@ -103,6 +107,9 @@ const AttendanceFilterSection = ({
           </option>
           <option value="month" className="bg-gray-800">
             Month
+          </option>
+          <option value="year" className="bg-gray-800">
+            Year
           </option>
           <option value="status" className="bg-gray-800">
             Status
@@ -173,6 +180,33 @@ const AttendanceFilterSection = ({
             onChange={(e) => setDateFrom(e.target.value)}
             className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors"
           />
+        </div>
+      )}
+
+      {/* Year Filter */}
+      {filterType === "year" && (
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">
+            Select Year
+          </label>
+          <select
+            value={yearFilter}
+            onChange={(e) => setYearFilter(e.target.value)}
+            className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors"
+          >
+            <option value="all" className="bg-gray-800">
+              All Years
+            </option>
+            <option value="2026" className="bg-gray-800">
+              2026
+            </option>
+            <option value="2025" className="bg-gray-800">
+              2025
+            </option>
+            <option value="2024" className="bg-gray-800">
+              2024
+            </option>
+          </select>
         </div>
       )}
 
@@ -290,6 +324,7 @@ export const AttendancePage = ({ onLogout, userName, userRole }) => {
   const [dateTo, setDateTo] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [employeeFilter, setEmployeeFilter] = useState("all");
+  const [yearFilter, setYearFilter] = useState("all");
 
   const { employees, updateEmployeeStatus } = useEmployees();
 
@@ -418,6 +453,13 @@ export const AttendancePage = ({ onLogout, userName, userRole }) => {
         const [day, recordMonth, recordYear] = r.date.split("-");
         return recordYear === year && recordMonth === month;
       });
+    } else if (filterType === "year" && yearFilter !== "all") {
+      // Filter by year only
+      filtered = filtered.filter((r) => {
+        // Record date is DD-MM-YYYY
+        const [day, month, recordYear] = r.date.split("-");
+        return recordYear === yearFilter;
+      });
     }
 
     if (statusFilter !== "all") {
@@ -437,7 +479,7 @@ export const AttendancePage = ({ onLogout, userName, userRole }) => {
     }
 
     return filtered;
-  }, [pastRecords, filterType, dateFrom, dateTo, statusFilter, employeeFilter]);
+  }, [pastRecords, filterType, dateFrom, dateTo, statusFilter, employeeFilter, yearFilter]);
 
   // Calculate attendance summary when employee and month are selected
   const attendanceSummary = useMemo(() => {
@@ -510,6 +552,25 @@ export const AttendancePage = ({ onLogout, userName, userRole }) => {
     return [];
   }, [recordsWithEmployee, employeeFilter, filterType, dateFrom]);
 
+  // Determine if we should show grouped summary view
+  // Show grouped summary when: All Records + All Employees (no specific filters applied)
+  const shouldShowGroupedSummary = useMemo(() => {
+    return (
+      filterType === "all" &&
+      employeeFilter === "all" &&
+      statusFilter === "all" &&
+      yearFilter === "all"
+    );
+  }, [filterType, employeeFilter, statusFilter, yearFilter]);
+
+  // Calculate grouped summaries for "All Records" view
+  const groupedSummaries = useMemo(() => {
+    if (shouldShowGroupedSummary) {
+      return createGroupedSummaries(filteredRecords);
+    }
+    return [];
+  }, [shouldShowGroupedSummary, filteredRecords]);
+
   // Get leave balances for display
   const leaveBalancesForDisplay = Object.keys(leaveBalanceData).map((type) => ({
     type,
@@ -576,6 +637,8 @@ export const AttendancePage = ({ onLogout, userName, userRole }) => {
             setStatusFilter={setStatusFilter}
             employeeFilter={employeeFilter}
             setEmployeeFilter={setEmployeeFilter}
+            yearFilter={yearFilter}
+            setYearFilter={setYearFilter}
             employees={employees}
           />
 
@@ -594,15 +657,30 @@ export const AttendancePage = ({ onLogout, userName, userRole }) => {
             </div>
           )}
 
-          {/* Past Attendance Records */}
-          <div>
-            <h3 className="text-lg font-semibold text-white mb-4">
-              Attendance History{" "}
-              {filteredRecords.length > 0 &&
-                `(${filteredRecords.length} records)`}
-            </h3>
-            <AttendanceTable records={filteredRecords} />
-          </div>
+          {/* Grouped Summary View - Show when "All Records" selected */}
+          {shouldShowGroupedSummary && groupedSummaries.length > 0 && (
+            <div>
+              <h3 className="text-lg font-semibold text-white mb-4">
+                Attendance Summary by Employee ({groupedSummaries.length} employee{groupedSummaries.length !== 1 ? 's' : ''})
+              </h3>
+              <p className="text-sm text-lightGrey mb-4">
+                Showing overall attendance with monthly breakdowns. Click "Show Monthly Breakdown" to expand details.
+              </p>
+              <AttendanceGroupedSummary summaries={groupedSummaries} />
+            </div>
+          )}
+
+          {/* Past Attendance Records - Show detailed table only when NOT showing grouped summary */}
+          {!shouldShowGroupedSummary && (
+            <div>
+              <h3 className="text-lg font-semibold text-white mb-4">
+                Attendance History{" "}
+                {filteredRecords.length > 0 &&
+                  `(${filteredRecords.length} records)`}
+              </h3>
+              <AttendanceTable records={filteredRecords} />
+            </div>
+          )}
 
           <CheckInModal
             isOpen={isCheckInModalOpen}

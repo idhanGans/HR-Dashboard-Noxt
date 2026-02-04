@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { getUserAvatar, saveUserAvatar } from "../utils/avatarUtils";
 
 // Default settings state
 const DEFAULT_SETTINGS = {
@@ -6,6 +7,7 @@ const DEFAULT_SETTINGS = {
   email: "john.doe@company.com",
   phone: "+1 (555) 123-4567",
   department: "Human Resources",
+  avatar: null,
   notifications: {
     email: true,
     sms: false,
@@ -17,27 +19,39 @@ const DEFAULT_SETTINGS = {
 
 /**
  * useSettings - Custom hook for settings state management
+ * Includes avatar upload and persistence
  */
 export const useSettings = () => {
-  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
+  const [settings, setSettings] = useState(() => ({
+    ...DEFAULT_SETTINGS,
+    avatar: getUserAvatar(),
+  }));
   const [activeSection, setActiveSection] = useState("profile");
 
-  const handleSettingChange = (key, value) => {
+  const handleSettingChange = (key: string, value: any) => {
     setSettings((prev) => ({ ...prev, [key]: value }));
+
+    // Persist avatar to localStorage immediately when changed
+    if (key === "avatar") {
+      if (value) {
+        saveUserAvatar(value);
+      }
+    }
   };
 
-  const handleNotificationChange = (key, value) => {
+  const handleNotificationChange = (key: string, value: boolean) => {
     setSettings((prev) => ({
       ...prev,
       notifications: { ...prev.notifications, [key]: value },
     }));
   };
 
-  const handlePreferenceChange = (key, value) => {
+  const handlePreferenceChange = (key: string, value: any) => {
     setSettings((prev) => ({ ...prev, [key]: value }));
   };
 
   const handleSaveSettings = () => {
+    // Save all settings (avatar is already saved on change)
     alert("✓ Settings saved successfully!");
   };
 

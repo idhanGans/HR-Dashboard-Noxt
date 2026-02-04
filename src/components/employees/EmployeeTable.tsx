@@ -1,6 +1,7 @@
 import { Card } from "../Card";
 import { Table } from "../Table";
 import { StatusBadge } from "../StatusBadge";
+import { AvatarDisplay } from "../AvatarDisplay";
 import {
   Edit,
   LogOut,
@@ -9,6 +10,7 @@ import {
   MoreVertical,
 } from "lucide-react";
 import { useState } from "react";
+import { getEmployeeAvatar } from "../../utils/avatarUtils";
 
 /**
  * EmployeeTable - Displays employee data in a table with detailed directory view
@@ -75,14 +77,19 @@ export const EmployeeTable = ({
     {
       key: "name",
       label: "Name",
-      render: (row) => (
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
-            {row.avatar || row.name.slice(0, 2).toUpperCase()}
+      render: (row) => {
+        const avatarData = getEmployeeAvatar(row.id);
+        return (
+          <div className="flex items-center gap-3">
+            <AvatarDisplay 
+              src={avatarData} 
+              name={row.name} 
+              size="sm"
+            />
+            <span className="text-white font-medium">{row.name}</span>
           </div>
-          <span className="text-white font-medium">{row.name}</span>
-        </div>
-      ),
+        );
+      },
     },
     {
       key: "email",

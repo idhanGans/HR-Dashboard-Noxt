@@ -7,6 +7,8 @@ export { Table } from "./Table";
 export { Sidebar } from "./Sidebar";
 export { Topbar } from "./Topbar";
 export { DashboardLayout } from "./DashboardLayout";
+export { AvatarDisplay } from "./AvatarDisplay";
+export { EmployeeAvatarManager } from "./EmployeeAvatarManager";
 
 // Dashboard Components
 export * from "./dashboard";
