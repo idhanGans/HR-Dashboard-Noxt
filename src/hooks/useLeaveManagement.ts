@@ -116,7 +116,7 @@ export const useLeaveManagement = () => {
   const handleRequestLeave = () => {
     setLeaveForm({
       ...EMPTY_LEAVE_REQUEST,
-      availableBalance: 0,
+      availableBalance: 12, // Default to Paid Leave balance
     });
     setIsRequestModalOpen(true);
   };
@@ -172,7 +172,20 @@ export const useLeaveManagement = () => {
       return;
     }
 
+    if (!leaveForm.reason || leaveForm.reason.trim().length === 0) {
+      alert("Please provide a reason for your leave request");
+      return;
+    }
+
     const days = calculateDays(leaveForm.startDate, leaveForm.endDate);
+
+    if (days <= 0) {
+      alert(
+        "Invalid date range. End date must be after or equal to start date.",
+      );
+      return;
+    }
+
     const available = getAvailableBalance(leaveForm.type);
 
     if (days > available && leaveForm.type !== "Unpaid Leave") {

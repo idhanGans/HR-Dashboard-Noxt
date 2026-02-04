@@ -1,5 +1,7 @@
 import { Card } from "../Card";
+import { AvatarDisplay } from "../AvatarDisplay";
 import { TrendingUp } from "lucide-react";
+import { getEmployeeAvatar } from "../../utils/avatarUtils";
 import type { Employee } from "../../types";
 
 interface TopPerformersCardProps {
@@ -39,54 +41,60 @@ export const TopPerformersCard = ({
       </div>
 
       <div className="space-y-4">
-        {performers.map((emp, index) => (
-          <div
-            key={emp.id}
-            className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-colors"
-          >
-            {/* Rank Badge */}
+        {performers.map((emp, index) => {
+          const avatarData = getEmployeeAvatar(emp.id);
+          return (
             <div
-              className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
-                index === 0
-                  ? "bg-gradient-to-br from-yellow-400 to-yellow-600 text-black"
-                  : index === 1
-                  ? "bg-gradient-to-br from-gray-300 to-gray-500 text-black"
-                  : "bg-gradient-to-br from-orange-400 to-orange-600 text-white"
-              }`}
+              key={emp.id}
+              className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-colors"
             >
-              {index + 1}
-            </div>
-
-            {/* Employee Info */}
-            <div className="flex-1">
-              <p className="text-white font-semibold">{emp.name}</p>
-              <p className="text-xs text-gray-400">
-                {emp.department} • {emp.role}
-              </p>
-            </div>
-
-            {/* KPI Score */}
-            <div className="text-left sm:text-right">
-              <div className="text-2xl font-bold text-white">
-                {emp.kpi?.currentScore?.toFixed(1)}
-              </div>
-              <div className="text-xs text-gray-400">KPI Score</div>
-            </div>
-
-            {/* Trend */}
-            {emp.kpi?.trend && (
+              {/* Rank Badge */}
               <div
-                className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                  emp.kpi.trend.startsWith("+")
-                    ? "bg-green-500/20 text-green-400"
-                    : "bg-red-500/20 text-red-400"
+                className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
+                  index === 0
+                    ? "bg-gradient-to-br from-yellow-400 to-yellow-600 text-black"
+                    : index === 1
+                      ? "bg-gradient-to-br from-gray-300 to-gray-500 text-black"
+                      : "bg-gradient-to-br from-orange-400 to-orange-600 text-white"
                 }`}
               >
-                {emp.kpi.trend}
+                {index + 1}
               </div>
-            )}
-          </div>
-        ))}
+
+              {/* Avatar */}
+              <AvatarDisplay src={avatarData} name={emp.name} size="sm" />
+
+              {/* Employee Info */}
+              <div className="flex-1">
+                <p className="text-white font-semibold">{emp.name}</p>
+                <p className="text-xs text-gray-400">
+                  {emp.department} • {emp.role}
+                </p>
+              </div>
+
+              {/* KPI Score */}
+              <div className="text-left sm:text-right">
+                <div className="text-2xl font-bold text-white">
+                  {emp.kpi?.currentScore?.toFixed(1)}
+                </div>
+                <div className="text-xs text-gray-400">KPI Score</div>
+              </div>
+
+              {/* Trend */}
+              {emp.kpi?.trend && (
+                <div
+                  className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                    emp.kpi.trend.startsWith("+")
+                      ? "bg-green-500/20 text-green-400"
+                      : "bg-red-500/20 text-red-400"
+                  }`}
+                >
+                  {emp.kpi.trend}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     </Card>
   );

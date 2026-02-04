@@ -5,3 +5,8 @@ export { AttendanceTable } from "./AttendanceTable";
 export { CheckInModal } from "./CheckInModal";
 export { CheckOutModal } from "./CheckOutModal";
 export { AttendanceHeader } from "./AttendanceHeader";
+export {
+  AttendanceSummaryCard,
+  AttendanceSummaryGrid,
+} from "./AttendanceSummary";
+export { AttendanceGroupedSummary } from "./AttendanceGroupedSummary";

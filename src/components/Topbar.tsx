@@ -1,4 +1,6 @@
 import { Search, Bell, User, Menu } from "lucide-react";
+import { AvatarDisplay } from "./AvatarDisplay";
+import { getUserAvatar } from "../utils/avatarUtils";
 
 // Top navigation bar component
 export const Topbar = ({
@@ -15,6 +17,8 @@ export const Topbar = ({
     SUPERVISOR: "Supervisor",
     EMPLOYEE: "Employee",
   };
+
+  const userAvatar = getUserAvatar();
 
   return (
     <div className="fixed top-0 left-0 lg:left-64 right-0 bg-black/30 backdrop-blur-md border-b border-white/10 px-4 sm:px-6 py-2 sm:py-4 flex items-center gap-3 z-40">
@@ -54,9 +58,7 @@ export const Topbar = ({
             <p className="text-sm font-medium text-white">{userName}</p>
             <p className="text-xs text-lightGrey">{roleLabels[userRole] ?? userRole}</p>
           </div>
-          <div className="w-10 h-10 bg-gradient-to-br from-silver to-white rounded-full flex items-center justify-center">
-            <User size={20} className="text-black" />
-          </div>
+          <AvatarDisplay src={userAvatar} name={userName} size="md" />
         </div>
       </div>
     </div>

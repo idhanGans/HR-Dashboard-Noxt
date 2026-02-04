@@ -1,4 +1,5 @@
 import { DashboardLayout } from "../components";
+import { EmployeeAvatarManager } from "../components";
 import {
   EmployeeStats,
   EmployeeFilters,
@@ -85,6 +86,15 @@ export const EmployeesPage = ({
           onManagePayroll={handleOpenPayroll}
         />
       )}
+
+      <div className="mt-8">
+        <EmployeeAvatarManager
+          employees={employeeList}
+          onAvatarUpdate={() => {
+            // Trigger re-render if needed
+          }}
+        />
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <DepartmentBreakdown

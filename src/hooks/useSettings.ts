@@ -1,12 +1,13 @@
 import { useState } from "react";
-import type { SettingsState } from "../types";
+import { getUserAvatar, saveUserAvatar } from "../utils/avatarUtils";
 
 // Default settings state
-const DEFAULT_SETTINGS: SettingsState = {
+const DEFAULT_SETTINGS = {
   fullName: "John Doe",
   email: "john.doe@company.com",
   phone: "+1 (555) 123-4567",
   department: "Human Resources",
+  avatar: null,
   notifications: {
     email: true,
     sms: false,
@@ -18,36 +19,39 @@ const DEFAULT_SETTINGS: SettingsState = {
 
 /**
  * useSettings - Custom hook for settings state management
+ * Includes avatar upload and persistence
  */
 export const useSettings = () => {
-  const [settings, setSettings] = useState<SettingsState>(DEFAULT_SETTINGS);
+  const [settings, setSettings] = useState(() => ({
+    ...DEFAULT_SETTINGS,
+    avatar: getUserAvatar(),
+  }));
   const [activeSection, setActiveSection] = useState("profile");
 
-  const handleSettingChange = <K extends keyof SettingsState>(
-    key: K,
-    value: SettingsState[K],
-  ) => {
+  const handleSettingChange = (key: string, value: any) => {
     setSettings((prev) => ({ ...prev, [key]: value }));
+
+    // Persist avatar to localStorage immediately when changed
+    if (key === "avatar") {
+      if (value) {
+        saveUserAvatar(value);
+      }
+    }
   };
 
-  const handleNotificationChange = <K extends keyof SettingsState["notifications"]>(
-    key: K,
-    value: SettingsState["notifications"][K],
-  ) => {
+  const handleNotificationChange = (key: string, value: boolean) => {
     setSettings((prev) => ({
       ...prev,
       notifications: { ...prev.notifications, [key]: value },
     }));
   };
 
-  const handlePreferenceChange = <K extends "theme" | "language">(
-    key: K,
-    value: SettingsState[K],
-  ) => {
+  const handlePreferenceChange = (key: string, value: any) => {
     setSettings((prev) => ({ ...prev, [key]: value }));
   };
 
   const handleSaveSettings = () => {
+    // Save all settings (avatar is already saved on change)
     alert("✓ Settings saved successfully!");
   };
 

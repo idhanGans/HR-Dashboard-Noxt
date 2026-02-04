@@ -9,6 +9,9 @@ import {
   CheckInModal,
   CheckOutModal,
   AttendanceHeader,
+  AttendanceSummaryCard,
+  AttendanceSummaryGrid,
+  AttendanceGroupedSummary,
 } from "../components/attendance";
 import {
   LeaveBalanceCard,
@@ -21,6 +24,11 @@ import {
 import { useAttendanceSession } from "../hooks/useAttendanceSession";
 import { useEmployees } from "../hooks/useEmployees";
 import { useLeaveManagement } from "../hooks/useLeaveManagement";
+import {
+  calculateMonthlySummary,
+  calculateMonthlyAllEmployeesSummary,
+  createGroupedSummaries,
+} from "../utils/attendanceUtils";
 import { Calendar, Filter } from "lucide-react";
 import type {
   AttendanceRecord,
@@ -98,6 +106,8 @@ const AttendanceFilterSection = ({
   setStatusFilter,
   employeeFilter,
   setEmployeeFilter,
+  yearFilter,
+  setYearFilter,
   employees,
 }: AttendanceFilterSectionProps) => (
   <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-6 mb-8">
@@ -127,6 +137,9 @@ const AttendanceFilterSection = ({
           </option>
           <option value="month" className="bg-gray-800">
             Month
+          </option>
+          <option value="year" className="bg-gray-800">
+            Year
           </option>
           <option value="status" className="bg-gray-800">
             Status
@@ -197,6 +210,33 @@ const AttendanceFilterSection = ({
             onChange={(e) => setDateFrom(e.target.value)}
             className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors"
           />
+        </div>
+      )}
+
+      {/* Year Filter */}
+      {filterType === "year" && (
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">
+            Select Year
+          </label>
+          <select
+            value={yearFilter}
+            onChange={(e) => setYearFilter(e.target.value)}
+            className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors"
+          >
+            <option value="all" className="bg-gray-800">
+              All Years
+            </option>
+            <option value="2026" className="bg-gray-800">
+              2026
+            </option>
+            <option value="2025" className="bg-gray-800">
+              2025
+            </option>
+            <option value="2024" className="bg-gray-800">
+              2024
+            </option>
+          </select>
         </div>
       )}
 
@@ -322,6 +362,7 @@ export const AttendancePage = ({
   const [dateTo, setDateTo] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [employeeFilter, setEmployeeFilter] = useState("all");
+  const [yearFilter, setYearFilter] = useState("all");
 
   const { employees, updateEmployeeStatus } = useEmployees();
 
@@ -414,22 +455,59 @@ export const AttendancePage = ({
     });
   }, [records, employees, employeeLookup]);
 
-  // Get today's date
-  const today = new Date().toISOString().slice(0, 10);
+  // Get today's date in DD-MM-YYYY format
+  const getTodayDateFormatted = () => {
+    const today = new Date();
+    const day = String(today.getDate()).padStart(2, "0");
+    const month = String(today.getMonth() + 1).padStart(2, "0");
+    const year = today.getFullYear();
+    return `${day}-${month}-${year}`;
+  };
+
+  const today = getTodayDateFormatted();
 
   // Separate today's record from past records
   const todayRecord = recordsWithEmployee.find((r) => r.date === today);
   const pastRecords = recordsWithEmployee.filter((r) => r.date !== today);
+
+  // Helper function to convert DD-MM-YYYY to Date for comparison
+  const dateStringToDate = (dateStr: string): Date => {
+    const [day, month, year] = dateStr.split("-");
+    return new Date(`${year}-${month}-${day}`);
+  };
+
+  // Helper function to convert date input (YYYY-MM) to month-year for filtering
+  const getMonthYearFromInput = (monthInput: string) => {
+    const [year, month] = monthInput.split("-");
+    return { year, month };
+  };
 
   // Filter past records based on selected filters
   const filteredRecords = useMemo(() => {
     let filtered = [...pastRecords];
 
     if (filterType === "date" && dateFrom && dateTo) {
-      filtered = filtered.filter((r) => r.date >= dateFrom && r.date <= dateTo);
+      const fromDate = dateStringToDate(dateFrom);
+      const toDate = dateStringToDate(dateTo);
+      filtered = filtered.filter((r) => {
+        const recordDate = dateStringToDate(r.date);
+        return recordDate >= fromDate && recordDate <= toDate;
+      });
     } else if (filterType === "month" && dateFrom) {
-      // dateFrom format: YYYY-MM for month input
-      filtered = filtered.filter((r) => r.date.startsWith(dateFrom));
+      // dateFrom format: YYYY-MM from month input
+      const { year, month } = getMonthYearFromInput(dateFrom);
+      filtered = filtered.filter((r) => {
+        // Record date is DD-MM-YYYY
+        const [day, recordMonth, recordYear] = r.date.split("-");
+        return recordYear === year && recordMonth === month;
+      });
+    } else if (filterType === "year" && yearFilter !== "all") {
+      // Filter by year only
+      filtered = filtered.filter((r) => {
+        // Record date is DD-MM-YYYY
+        const [day, month, recordYear] = r.date.split("-");
+        return recordYear === yearFilter;
+      });
     }
 
     if (statusFilter !== "all") {
@@ -449,7 +527,105 @@ export const AttendancePage = ({
     }
 
     return filtered;
-  }, [pastRecords, filterType, dateFrom, dateTo, statusFilter, employeeFilter]);
+  }, [
+    pastRecords,
+    filterType,
+    dateFrom,
+    dateTo,
+    statusFilter,
+    employeeFilter,
+    yearFilter,
+  ]);
+
+  // Calculate attendance summary when employee and month are selected
+  const attendanceSummary = useMemo(() => {
+    // If employee is selected and month is selected, show single employee monthly summary
+    if (employeeFilter !== "all" && filterType === "month" && dateFrom) {
+      const [year, month] = dateFrom.split("-");
+      return calculateMonthlySummary(
+        recordsWithEmployee,
+        parseInt(employeeFilter),
+        parseInt(year),
+        parseInt(month),
+      );
+    }
+
+    // If employee is selected and filtering by date range, show single employee summary for that range
+    if (
+      employeeFilter !== "all" &&
+      filterType === "date" &&
+      dateFrom &&
+      dateTo
+    ) {
+      const fromDate = dateStringToDate(dateFrom);
+      const toDate = dateStringToDate(dateTo);
+
+      const filtered = recordsWithEmployee.filter((r) => {
+        if (r.employeeId !== parseInt(employeeFilter)) return false;
+        const recordDate = dateStringToDate(r.date);
+        return recordDate >= fromDate && recordDate <= toDate;
+      });
+
+      if (filtered.length === 0) return null;
+
+      const presentDays = filtered.filter((r) => r.status === "present").length;
+      const absentDays = filtered.filter((r) => r.status === "absent").length;
+      const lateDays = filtered.filter((r) => r.status === "late").length;
+      const totalDays = filtered.length;
+
+      return {
+        period: `${dateFrom} to ${dateTo}`,
+        employeeName: filtered[0]?.employeeName || "Unknown",
+        employeeId: parseInt(employeeFilter),
+        presentDays,
+        absentDays,
+        lateDays,
+        totalDays,
+        expectedWorkingDays: totalDays, // Rough estimate
+        attendanceRate: Math.round((presentDays / totalDays) * 100) || 0,
+        records: filtered,
+      };
+    }
+
+    return null;
+  }, [recordsWithEmployee, employeeFilter, filterType, dateFrom, dateTo]);
+
+  // Calculate all employees monthly summary when only month is selected
+  const allEmployeesSummaries = useMemo(() => {
+    if (
+      employeeFilter === "all" &&
+      filterType === "month" &&
+      dateFrom &&
+      employeeFilter === "all"
+    ) {
+      const [year, month] = dateFrom.split("-");
+      return calculateMonthlyAllEmployeesSummary(
+        recordsWithEmployee,
+        parseInt(year),
+        parseInt(month),
+      );
+    }
+    return [];
+  }, [recordsWithEmployee, employeeFilter, filterType, dateFrom]);
+
+  // Determine if we should show grouped summary view
+  // Show grouped summary when: All Records + All Employees (no specific filters applied)
+  const shouldShowGroupedSummary = useMemo(() => {
+    return (
+      filterType === "all" &&
+      employeeFilter === "all" &&
+      statusFilter === "all" &&
+      yearFilter === "all"
+    );
+  }, [filterType, employeeFilter, statusFilter, yearFilter]);
+
+  // Calculate grouped summaries for "All Records" view
+  const groupedSummaries = useMemo(() => {
+    if (shouldShowGroupedSummary) {
+      return createGroupedSummaries(filteredRecords);
+    }
+    return [];
+  }, [shouldShowGroupedSummary, filteredRecords]);
 
   // Get leave balances for display
   const leaveBalancesForDisplay = Object.keys(leaveBalanceData).map((type) => ({
@@ -517,18 +693,52 @@ export const AttendancePage = ({
             setStatusFilter={setStatusFilter}
             employeeFilter={employeeFilter}
             setEmployeeFilter={setEmployeeFilter}
+            yearFilter={yearFilter}
+            setYearFilter={setYearFilter}
             employees={employees}
           />
 
-          {/* Past Attendance Records */}
-          <div>
-            <h3 className="text-lg font-semibold text-white mb-4">
-              Attendance History{" "}
-              {filteredRecords.length > 0 &&
-                `(${filteredRecords.length} records)`}
-            </h3>
-            <AttendanceTable records={filteredRecords} />
-          </div>
+          {/* Attendance Summary - Show single employee monthly summary */}
+          {attendanceSummary && (
+            <AttendanceSummaryCard summary={attendanceSummary} />
+          )}
+
+          {/* Attendance Summaries - Show all employees monthly summary */}
+          {allEmployeesSummaries.length > 0 && (
+            <div>
+              <h3 className="text-lg font-semibold text-white mb-4">
+                Monthly Summary for All Employees
+              </h3>
+              <AttendanceSummaryGrid summaries={allEmployeesSummaries} />
+            </div>
+          )}
+
+          {/* Grouped Summary View - Show when "All Records" selected */}
+          {shouldShowGroupedSummary && groupedSummaries.length > 0 && (
+            <div>
+              <h3 className="text-lg font-semibold text-white mb-4">
+                Attendance Summary by Employee ({groupedSummaries.length}{" "}
+                employee{groupedSummaries.length !== 1 ? "s" : ""})
+              </h3>
+              <p className="text-sm text-lightGrey mb-4">
+                Showing overall attendance with monthly breakdowns. Click "Show
+                Monthly Breakdown" to expand details.
+              </p>
+              <AttendanceGroupedSummary summaries={groupedSummaries} />
+            </div>
+          )}
+
+          {/* Past Attendance Records - Show detailed table only when NOT showing grouped summary */}
+          {!shouldShowGroupedSummary && (
+            <div>
+              <h3 className="text-lg font-semibold text-white mb-4">
+                Attendance History{" "}
+                {filteredRecords.length > 0 &&
+                  `(${filteredRecords.length} records)`}
+              </h3>
+              <AttendanceTable records={filteredRecords} />
+            </div>
+          )}
 
           <CheckInModal
             isOpen={isCheckInModalOpen}
