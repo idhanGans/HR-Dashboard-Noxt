@@ -60,7 +60,7 @@ export function groupAttendanceByEmployeeAndMonth(
 
   records.forEach((record) => {
     // Parse DD-MM-YYYY format
-    const [day, month, year] = record.date.split("-");
+    const [_day, month, year] = record.date.split("-");
     const key = `${year}-${month}-${record.employeeId || "unassigned"}`;
 
     if (!grouped.has(key)) {
@@ -91,7 +91,7 @@ export function calculateMonthlySummary(
 
   const filtered = records.filter((r) => {
     // Parse DD-MM-YYYY format
-    const [day, recordMonth, recordYear] = r.date.split("-");
+    const [_day, recordMonth, recordYear] = r.date.split("-");
     return (
       recordYear === String(year) &&
       recordMonth === monthStr &&
@@ -141,7 +141,7 @@ export function calculateYearlySummary(
 ): AttendanceSummary {
   const filtered = records.filter((r) => {
     // Parse DD-MM-YYYY format
-    const [day, month, recordYear] = r.date.split("-");
+    const [_day, _month, recordYear] = r.date.split("-");
     return recordYear === String(year) && r.employeeId === employeeId;
   });
 
@@ -190,7 +190,7 @@ export function calculateMonthlyAllEmployeesSummary(
 
   const filtered = records.filter((r) => {
     // Parse DD-MM-YYYY format
-    const [day, recordMonth, recordYear] = r.date.split("-");
+    const [_day, recordMonth, recordYear] = r.date.split("-");
     return recordYear === String(year) && recordMonth === monthStr;
   });
 

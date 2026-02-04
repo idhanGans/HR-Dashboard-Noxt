@@ -89,7 +89,7 @@ export const EmployeesPage = ({
 
       <div className="mt-8">
         <EmployeeAvatarManager
-          employees={employeeList}
+          employees={filteredEmployees}
           onAvatarUpdate={() => {
             // Trigger re-render if needed
           }}

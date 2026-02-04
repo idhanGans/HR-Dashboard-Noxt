@@ -92,6 +92,8 @@ interface AttendanceFilterSectionProps {
   setStatusFilter: Dispatch<SetStateAction<string>>;
   employeeFilter: string;
   setEmployeeFilter: Dispatch<SetStateAction<string>>;
+  yearFilter: string;
+  setYearFilter: Dispatch<SetStateAction<string>>;
   employees: Employee[];
 }
 
@@ -498,14 +500,14 @@ export const AttendancePage = ({
       const { year, month } = getMonthYearFromInput(dateFrom);
       filtered = filtered.filter((r) => {
         // Record date is DD-MM-YYYY
-        const [day, recordMonth, recordYear] = r.date.split("-");
+        const [_day, recordMonth, recordYear] = r.date.split("-");
         return recordYear === year && recordMonth === month;
       });
     } else if (filterType === "year" && yearFilter !== "all") {
       // Filter by year only
       filtered = filtered.filter((r) => {
         // Record date is DD-MM-YYYY
-        const [day, month, recordYear] = r.date.split("-");
+        const [_day, _month, recordYear] = r.date.split("-");
         return recordYear === yearFilter;
       });
     }

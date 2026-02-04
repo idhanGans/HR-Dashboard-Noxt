@@ -7,7 +7,7 @@ const DEFAULT_SETTINGS = {
   email: "john.doe@company.com",
   phone: "+1 (555) 123-4567",
   department: "Human Resources",
-  avatar: null,
+  avatar: undefined as string | undefined,
   notifications: {
     email: true,
     sms: false,
@@ -24,7 +24,7 @@ const DEFAULT_SETTINGS = {
 export const useSettings = () => {
   const [settings, setSettings] = useState(() => ({
     ...DEFAULT_SETTINGS,
-    avatar: getUserAvatar(),
+    avatar: getUserAvatar() || undefined,
   }));
   const [activeSection, setActiveSection] = useState("profile");
 

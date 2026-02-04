@@ -250,6 +250,7 @@ export interface SettingsState {
   email: string;
   phone: string;
   department: string;
+  avatar?: string;
   notifications: NotificationSettings;
   theme: string;
   language: string;

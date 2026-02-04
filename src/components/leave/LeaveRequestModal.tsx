@@ -6,7 +6,7 @@ type LeaveRequest = LeaveRecord & {
   availableBalance?: number;
   requestedDate?: string;
 };
-import { useState, useEffect } from "react";
+import { useMemo } from "react";
 
 /**
  * LeaveRequestModal - Modal for requesting, reviewing, and approving/rejecting leaves
@@ -30,25 +30,16 @@ export const LeaveRequestModal = ({
   onReject: () => void;
   employeeName?: string;
 }) => {
-  // Local state for form fields
-  const [formData, setFormData] = useState({
-    startDate: "",
-    endDate: "",
-    type: "",
-    reason: "",
-  });
-
-  // Sync with leaveRequest prop when it changes
-  useEffect(() => {
-    if (leaveRequest) {
-      setFormData({
-        startDate: leaveRequest.startDate || "",
-        endDate: leaveRequest.endDate || "",
-        type: leaveRequest.type || "",
-        reason: leaveRequest.reason || "",
-      });
-    }
-  }, [leaveRequest]);
+  // Derive form data from leaveRequest prop
+  const formData = useMemo(
+    () => ({
+      startDate: leaveRequest?.startDate || "",
+      endDate: leaveRequest?.endDate || "",
+      type: leaveRequest?.type || "",
+      reason: leaveRequest?.reason || "",
+    }),
+    [leaveRequest],
+  );
 
   const getLeaveTypeColor = (type: string) => {
     switch (type?.toLowerCase()) {
@@ -127,7 +118,7 @@ export const LeaveRequestModal = ({
               <input
                 type="date"
                 value={formData.startDate}
-                onChange={(e) => handleFieldChange("startDate", e.target.value)}
+                onChange={(e) => handleFieldChange({ startDate: e.target.value })}
                 disabled={mode === "review"}
                 className={`w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors ${
                   mode === "review" ? "cursor-not-allowed opacity-70" : ""
@@ -143,7 +134,7 @@ export const LeaveRequestModal = ({
               <input
                 type="date"
                 value={formData.endDate}
-                onChange={(e) => handleFieldChange("endDate", e.target.value)}
+                onChange={(e) => handleFieldChange({ endDate: e.target.value })}
                 disabled={mode === "review"}
                 min={formData.startDate}
                 className={`w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors ${
@@ -160,7 +151,7 @@ export const LeaveRequestModal = ({
             </label>
             <select
               value={formData.type}
-              onChange={(e) => handleFieldChange("type", e.target.value)}
+              onChange={(e) => handleFieldChange({ type: e.target.value })}
               disabled={mode === "review"}
               className={`w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors ${
                 mode === "review" ? "cursor-not-allowed opacity-70" : ""
@@ -191,7 +182,7 @@ export const LeaveRequestModal = ({
             </label>
             <textarea
               value={formData.reason}
-              onChange={(e) => handleFieldChange("reason", e.target.value)}
+              onChange={(e) => handleFieldChange({ reason: e.target.value })}
               disabled={mode === "review"}
               rows={3}
               className={`w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors resize-none ${
