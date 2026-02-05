@@ -50,9 +50,6 @@ jobs:
                   --region=${{ vars.GCP_CLOUD_RUN_REGION }} \
                   --allow-unauthenticated \
                   --service-account=${{ secrets.CLOUD_RUN_RUNTIME_SA_EMAIL }} \
-                  --network=default \
-                  --subnet=default \
-                  --vpc-egress=private-ranges-only \
                   --port=5000 \
                   --min-instances=0 \
                   --max-instances=2 \
