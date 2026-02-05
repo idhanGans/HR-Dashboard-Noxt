@@ -12,7 +12,6 @@ interface EmployeeAvatarManagerProps {
     department: string;
     photoUrl?: string;
   }>;
-  onAvatarUpdate?: (employeeId: number, avatarData: string) => void;
 }
 
 /**
@@ -62,7 +61,6 @@ const EmployeeAvatarListItem = ({
  */
 export const EmployeeAvatarManager = ({
   employees,
-  onAvatarUpdate,
 }: EmployeeAvatarManagerProps) => {
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<number | null>(
     null,

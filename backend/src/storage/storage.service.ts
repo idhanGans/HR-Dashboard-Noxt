@@ -34,28 +34,15 @@ export class StorageService {
     this.localMediaPath = path.join(process.cwd(), "media");
 
     if (this.isGcsEnabled) {
-      const projectId = this.configService.get("GCS_PROJECT_ID", {
-        infer: true,
-      });
-      const clientEmail = this.configService.get("GCS_CLIENT_EMAIL", {
-        infer: true,
-      });
-      const privateKey = this.configService.get("GCS_PRIVATE_KEY", {
-        infer: true,
-      });
       this.bucketName = this.configService.get("GCS_BUCKET_NAME", {
         infer: true,
       });
 
-      this.gcsStorage = new Storage({
-        projectId,
-        credentials: {
-          client_email: clientEmail,
-          private_key: privateKey?.replace(/\\n/g, "\n"),
-        },
-      });
+      // Use Application Default Credentials (ADC)
+      // In Cloud Run, this automatically uses the service account identity
+      this.gcsStorage = new Storage();
 
-      this.logger.log("GCS storage initialized");
+      this.logger.log("GCS storage initialized with ADC");
     } else {
       this.logger.log("Using local file storage");
       // Ensure local media directory exists

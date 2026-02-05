@@ -51,31 +51,12 @@ export class EnvironmentVariables {
   REFRESH_TOKEN_DURATION: string;
 
   // GCS Storage Configuration (required only in STAGING/PRODUCTION)
+  // Uses Application Default Credentials (ADC) - no explicit credentials needed
+  // In Cloud Run, ADC automatically uses the service account identity
   @ValidateIf(
     (o: EnvironmentVariables) => o.NODE_ENV !== NodeEnvironment.DEVELOPMENT,
   )
   @IsString()
   @IsNotEmpty()
   GCS_BUCKET_NAME?: string;
-
-  @ValidateIf(
-    (o: EnvironmentVariables) => o.NODE_ENV !== NodeEnvironment.DEVELOPMENT,
-  )
-  @IsString()
-  @IsNotEmpty()
-  GCS_PROJECT_ID?: string;
-
-  @ValidateIf(
-    (o: EnvironmentVariables) => o.NODE_ENV !== NodeEnvironment.DEVELOPMENT,
-  )
-  @IsString()
-  @IsNotEmpty()
-  GCS_CLIENT_EMAIL?: string;
-
-  @ValidateIf(
-    (o: EnvironmentVariables) => o.NODE_ENV !== NodeEnvironment.DEVELOPMENT,
-  )
-  @IsString()
-  @IsNotEmpty()
-  GCS_PRIVATE_KEY?: string;
 }
