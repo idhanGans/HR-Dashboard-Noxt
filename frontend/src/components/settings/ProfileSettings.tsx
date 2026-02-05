@@ -6,16 +6,19 @@ import type { SettingsState } from "../../types";
  * ProfileSettings - Profile information settings form with avatar upload
  * @param {Object} settings - Settings object with fullName, email, phone, department, avatar
  * @param {Function} onSettingChange - Callback when setting changes
+ * @param {number | null} userId - Current user ID for backend avatar upload
  */
 export const ProfileSettings = ({
   settings,
   onSettingChange,
+  userId,
 }: {
   settings: SettingsState;
   onSettingChange: <K extends keyof SettingsState>(
     key: K,
     value: SettingsState[K],
   ) => void;
+  userId?: number | null;
 }) => {
   return (
     <>
@@ -23,6 +26,7 @@ export const ProfileSettings = ({
       <Card>
         <h2 className="text-lg font-bold text-white mb-6">Profile Avatar</h2>
         <AvatarUpload
+          userId={userId}
           currentAvatar={settings.avatar}
           onAvatarChange={(avatar) => onSettingChange("avatar", avatar)}
           userName={settings.fullName}

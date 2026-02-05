@@ -8,8 +8,16 @@ import {
   MoreVertical,
 } from "lucide-react";
 import { useState } from "react";
-import { getEmployeeAvatar } from "../../utils/avatarUtils";
+import { useAvatarUrl } from "../../hooks/useAvatar";
 import type { Employee } from "../../types";
+
+/**
+ * EmployeeAvatar - Avatar component that fetches URL from backend
+ */
+const EmployeeAvatar = ({ employeeId, name }: { employeeId: number; name: string }) => {
+  const { avatarUrl } = useAvatarUrl(employeeId);
+  return <AvatarDisplay src={avatarUrl} name={name} size="sm" />;
+};
 
 interface EmployeeTableProps {
   employees: Employee[];
@@ -80,15 +88,12 @@ export const EmployeeTable = ({
     {
       key: "name",
       label: "Name",
-      render: (row: Employee) => {
-        const avatarData = getEmployeeAvatar(row.id);
-        return (
-          <div className="flex items-center gap-3">
-            <AvatarDisplay src={avatarData} name={row.name} size="sm" />
-            <span className="text-white font-medium">{row.name}</span>
-          </div>
-        );
-      },
+      render: (row: Employee) => (
+        <div className="flex items-center gap-3">
+          <EmployeeAvatar employeeId={row.id} name={row.name} />
+          <span className="text-white font-medium">{row.name}</span>
+        </div>
+      ),
     },
     {
       key: "email",

@@ -1,12 +1,20 @@
 import { Card } from "../Card";
 import { AvatarDisplay } from "../AvatarDisplay";
 import { TrendingUp } from "lucide-react";
-import { getEmployeeAvatar } from "../../utils/avatarUtils";
+import { useAvatarUrl } from "../../hooks/useAvatar";
 import type { Employee } from "../../types";
 
 interface TopPerformersCardProps {
   performers?: Employee[];
 }
+
+/**
+ * PerformerAvatar - Avatar component that fetches URL from backend
+ */
+const PerformerAvatar = ({ employeeId, name }: { employeeId: number; name: string }) => {
+  const { avatarUrl } = useAvatarUrl(employeeId);
+  return <AvatarDisplay src={avatarUrl} name={name} size="sm" />;
+};
 
 /**
  * TopPerformersCard - Display top performing employees based on KPI
@@ -41,28 +49,26 @@ export const TopPerformersCard = ({
       </div>
 
       <div className="space-y-4">
-        {performers.map((emp, index) => {
-          const avatarData = getEmployeeAvatar(emp.id);
-          return (
+        {performers.map((emp, index) => (
+          <div
+            key={emp.id}
+            className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-colors"
+          >
+            {/* Rank Badge */}
             <div
-              key={emp.id}
-              className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-colors"
+              className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
+                index === 0
+                  ? "bg-gradient-to-br from-yellow-400 to-yellow-600 text-black"
+                  : index === 1
+                    ? "bg-gradient-to-br from-gray-300 to-gray-500 text-black"
+                    : "bg-gradient-to-br from-orange-400 to-orange-600 text-white"
+              }`}
             >
-              {/* Rank Badge */}
-              <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
-                  index === 0
-                    ? "bg-gradient-to-br from-yellow-400 to-yellow-600 text-black"
-                    : index === 1
-                      ? "bg-gradient-to-br from-gray-300 to-gray-500 text-black"
-                      : "bg-gradient-to-br from-orange-400 to-orange-600 text-white"
-                }`}
-              >
-                {index + 1}
-              </div>
+              {index + 1}
+            </div>
 
-              {/* Avatar */}
-              <AvatarDisplay src={avatarData} name={emp.name} size="sm" />
+            {/* Avatar */}
+            <PerformerAvatar employeeId={emp.id} name={emp.name} />
 
               {/* Employee Info */}
               <div className="flex-1">
@@ -93,8 +99,7 @@ export const TopPerformersCard = ({
                 </div>
               )}
             </div>
-          );
-        })}
+        ))}
       </div>
     </Card>
   );

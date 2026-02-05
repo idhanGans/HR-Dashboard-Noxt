@@ -88,12 +88,7 @@ export const EmployeesPage = ({
       )}
 
       <div className="mt-8">
-        <EmployeeAvatarManager
-          employees={filteredEmployees}
-          onAvatarUpdate={() => {
-            // Trigger re-render if needed
-          }}
-        />
+        <EmployeeAvatarManager employees={filteredEmployees} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

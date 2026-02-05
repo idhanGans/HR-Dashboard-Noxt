@@ -1,24 +1,53 @@
-import { Upload, X, Camera } from "lucide-react";
-import { useState } from "react";
+import { Upload, X, Camera, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useAvatar } from "../../hooks/useAvatar";
 
 interface AvatarUploadProps {
+  /** User ID for backend upload (if provided, uses API; otherwise uses callback) */
+  userId?: number | null;
+  /** Current avatar URL (used when userId is not provided) */
   currentAvatar?: string;
-  onAvatarChange: (avatarData: string) => void;
+  /** Callback when avatar changes (used when userId is not provided) */
+  onAvatarChange?: (avatarData: string) => void;
+  /** User name for initials fallback */
   userName?: string;
 }
 
 /**
  * AvatarUpload - Component for uploading and managing user avatar
  * Supports image preview, drag-and-drop, and file validation
+ * When userId is provided, uploads to backend API
+ * When userId is not provided, uses onAvatarChange callback
  */
 export const AvatarUpload = ({
+  userId,
   currentAvatar,
   onAvatarChange,
   userName = "User",
 }: AvatarUploadProps) => {
-  const [preview, setPreview] = useState<string | null>(currentAvatar || null);
+  const useBackend = userId !== undefined && userId !== null;
+  const {
+    avatarUrl,
+    isLoading: isLoadingAvatar,
+    uploadAvatar,
+    isUploading,
+    deleteAvatar,
+    isDeleting,
+  } = useAvatar(useBackend ? userId : null, { enabled: useBackend });
+
+  const [localPreview, setLocalPreview] = useState<string | null>(currentAvatar || null);
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Use backend avatar URL if available, otherwise use local preview
+  const preview = useBackend ? avatarUrl : localPreview;
+
+  // Update local preview when currentAvatar prop changes
+  useEffect(() => {
+    if (!useBackend && currentAvatar !== undefined) {
+      setLocalPreview(currentAvatar || null);
+    }
+  }, [currentAvatar, useBackend]);
 
   const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
   const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
@@ -36,13 +65,23 @@ export const AvatarUpload = ({
     return true;
   };
 
-  const handleFileSelect = (file: File) => {
-    if (validateFile(file)) {
+  const handleFileSelect = async (file: File) => {
+    if (!validateFile(file)) return;
+
+    if (useBackend) {
+      try {
+        await uploadAvatar(file);
+        setError(null);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Upload failed");
+      }
+    } else {
+      // Legacy mode: use base64
       const reader = new FileReader();
       reader.onload = (e) => {
         const result = e.target?.result as string;
-        setPreview(result);
-        onAvatarChange(result);
+        setLocalPreview(result);
+        onAvatarChange?.(result);
       };
       reader.readAsDataURL(file);
     }
@@ -76,9 +115,18 @@ export const AvatarUpload = ({
     }
   };
 
-  const handleRemoveAvatar = () => {
-    setPreview(null);
-    onAvatarChange("");
+  const handleRemoveAvatar = async () => {
+    if (useBackend) {
+      try {
+        await deleteAvatar();
+        setError(null);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Delete failed");
+      }
+    } else {
+      setLocalPreview(null);
+      onAvatarChange?.("");
+    }
   };
 
   const getInitials = (name: string): string => {
@@ -90,12 +138,18 @@ export const AvatarUpload = ({
       .slice(0, 2);
   };
 
+  const isProcessing = isUploading || isDeleting;
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-6">
         {/* Avatar Preview */}
-        <div className="flex-shrink-0">
-          {preview ? (
+        <div className="flex-shrink-0 relative">
+          {isLoadingAvatar ? (
+            <div className="w-24 h-24 rounded-full bg-white/10 flex items-center justify-center border-2 border-blue-400">
+              <Loader2 size={24} className="text-blue-400 animate-spin" />
+            </div>
+          ) : preview ? (
             <img
               src={preview}
               alt="Avatar preview"
@@ -104,6 +158,11 @@ export const AvatarUpload = ({
           ) : (
             <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-2xl font-bold border-2 border-blue-400">
               {getInitials(userName)}
+            </div>
+          )}
+          {isProcessing && (
+            <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center">
+              <Loader2 size={24} className="text-white animate-spin" />
             </div>
           )}
         </div>
@@ -118,12 +177,13 @@ export const AvatarUpload = ({
               isDragging
                 ? "border-blue-400 bg-blue-400/10"
                 : "border-white/20 bg-white/5 hover:border-blue-400 hover:bg-blue-400/5"
-            }`}
+            } ${isProcessing ? "pointer-events-none opacity-50" : ""}`}
           >
             <input
               type="file"
               accept="image/jpeg,image/png,image/gif,image/webp"
               onChange={handleFileInputChange}
+              disabled={isProcessing}
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
               aria-label="Upload avatar"
             />
@@ -154,9 +214,14 @@ export const AvatarUpload = ({
           {preview && (
             <button
               onClick={handleRemoveAvatar}
-              className="mt-3 px-4 py-2 text-sm font-medium text-red-400 border border-red-400/30 rounded-lg hover:bg-red-400/10 transition-colors flex items-center gap-2"
+              disabled={isProcessing}
+              className="mt-3 px-4 py-2 text-sm font-medium text-red-400 border border-red-400/30 rounded-lg hover:bg-red-400/10 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <X size={16} />
+              {isDeleting ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : (
+                <X size={16} />
+              )}
               Remove Avatar
             </button>
           )}
@@ -165,8 +230,9 @@ export const AvatarUpload = ({
 
       {/* Info Text */}
       <p className="text-xs text-gray-400">
-        Your avatar is stored locally in your browser and will be displayed
-        across your profile and dashboard.
+        {useBackend
+          ? "Your avatar is stored on the server and available across all devices."
+          : "Your avatar is stored locally in your browser and will be displayed across your profile and dashboard."}
       </p>
     </div>
   );
