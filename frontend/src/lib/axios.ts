@@ -5,11 +5,17 @@ import { AUTH_REFRESH } from "../services/endpoints";
 
 const REFRESH_TOKEN_KEY = "hrdash-refresh-token";
 
+// Base URL for API calls (includes /api suffix)
+export const API_BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3000/api";
+
+// Backend base URL (without /api suffix) - used for serving static files
+export const BACKEND_BASE_URL = API_BASE_URL.replace(/\/api$/, "");
+
 let accessToken: string | null = null;
 let refreshPromise: Promise<string> | null = null;
 
 const interceptedAxios: AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL ?? "http://localhost:3000/api",
+  baseURL: API_BASE_URL,
 });
 
 export const setAccessToken = (token: string | null) => {

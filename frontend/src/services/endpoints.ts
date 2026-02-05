@@ -7,6 +7,9 @@ export const USERS_LIST = "/users";
 export const USERS_CREATE = "/users";
 export const USERS_UPDATE = "/users/:id";
 export const USERS_STATISTICS = "/users/statistics";
+export const USERS_AVATAR_UPLOAD = "/users/:id/avatar";
+export const USERS_AVATAR_GET = "/users/:id/avatar";
+export const USERS_AVATAR_DELETE = "/users/:id/avatar";
 
 // Payroll
 export const PAYROLL_EMPLOYEE_LIST = "/users";

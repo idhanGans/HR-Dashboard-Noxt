@@ -12,12 +12,19 @@ import {
   EmployeeStatisticsDto,
   UserPaginationQueryDto,
 } from "@/users/dto";
+import { StorageService, StorageFile } from "@/storage/storage.service";
 import { Prisma } from "@prisma/client";
 import * as bcrypt from "bcrypt";
+import { randomUUID } from "crypto";
+
+const AVATAR_FOLDER = "user-avatar";
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private storageService: StorageService,
+  ) {}
 
   async create(createUserDto: CreateUserDto): Promise<UserResponseDto> {
     // Validate organizationId exists if provided
@@ -309,5 +316,108 @@ export class UsersService {
     await this.prisma.user.delete({
       where: { id },
     });
+  }
+
+  // ============ Avatar Methods ============
+
+  /**
+   * Upload avatar for a user
+   * @param userId The user ID
+   * @param file The uploaded file
+   */
+  async uploadAvatar(
+    userId: number,
+    file: StorageFile,
+  ): Promise<{ photoUrl: string }> {
+    // Check if user exists
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+
+    // Delete old avatar if exists
+    if (user.photoUrl) {
+      try {
+        await this.storageService.deleteFile(user.photoUrl);
+      } catch {
+        // Ignore deletion errors for old file
+      }
+    }
+
+    // Upload new avatar with UUID filename to avoid collisions
+    const filename = randomUUID();
+    const result = await this.storageService.uploadFile(
+      file,
+      AVATAR_FOLDER,
+      filename,
+    );
+
+    // Update user photoUrl with the storage key
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { photoUrl: result.key },
+    });
+
+    return { photoUrl: result.key };
+  }
+
+  /**
+   * Get avatar URL for a user (presigned URL for GCS, API path for local)
+   * @param userId The user ID
+   */
+  async getAvatarUrl(userId: number): Promise<{ url: string | null }> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { photoUrl: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+
+    if (!user.photoUrl) {
+      return { url: null };
+    }
+
+    const url = await this.storageService.getFileUrl(user.photoUrl);
+    return { url };
+  }
+
+  /**
+   * Get avatar file buffer (for serving local files)
+   * @param key The file storage key
+   */
+  async getAvatarFile(key: string): Promise<Buffer> {
+    const exists = await this.storageService.fileExists(key);
+    if (!exists) {
+      throw new NotFoundException("Avatar file not found");
+    }
+    return this.storageService.getFileBuffer(key);
+  }
+
+  /**
+   * Delete avatar for a user
+   * @param userId The user ID
+   */
+  async deleteAvatar(userId: number): Promise<void> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { photoUrl: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+
+    if (user.photoUrl) {
+      await this.storageService.deleteFile(user.photoUrl);
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { photoUrl: null },
+      });
+    }
   }
 }

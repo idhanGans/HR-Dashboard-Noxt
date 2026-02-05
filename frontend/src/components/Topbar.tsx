@@ -1,6 +1,7 @@
 import { Search, Bell, Menu } from "lucide-react";
 import { AvatarDisplay } from "./AvatarDisplay";
-import { getUserAvatar } from "../utils/avatarUtils";
+import { useAvatarUrl } from "../hooks/useAvatar";
+import { useAuth } from "../contexts/AuthContext";
 
 // Top navigation bar component
 export const Topbar = ({
@@ -12,13 +13,14 @@ export const Topbar = ({
   userRole?: string;
   onToggleSidebar: () => void;
 }) => {
+  const { auth } = useAuth();
+  const { avatarUrl } = useAvatarUrl(auth.userId);
+
   const roleLabels: Record<string, string> = {
     SUPERADMIN: "Administrator",
     SUPERVISOR: "Supervisor",
     EMPLOYEE: "Employee",
   };
-
-  const userAvatar = getUserAvatar();
 
   return (
     <div className="fixed top-0 left-0 lg:left-64 right-0 bg-black/30 backdrop-blur-md border-b border-white/10 px-4 sm:px-6 py-2 sm:py-4 flex items-center gap-3 z-40">
@@ -58,7 +60,7 @@ export const Topbar = ({
             <p className="text-sm font-medium text-white">{userName}</p>
             <p className="text-xs text-lightGrey">{roleLabels[userRole] ?? userRole}</p>
           </div>
-          <AvatarDisplay src={userAvatar} name={userName} size="md" />
+          <AvatarDisplay src={avatarUrl} name={userName} size="md" />
         </div>
       </div>
     </div>

@@ -9,6 +9,7 @@ import { AuthModule } from "@/auth/auth.module";
 import { KpiModule } from "@/kpi/kpi.module";
 import { PayrollModule } from "./payroll/payroll.module";
 import { AttendanceModule } from "@/attendance/attendance.module";
+import { StorageModule } from "@/storage/storage.module";
 import { validate } from "@/config";
 
 @Module({
@@ -18,6 +19,7 @@ import { validate } from "@/config";
       validate,
     }),
     PrismaModule,
+    StorageModule,
     AuthModule,
     OrganizationsModule,
     UsersModule,

@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { getUserAvatar, saveUserAvatar } from "../utils/avatarUtils";
 
 // Default settings state
 const DEFAULT_SETTINGS = {
@@ -19,24 +18,14 @@ const DEFAULT_SETTINGS = {
 
 /**
  * useSettings - Custom hook for settings state management
- * Includes avatar upload and persistence
+ * Avatar is now managed by the backend via useAvatar hook
  */
 export const useSettings = () => {
-  const [settings, setSettings] = useState(() => ({
-    ...DEFAULT_SETTINGS,
-    avatar: getUserAvatar() || undefined,
-  }));
+  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const [activeSection, setActiveSection] = useState("profile");
 
-  const handleSettingChange = (key: string, value: any) => {
+  const handleSettingChange = (key: string, value: unknown) => {
     setSettings((prev) => ({ ...prev, [key]: value }));
-
-    // Persist avatar to localStorage immediately when changed
-    if (key === "avatar") {
-      if (value) {
-        saveUserAvatar(value);
-      }
-    }
   };
 
   const handleNotificationChange = (key: string, value: boolean) => {
@@ -46,7 +35,7 @@ export const useSettings = () => {
     }));
   };
 
-  const handlePreferenceChange = (key: string, value: any) => {
+  const handlePreferenceChange = (key: string, value: unknown) => {
     setSettings((prev) => ({ ...prev, [key]: value }));
   };
 

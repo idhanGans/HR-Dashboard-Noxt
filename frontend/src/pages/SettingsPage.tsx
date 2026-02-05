@@ -8,6 +8,7 @@ import {
   SettingsHeader,
 } from "../components/settings";
 import { useSettings } from "../hooks/useSettings";
+import { useAuth } from "../contexts/AuthContext";
 import type { SettingsState } from "../types";
 import type { LayoutProps } from "../types/auth";
 
@@ -20,6 +21,7 @@ const SettingsContent = ({
   onNotificationChange,
   onPreferenceChange,
   onSave,
+  userId,
 }: {
   settings: SettingsState;
   onSettingChange: <K extends keyof SettingsState>(
@@ -35,9 +37,10 @@ const SettingsContent = ({
     value: SettingsState[K],
   ) => void;
   onSave: () => void;
+  userId: number | null;
 }) => (
   <div className="lg:col-span-2 space-y-6">
-    <ProfileSettings settings={settings} onSettingChange={onSettingChange} />
+    <ProfileSettings settings={settings} onSettingChange={onSettingChange} userId={userId} />
 
     <NotificationSettings
       notifications={settings.notifications}
@@ -61,6 +64,7 @@ export const SettingsPage = ({
   userName,
   userRole,
 }: LayoutProps) => {
+  const { auth } = useAuth();
   const {
     settings,
     activeSection,
@@ -93,6 +97,7 @@ export const SettingsPage = ({
           onNotificationChange={handleNotificationChange}
           onPreferenceChange={handlePreferenceChange}
           onSave={handleSaveSettings}
+          userId={auth.userId}
         />
       </div>
     </DashboardLayout>

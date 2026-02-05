@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Card } from "./Card";
 import { AvatarUpload } from "./settings/AvatarUpload";
-import { getEmployeeAvatar, saveEmployeeAvatar } from "../utils/avatarUtils";
 import { AvatarDisplay } from "./AvatarDisplay";
+import { useAvatarUrl } from "../hooks/useAvatar";
 import { X } from "lucide-react";
 
 interface EmployeeAvatarManagerProps {
@@ -10,13 +10,55 @@ interface EmployeeAvatarManagerProps {
     id: number;
     name: string;
     department: string;
+    photoUrl?: string;
   }>;
   onAvatarUpdate?: (employeeId: number, avatarData: string) => void;
 }
 
 /**
+ * EmployeeAvatarListItem - Individual employee list item with avatar
+ */
+const EmployeeAvatarListItem = ({
+  employee,
+  isSelected,
+  onClick,
+}: {
+  employee: { id: number; name: string; department: string; photoUrl?: string };
+  isSelected: boolean;
+  onClick: () => void;
+}) => {
+  const { avatarUrl } = useAvatarUrl(employee.id);
+
+  return (
+    <button
+      onClick={onClick}
+      className={`w-full text-left px-4 py-3 rounded-lg transition-colors flex items-center gap-3 ${
+        isSelected
+          ? "bg-blue-500/20 border border-blue-400"
+          : "bg-white/5 border border-white/10 hover:border-blue-400/50"
+      }`}
+    >
+      <AvatarDisplay
+        src={avatarUrl}
+        name={employee.name}
+        size="sm"
+      />
+      <div className="flex-1 min-w-0">
+        <p className="text-white font-medium truncate">
+          {employee.name}
+        </p>
+        <p className="text-xs text-gray-400 truncate">
+          {employee.department}
+        </p>
+      </div>
+    </button>
+  );
+};
+
+/**
  * EmployeeAvatarManager - Component for managing employee avatars
  * Allows managers/admins to upload avatars for employees
+ * Uses backend API for avatar storage
  */
 export const EmployeeAvatarManager = ({
   employees,
@@ -25,36 +67,8 @@ export const EmployeeAvatarManager = ({
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<number | null>(
     null,
   );
-  const [avatars, setAvatars] = useState<Record<number, string | null>>(() => {
-    const result: Record<number, string | null> = {};
-    employees.forEach((emp) => {
-      result[emp.id] = getEmployeeAvatar(emp.id);
-    });
-    return result;
-  });
 
   const selectedEmployee = employees.find((e) => e.id === selectedEmployeeId);
-
-  const handleAvatarChange = (avatarData: string) => {
-    if (selectedEmployeeId === null) return;
-
-    saveEmployeeAvatar(selectedEmployeeId, avatarData);
-    setAvatars((prev) => ({
-      ...prev,
-      [selectedEmployeeId]: avatarData,
-    }));
-
-    if (onAvatarUpdate) {
-      onAvatarUpdate(selectedEmployeeId, avatarData);
-    }
-  };
-
-  const handleRemoveAvatar = (employeeId: number) => {
-    setAvatars((prev) => ({
-      ...prev,
-      [employeeId]: null,
-    }));
-  };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -63,29 +77,12 @@ export const EmployeeAvatarManager = ({
         <h3 className="text-lg font-bold text-white mb-4">Select Employee</h3>
         <div className="space-y-2 max-h-96 overflow-y-auto">
           {employees.map((employee) => (
-            <button
+            <EmployeeAvatarListItem
               key={employee.id}
+              employee={employee}
+              isSelected={selectedEmployeeId === employee.id}
               onClick={() => setSelectedEmployeeId(employee.id)}
-              className={`w-full text-left px-4 py-3 rounded-lg transition-colors flex items-center gap-3 ${
-                selectedEmployeeId === employee.id
-                  ? "bg-blue-500/20 border border-blue-400"
-                  : "bg-white/5 border border-white/10 hover:border-blue-400/50"
-              }`}
-            >
-              <AvatarDisplay
-                src={avatars[employee.id]}
-                name={employee.name}
-                size="sm"
-              />
-              <div className="flex-1 min-w-0">
-                <p className="text-white font-medium truncate">
-                  {employee.name}
-                </p>
-                <p className="text-xs text-gray-400 truncate">
-                  {employee.department}
-                </p>
-              </div>
-            </button>
+            />
           ))}
         </div>
       </Card>
@@ -112,25 +109,9 @@ export const EmployeeAvatarManager = ({
             </div>
 
             <AvatarUpload
-              currentAvatar={avatars[selectedEmployee.id] || undefined}
-              onAvatarChange={handleAvatarChange}
+              userId={selectedEmployee.id}
               userName={selectedEmployee.name}
             />
-
-            {avatars[selectedEmployee.id] && (
-              <div className="mt-4 pt-4 border-t border-white/10">
-                <button
-                  onClick={() => {
-                    handleRemoveAvatar(selectedEmployee.id);
-                    saveEmployeeAvatar(selectedEmployee.id, "");
-                  }}
-                  className="px-4 py-2 text-sm font-medium text-red-400 border border-red-400/30 rounded-lg hover:bg-red-400/10 transition-colors inline-flex items-center gap-2"
-                >
-                  <X size={16} />
-                  Remove Employee Avatar
-                </button>
-              </div>
-            )}
           </Card>
         ) : (
           <Card className="flex items-center justify-center h-64">

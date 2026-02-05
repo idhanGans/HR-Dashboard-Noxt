@@ -5,6 +5,7 @@ import {
   IsOptional,
   IsString,
   Min,
+  ValidateIf,
 } from "class-validator";
 import { Transform } from "class-transformer";
 
@@ -48,4 +49,33 @@ export class EnvironmentVariables {
   @IsString()
   @IsNotEmpty()
   REFRESH_TOKEN_DURATION: string;
+
+  // GCS Storage Configuration (required only in STAGING/PRODUCTION)
+  @ValidateIf(
+    (o: EnvironmentVariables) => o.NODE_ENV !== NodeEnvironment.DEVELOPMENT,
+  )
+  @IsString()
+  @IsNotEmpty()
+  GCS_BUCKET_NAME?: string;
+
+  @ValidateIf(
+    (o: EnvironmentVariables) => o.NODE_ENV !== NodeEnvironment.DEVELOPMENT,
+  )
+  @IsString()
+  @IsNotEmpty()
+  GCS_PROJECT_ID?: string;
+
+  @ValidateIf(
+    (o: EnvironmentVariables) => o.NODE_ENV !== NodeEnvironment.DEVELOPMENT,
+  )
+  @IsString()
+  @IsNotEmpty()
+  GCS_CLIENT_EMAIL?: string;
+
+  @ValidateIf(
+    (o: EnvironmentVariables) => o.NODE_ENV !== NodeEnvironment.DEVELOPMENT,
+  )
+  @IsString()
+  @IsNotEmpty()
+  GCS_PRIVATE_KEY?: string;
 }
