@@ -34,6 +34,9 @@ export const KPI_PERIODS_CURRENT = "/kpi/periods/current";
 // KPI Metrics
 export const KPI_METRICS_LIST = "/kpi/metrics";
 
+// Organization Chart
+export const ORG_CHART_TREE = "/org-chart/tree";
+export const ORG_CHART_NODES = "/org-chart/nodes";
 
 // Attendance
 export const ATTENDANCE_CHECK_IN = "/attendance/records/check-in";

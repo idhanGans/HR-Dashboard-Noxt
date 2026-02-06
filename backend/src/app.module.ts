@@ -10,6 +10,7 @@ import { KpiModule } from "@/kpi/kpi.module";
 import { PayrollModule } from "./payroll/payroll.module";
 import { AttendanceModule } from "@/attendance/attendance.module";
 import { StorageModule } from "@/storage/storage.module";
+import { OrgChartModule } from "@/org-chart/org-chart.module";
 import { validate } from "@/config";
 
 @Module({
@@ -26,6 +27,7 @@ import { validate } from "@/config";
     KpiModule,
     PayrollModule,
     AttendanceModule,
+    OrgChartModule,
   ],
   controllers: [AppController],
   providers: [AppService],

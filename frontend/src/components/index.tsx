@@ -36,6 +36,9 @@ export * from "./kpi";
 // Hiring Components
 export * from "./hiring";
 
+// Organization Components
+export * from "./organization";
+
 // Settings Components
 export * from "./settings";
 
