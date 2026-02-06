@@ -59,4 +59,11 @@ export class EnvironmentVariables {
   @IsString()
   @IsNotEmpty()
   GCS_BUCKET_NAME?: string;
+
+  @ValidateIf(
+    (o: EnvironmentVariables) => o.NODE_ENV !== NodeEnvironment.DEVELOPMENT,
+  )
+  @IsString()
+  @IsNotEmpty()
+  SCHEDULER_TOKEN?: string;
 }

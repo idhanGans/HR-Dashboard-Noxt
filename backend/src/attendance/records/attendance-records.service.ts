@@ -1,5 +1,4 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
-import { Cron } from "@nestjs/schedule";
 import { DateTime } from "luxon";
 import { PrismaService } from "@/prisma/prisma.service";
 import {
@@ -186,7 +185,6 @@ export class AttendanceRecordsService {
     return this.findAll(query, userId);
   }
 
-  @Cron("0 */15 * * * *")
   async autoCheckoutOpenRecords(): Promise<void> {
     const now = new Date();
     const openRecords = await this.prisma.attendanceRecord.findMany({
@@ -238,7 +236,6 @@ export class AttendanceRecordsService {
     }
   }
 
-  @Cron("0 0 0 * * *")
   async markAbsentRecords(): Promise<void> {
     const zone = this.normalizeTimezone(DateTime.local().zoneName);
     const targetDate = DateTime.local().minus({ days: 1 }).toJSDate();
@@ -246,7 +243,7 @@ export class AttendanceRecordsService {
 
     const users = await this.prisma.user.findMany({
       where: {
-        role: Role.EMPLOYEE,
+        role: { in: [Role.EMPLOYEE, Role.SUPERVISOR] },
         employmentType: { not: EmploymentType.FORMER },
       },
       select: { id: true },
