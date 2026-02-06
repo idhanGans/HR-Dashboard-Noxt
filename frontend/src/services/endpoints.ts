@@ -43,6 +43,9 @@ export const KPI_PERIODS_LIST = "/kpi/periods";
 
 // KPI Scores
 export const KPI_SCORES_BY_ID = "/kpi/scores/:id";
+// Organization Chart
+export const ORG_CHART_TREE = "/org-chart/tree";
+export const ORG_CHART_NODES = "/org-chart/nodes";
 
 // Attendance
 export const ATTENDANCE_CHECK_IN = "/attendance/records/check-in";

@@ -4,5 +4,6 @@ export { AttendancePage } from "./AttendancePage";
 export { PayrollPage } from "./PayrollPage";
 export { KPIPage } from "./KPIPage";
 export { EmployeesPage } from "./EmployeesPage";
+export { OrganizationPage } from "./OrganizationPage";
 export { HiringPage } from "./HiringPage";
 export { SettingsPage } from "./SettingsPage";

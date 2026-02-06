@@ -6,6 +6,7 @@ import {
   PayrollPieChart,
   QuickActions,
   TopPerformersCard,
+  OrganizationChart,
 } from "../components/dashboard";
 import {
   dashboardStats,
@@ -114,6 +115,22 @@ const BottomSection = ({ topPerformers }: { topPerformers: Employee[] }) => (
 );
 
 /**
+ * OrganizationChartSection - Organization chart display
+ */
+const OrganizationChartSection = () => {
+  return (
+    <div className="mt-8">
+      <div className="mb-4">
+        <h2 className="text-xl font-bold text-white">Organization Structure</h2>
+      </div>
+      <div className="bg-white/5 border border-white/10 rounded-lg p-6 backdrop-blur-sm overflow-auto">
+        <OrganizationChart />
+      </div>
+    </div>
+  );
+};
+
+/**
  * AdminDashboard - Main admin dashboard view with real employee data
  */
 const AdminDashboard = ({ onLogout, userName, userRole }: LayoutProps) => {
@@ -138,6 +155,7 @@ const AdminDashboard = ({ onLogout, userName, userRole }: LayoutProps) => {
       <StatsGrid stats={updatedStats} />
       <ChartsSection kpiData={kpiTrend} />
       <BottomSection topPerformers={topPerformers} />
+      <OrganizationChartSection />
     </DashboardLayout>
   );
 };

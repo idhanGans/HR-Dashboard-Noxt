@@ -6,6 +6,7 @@ import {
   TrendingUp,
   Users,
   UserPlus,
+  Network,
   LogOut,
   Settings,
 } from "lucide-react";
@@ -40,6 +41,12 @@ export const Sidebar = ({
       path: "/employees",
       icon: Users,
       requiredRoles: ["SUPERVISOR"],
+    },
+    {
+      label: "Organization",
+      path: "/organization",
+      icon: Network,
+      requiredRoles: ["SUPERADMIN"],
     },
     {
       label: "Hiring",

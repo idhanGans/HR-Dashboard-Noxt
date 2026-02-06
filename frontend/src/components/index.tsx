@@ -39,6 +39,9 @@ export * from "./kpi-tracker";
 // Hiring Components
 export * from "./hiring";
 
+// Organization Components
+export * from "./organization";
+
 // Settings Components
 export * from "./settings";
 
