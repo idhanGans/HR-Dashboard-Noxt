@@ -60,4 +60,5 @@ jobs:
                   --set-env-vars=ACCESS_TOKEN_DURATION=${{ vars.STAGING_ACCESS_TOKEN_DURATION }} \
                   --set-env-vars=REFRESH_TOKEN_DURATION=${{ vars.STAGING_REFRESH_TOKEN_DURATION }} \
                   --set-env-vars=GCS_BUCKET_NAME=${{ vars.STAGING_GCS_BUCKET_NAME }} \
+                  --set-env-vars=SCHEDULER_TOKEN=${{ secrets.STAGING_SCHEDULER_TOKEN }} \
                   --set-env-vars=NODE_ENV=staging
