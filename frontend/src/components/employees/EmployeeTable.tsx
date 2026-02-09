@@ -9,12 +9,19 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useAvatarUrl } from "../../hooks/useAvatar";
+import { DepartmentBadge } from "./department";
 import type { Employee } from "../../types";
 
 /**
  * EmployeeAvatar - Avatar component that fetches URL from backend
  */
-const EmployeeAvatar = ({ employeeId, name }: { employeeId: number; name: string }) => {
+const EmployeeAvatar = ({
+  employeeId,
+  name,
+}: {
+  employeeId: number;
+  name: string;
+}) => {
   const { avatarUrl } = useAvatarUrl(employeeId);
   return <AvatarDisplay src={avatarUrl} name={name} size="sm" />;
 };
@@ -50,9 +57,9 @@ export const EmployeeTable = ({
   };
 
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
-  const [closeTimeout, setCloseTimeout] = useState<
-    ReturnType<typeof setTimeout> | null
-  >(null);
+  const [closeTimeout, setCloseTimeout] = useState<ReturnType<
+    typeof setTimeout
+  > | null>(null);
 
   const handleMouseLeave = () => {
     const timeout = setTimeout(() => {
@@ -114,11 +121,7 @@ export const EmployeeTable = ({
     {
       key: "department",
       label: "Department",
-      render: (row: Employee) => (
-        <span className="text-white bg-white/5 px-3 py-1 rounded text-sm">
-          {row.department}
-        </span>
-      ),
+      render: (row: Employee) => <DepartmentBadge name={row.department} />,
     },
     {
       key: "position",

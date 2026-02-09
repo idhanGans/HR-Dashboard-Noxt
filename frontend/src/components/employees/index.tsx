@@ -8,3 +8,14 @@ export { EmployeeHeader } from "./EmployeeHeader";
 export { EmployeeSelector } from "./EmployeeSelector";
 export { KPIFormModal } from "./KPIFormModal";
 export { PayrollFormModal } from "./PayrollFormModal";
+
+// Department components
+export {
+  DepartmentBadge,
+  DepartmentTable,
+  DepartmentFormModal,
+  ManageDepartmentButton,
+  ManageDepartmentsModal,
+  DepartmentDeleteModal,
+  DepartmentSelect,
+} from "./department";

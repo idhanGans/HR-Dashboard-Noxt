@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useDebounce } from "use-debounce";
 import { getInitials } from "../utils/utils";
 import { employeeService } from "../services/employee";
+import { useDepartmentStore } from "../stores/departmentStore";
 import type { Employee, EmployeeForm, PayrollFormData } from "../types";
 import type {
   UserApiResponse,
@@ -27,7 +28,8 @@ interface EmployeeFilters {
 const employeeKeys = {
   all: ["employees"] as const,
   lists: () => [...employeeKeys.all, "list"] as const,
-  list: (filters: EmployeeFilters) => [...employeeKeys.lists(), filters] as const,
+  list: (filters: EmployeeFilters) =>
+    [...employeeKeys.lists(), filters] as const,
   details: () => [...employeeKeys.all, "detail"] as const,
   detail: (id: number) => [...employeeKeys.details(), id] as const,
   statistics: () => [...employeeKeys.all, "statistics"] as const,
@@ -175,6 +177,16 @@ export const useEmployeeManagement = (options?: { enabled?: boolean }) => {
   const [search, setSearch] = useState("");
   const [debouncedSearch] = useDebounce(search, 1000);
 
+  // Department filter state
+  const [departmentFilter, setDepartmentFilter] = useState<string | null>(null);
+
+  // Department management modal
+  const {
+    modals: departmentModals,
+    openManageModal: openDepartmentManageModal,
+    closeManageModal: closeDepartmentManageModal,
+  } = useDepartmentStore();
+
   // Modal state (UI state)
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [mode, setMode] = useState<"add" | "edit">("add");
@@ -183,7 +195,7 @@ export const useEmployeeManagement = (options?: { enabled?: boolean }) => {
   // KPI modal states
   const [isKPIModalOpen, setIsKPIModalOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(
-    null
+    null,
   );
 
   // Payroll modal states
@@ -206,7 +218,7 @@ export const useEmployeeManagement = (options?: { enabled?: boolean }) => {
       search: debouncedSearch || undefined,
       employmentType: filter !== "all" ? filter : undefined,
     }),
-    [debouncedSearch, filter]
+    [debouncedSearch, filter],
   );
 
   // ============ Queries ============
@@ -283,7 +295,7 @@ export const useEmployeeManagement = (options?: { enabled?: boolean }) => {
 
       // Snapshot current data for rollback
       const previousEmployees = queryClient.getQueryData<Employee[]>(
-        employeeKeys.list(filters)
+        employeeKeys.list(filters),
       );
 
       // Optimistically update the cache
@@ -293,8 +305,8 @@ export const useEmployeeManagement = (options?: { enabled?: boolean }) => {
           previousEmployees.map((emp) =>
             emp.id === employeeId
               ? { ...emp, employmentType: "FORMER" as const }
-              : emp
-          )
+              : emp,
+          ),
         );
       }
 
@@ -305,7 +317,7 @@ export const useEmployeeManagement = (options?: { enabled?: boolean }) => {
       if (context?.previousEmployees) {
         queryClient.setQueryData(
           employeeKeys.list(filters),
-          context.previousEmployees
+          context.previousEmployees,
         );
       }
     },
@@ -322,9 +334,14 @@ export const useEmployeeManagement = (options?: { enabled?: boolean }) => {
 
   const employeeList = useMemo(
     () => employeesQuery.data ?? [],
-    [employeesQuery.data]
+    [employeesQuery.data],
   );
-  const filteredEmployees = employeeList;
+
+  // Apply department filter on client side
+  const filteredEmployees = useMemo(() => {
+    if (!departmentFilter) return employeeList;
+    return employeeList.filter((emp) => emp.department === departmentFilter);
+  }, [employeeList, departmentFilter]);
   const statistics = statisticsQuery.data ?? null;
 
   // Counts from statistics (always shows totals, not affected by filters)
@@ -340,13 +357,13 @@ export const useEmployeeManagement = (options?: { enabled?: boolean }) => {
     // Fallback to local calculation if statistics not loaded
     const total = employeeList.length;
     const permanent = employeeList.filter(
-      (e) => e.employmentType === "PERMANENT"
+      (e) => e.employmentType === "PERMANENT",
     ).length;
     const temporary = employeeList.filter(
-      (e) => e.employmentType === "TEMPORARY"
+      (e) => e.employmentType === "TEMPORARY",
     ).length;
     const former = employeeList.filter(
-      (e) => e.employmentType === "FORMER"
+      (e) => e.employmentType === "FORMER",
     ).length;
     return { total, permanent, temporary, former };
   }, [statistics, employeeList]);
@@ -466,6 +483,15 @@ export const useEmployeeManagement = (options?: { enabled?: boolean }) => {
     setFilter,
     search,
     setSearch,
+
+    // Department filter
+    departmentFilter,
+    setDepartmentFilter,
+
+    // Department management modal
+    isDepartmentManageOpen: departmentModals.manageModal.isOpen,
+    openDepartmentManageModal,
+    closeDepartmentManageModal,
 
     // Modal state
     isModalOpen,

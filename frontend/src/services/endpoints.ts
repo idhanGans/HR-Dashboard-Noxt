@@ -57,3 +57,10 @@ export const ATTENDANCE_LEAVES_RECENT_APPROVALS =
 export const ATTENDANCE_LEAVES_SELF = "/attendance/leaves/me";
 export const ATTENDANCE_LEAVES_APPROVE = "/attendance/leaves/:id/approve";
 export const ATTENDANCE_LEAVES_REJECT = "/attendance/leaves/:id/reject";
+
+// Organizations / Departments
+export const ORGANIZATIONS_LIST = "/organizations";
+export const ORGANIZATIONS_CREATE = "/organizations";
+export const ORGANIZATIONS_BY_ID = "/organizations/:id";
+export const ORGANIZATIONS_UPDATE = "/organizations/:id";
+export const ORGANIZATIONS_DELETE = "/organizations/:id";

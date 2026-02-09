@@ -10,8 +10,10 @@ import {
   EmployeeHeader,
   KPIFormModal,
   PayrollFormModal,
+  ManageDepartmentsModal,
 } from "../components/employees";
 import { useEmployeeManagement } from "../hooks/useEmployeeManagement";
+import { useAuth } from "../contexts/AuthContext";
 import type { LayoutProps } from "../types/auth";
 
 /**
@@ -22,6 +24,8 @@ export const EmployeesPage = ({
   userName,
   userRole,
 }: LayoutProps) => {
+  const { auth } = useAuth();
+
   const {
     filteredEmployees,
     counts,
@@ -42,6 +46,12 @@ export const EmployeesPage = ({
     handleOpenEdit,
     handleSave,
     handleMarkFormer,
+    // Department management
+    departmentFilter,
+    setDepartmentFilter,
+    isDepartmentManageOpen,
+    openDepartmentManageModal,
+    closeDepartmentManageModal,
     // KPI management
     isKPIModalOpen,
     selectedEmployee,
@@ -57,6 +67,10 @@ export const EmployeesPage = ({
     handleSavePayroll,
   } = useEmployeeManagement();
 
+  const handleDepartmentFilterChange = (value: string | number | null) => {
+    setDepartmentFilter(value ? String(value) : null);
+  };
+
   return (
     <DashboardLayout
       userRole={userRole}
@@ -67,6 +81,10 @@ export const EmployeesPage = ({
         search={search}
         onSearchChange={setSearch}
         onAddClick={handleOpenAdd}
+        userRole={userRole}
+        onManageDepartments={openDepartmentManageModal}
+        departmentFilter={departmentFilter}
+        onDepartmentFilterChange={handleDepartmentFilterChange}
       />
 
       <EmployeeStats counts={counts} />
@@ -107,6 +125,7 @@ export const EmployeesPage = ({
         onFormChange={setForm}
         onSave={handleSave}
         saving={saving}
+        userRole={userRole}
       />
 
       <KPIFormModal
@@ -123,6 +142,13 @@ export const EmployeesPage = ({
         payrollData={payrollForm}
         onPayrollChange={setPayrollForm}
         onSave={handleSavePayroll}
+      />
+
+      <ManageDepartmentsModal
+        isOpen={isDepartmentManageOpen}
+        onClose={closeDepartmentManageModal}
+        userRole={userRole}
+        userId={auth.userId}
       />
     </DashboardLayout>
   );

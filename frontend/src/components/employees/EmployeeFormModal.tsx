@@ -1,6 +1,7 @@
 import { Modal } from "../Modal";
 import { Button } from "../Button";
 import { DropdownSelect } from "../DropdownSelect";
+import { DepartmentSelect } from "./department";
 import type { Dispatch, SetStateAction } from "react";
 import type { EmployeeForm } from "../../types";
 
@@ -12,6 +13,7 @@ interface EmployeeFormModalProps {
   onFormChange: Dispatch<SetStateAction<EmployeeForm>>;
   onSave: () => void;
   saving?: boolean;
+  userRole?: string;
 }
 
 const genderOptions = [
@@ -72,10 +74,14 @@ export const EmployeeFormModal = ({
   onFormChange,
   onSave,
   saving = false,
+  userRole = "EMPLOYEE",
 }: EmployeeFormModalProps) => {
   const handleChange = (field: string, value: string) => {
     onFormChange({ ...form, [field]: value });
   };
+
+  const canEditDepartment =
+    userRole === "SUPERADMIN" || userRole === "SUPERVISOR";
 
   const toSelectValue = (value?: string) =>
     value && value.length > 0 ? value : null;
@@ -271,6 +277,26 @@ export const EmployeeFormModal = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
             <div>
               <label className="block text-xs font-semibold text-lightGrey mb-2 uppercase">
+                Department <span className="text-red-400">*</span>
+              </label>
+              <DepartmentSelect
+                value={form.department || null}
+                onChange={(value) =>
+                  handleChange("department", value ? String(value) : "")
+                }
+                disabled={!canEditDepartment}
+                placeholder="Select Department"
+                showEmptyOption
+                ariaLabel="Select department"
+              />
+              {!form.department && (
+                <p className="text-amber-400/70 text-xs mt-1">
+                  Department is required
+                </p>
+              )}
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-lightGrey mb-2 uppercase">
                 Division
               </label>
               <input
@@ -280,6 +306,9 @@ export const EmployeeFormModal = ({
                 placeholder="e.g., Engineering"
               />
             </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
             <div>
               <label className="block text-xs font-semibold text-lightGrey mb-2 uppercase">
                 Position
@@ -360,12 +389,12 @@ export const EmployeeFormModal = ({
           >
             Cancel
           </Button>
-          <Button onClick={onSave} className="w-full sm:w-auto" disabled={saving}>
-            {saving
-              ? "Saving..."
-              : mode === "add"
-                ? "Add Employee"
-                : "Save"}
+          <Button
+            onClick={onSave}
+            className="w-full sm:w-auto"
+            disabled={saving}
+          >
+            {saving ? "Saving..." : mode === "add" ? "Add Employee" : "Save"}
           </Button>
         </div>
       </div>
