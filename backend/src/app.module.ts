@@ -12,6 +12,7 @@ import { AttendanceModule } from "@/attendance/attendance.module";
 import { StorageModule } from "@/storage/storage.module";
 import { OrgChartModule } from "@/org-chart/org-chart.module";
 import { validate } from "@/config";
+import { DashboardModule } from "@/dashboard/dashboard.module";
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { validate } from "@/config";
     PayrollModule,
     AttendanceModule,
     OrgChartModule,
+    DashboardModule,
   ],
   controllers: [AppController],
   providers: [AppService],

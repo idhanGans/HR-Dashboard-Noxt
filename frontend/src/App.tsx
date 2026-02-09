@@ -156,7 +156,7 @@ const AppRoutes = () => {
             isAuthenticated={auth.isAuthenticated}
             isInitializing={auth.isInitializing}
             userRole={auth.role}
-            allowedRoles={["SUPERADMIN"]}
+            allowedRoles={["SUPERVISOR"]}
           >
             <OrganizationPage {...layoutProps} />
           </ProtectedRoute>

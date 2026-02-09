@@ -46,7 +46,7 @@ export const Sidebar = ({
       label: "Organization",
       path: "/organization",
       icon: Network,
-      requiredRoles: ["SUPERADMIN"],
+      requiredRoles: ["SUPERVISOR"],
     },
     {
       label: "Hiring",

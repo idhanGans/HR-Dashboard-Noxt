@@ -16,6 +16,7 @@ export const PAYROLL_EMPLOYEE_LIST = "/users";
 export const PAYROLL_BY_PERIOD = "/payroll/:userId";
 export const PAYROLL_UPDATE = "/payroll/:userId";
 export const PAYROLL_PAYSLIP = "/payroll/:userId/payslip";
+export const PAYROLL_STATS_DEPARTMENT = "/payroll/stats/department";
 
 // KPI Statistics
 export const KPI_STATISTICS_OVERALL = "/kpi/statistics/overall";
@@ -60,3 +61,6 @@ export const ATTENDANCE_LEAVES_RECENT_APPROVALS =
 export const ATTENDANCE_LEAVES_SELF = "/attendance/leaves/me";
 export const ATTENDANCE_LEAVES_APPROVE = "/attendance/leaves/:id/approve";
 export const ATTENDANCE_LEAVES_REJECT = "/attendance/leaves/:id/reject";
+
+// Dashboard
+export const DASHBOARD_OVERVIEW = "/dashboard/overview";

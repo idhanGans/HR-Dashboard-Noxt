@@ -1,4 +1,6 @@
-import { DashboardLayout } from "../components";
+import type { ComponentType } from "react";
+import { TrendingUp, Users, Clock } from "lucide-react";
+import { DashboardLayout, Card } from "../components";
 import {
   StatCard,
   AttendanceChart,
@@ -8,18 +10,15 @@ import {
   TopPerformersCard,
   OrganizationChart,
 } from "../components/dashboard";
+import { hasRequiredRole } from "../utils/roles";
 import {
-  dashboardStats,
-  attendanceData,
-  payrollByDepartment,
-} from "../utils/dummyData";
-import { TrendingUp, Users, Clock } from "lucide-react";
-import { useDashboardStats } from "../hooks/useDashboardStats";
-import type { ComponentType } from "react";
-import type { DashboardStats, Employee, KPITrendData } from "../types";
+  useDashboardOverview,
+  usePayrollByDepartment,
+} from "../hooks/useDashboardOverview";
+import type { AttendanceData, DashboardStats, KPITrendData } from "../types";
+import type { DashboardTopPerformerDto } from "../types/api";
 import type { LayoutProps } from "../types/auth";
 
-// Dashboard stats configuration
 type StatConfig = {
   label: string;
   valueKey: keyof DashboardStats;
@@ -50,9 +49,6 @@ const STATS_CONFIG: StatConfig[] = [
   },
 ];
 
-/**
- * DashboardHeader - Page header component
- */
 const DashboardHeader = () => (
   <div className="mb-8">
     <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">
@@ -62,9 +58,6 @@ const DashboardHeader = () => (
   </div>
 );
 
-/**
- * StatsGrid - Grid of stat cards
- */
 const StatsGrid = ({ stats }: { stats: DashboardStats }) => {
   const statCards = STATS_CONFIG.map((config) => {
     const rawValue = stats[config.valueKey];
@@ -93,56 +86,117 @@ const StatsGrid = ({ stats }: { stats: DashboardStats }) => {
   );
 };
 
-/**
- * ChartsSection - Section containing attendance and KPI charts
- */
-const ChartsSection = ({ kpiData }: { kpiData: KPITrendData[] }) => (
+const ChartsSection = ({
+  attendance,
+  kpiData,
+}: {
+  attendance: AttendanceData[];
+  kpiData: KPITrendData[];
+}) => (
   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-    <AttendanceChart data={attendanceData} />
+    <AttendanceChart data={attendance} />
     <KPITrendChart data={kpiData} />
   </div>
 );
 
-/**
- * BottomSection - Payroll pie chart, quick actions, and top performers
- */
-const BottomSection = ({ topPerformers }: { topPerformers: Employee[] }) => (
-  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-    <PayrollPieChart payrollData={payrollByDepartment} />
-    <QuickActions />
-    <TopPerformersCard performers={topPerformers} />
-  </div>
-);
+const PayrollPanel = ({
+  loading,
+  error,
+  payrollData,
+}: {
+  loading: boolean;
+  error: string | null;
+  payrollData?: { labels: string[]; data: number[] };
+}) => {
+  if (loading) {
+    return (
+      <Card className="flex flex-col">
+        <h2 className="text-lg font-bold text-white mb-4">
+          Payroll by Department
+        </h2>
+        <p className="text-lightGrey">Loading payroll data...</p>
+      </Card>
+    );
+  }
 
-/**
- * OrganizationChartSection - Organization chart display
- */
-const OrganizationChartSection = () => {
+  if (error) {
+    return (
+      <Card className="flex flex-col">
+        <h2 className="text-lg font-bold text-white mb-4">
+          Payroll by Department
+        </h2>
+        <p className="text-red-400">{error}</p>
+      </Card>
+    );
+  }
+
   return (
-    <div className="mt-8">
-      <div className="mb-4">
-        <h2 className="text-xl font-bold text-white">Organization Structure</h2>
+    <PayrollPieChart payrollData={payrollData ?? { labels: [], data: [] }} />
+  );
+};
+
+const BottomSection = ({
+  canSeePayroll,
+  payrollData,
+  payrollLoading,
+  payrollError,
+  topPerformers,
+}: {
+  canSeePayroll: boolean;
+  payrollData?: { labels: string[]; data: number[] };
+  payrollLoading: boolean;
+  payrollError: string | null;
+  topPerformers: DashboardTopPerformerDto[];
+}) => {
+  if (!canSeePayroll) {
+    return (
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <QuickActions />
+        <TopPerformersCard performers={topPerformers} />
       </div>
-      <div className="bg-white/5 border border-white/10 rounded-lg p-6 backdrop-blur-sm overflow-auto">
-        <OrganizationChart />
-      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <PayrollPanel
+        loading={payrollLoading}
+        error={payrollError}
+        payrollData={payrollData}
+      />
+      <QuickActions />
+      <TopPerformersCard performers={topPerformers} />
     </div>
   );
 };
 
-/**
- * AdminDashboard - Main admin dashboard view with real employee data
- */
-const AdminDashboard = ({ onLogout, userName, userRole }: LayoutProps) => {
-  const { totalEmployees, presentToday, overallKPI, kpiTrend, topPerformers } =
-    useDashboardStats();
+const OrganizationChartSection = () => (
+  <div className="mt-8">
+    <div className="mb-4">
+      <h2 className="text-xl font-bold text-white">Organization Structure</h2>
+    </div>
+    <div className="bg-white/5 border border-white/10 rounded-lg p-6 backdrop-blur-sm overflow-auto">
+      <OrganizationChart />
+    </div>
+  </div>
+);
 
-  // Update dashboard stats with real-time data
-  const updatedStats = {
-    ...dashboardStats,
-    totalEmployees,
-    todayAttendance: presentToday,
-    averageKPI: overallKPI,
+const AdminDashboard = ({ onLogout, userName, userRole }: LayoutProps) => {
+  const canSeeSupervisorDashboard = hasRequiredRole(userRole, ["SUPERVISOR"]);
+  const canSeePayroll = hasRequiredRole(userRole, ["SUPERADMIN"]);
+
+  const overview = useDashboardOverview({
+    enabled: canSeeSupervisorDashboard,
+    months: 12,
+  });
+
+  const payroll = usePayrollByDepartment({ enabled: canSeePayroll });
+
+  const stats: DashboardStats = {
+    totalEmployees: overview.data?.totalEmployees ?? 0,
+    todayAttendance: overview.data?.todayAttendance ?? 0,
+    averageKPI: overview.data?.averageKpi ?? 0,
+    currentPayroll: 0,
   };
 
   return (
@@ -152,12 +206,44 @@ const AdminDashboard = ({ onLogout, userName, userRole }: LayoutProps) => {
       onLogout={onLogout}
     >
       <DashboardHeader />
-      <StatsGrid stats={updatedStats} />
-      <ChartsSection kpiData={kpiTrend} />
-      <BottomSection topPerformers={topPerformers} />
-      <OrganizationChartSection />
+
+      {!canSeeSupervisorDashboard ? (
+        <OrganizationChartSection />
+      ) : overview.isLoading ? (
+        <div className="text-center py-8 text-lightGrey">
+          Loading dashboard...
+        </div>
+      ) : overview.error ? (
+        <>
+          <div className="text-center py-8 text-red-400">
+            {overview.error instanceof Error
+              ? overview.error.message
+              : "Failed to load dashboard"}
+          </div>
+          <OrganizationChartSection />
+        </>
+      ) : (
+        <>
+          <StatsGrid stats={stats} />
+          <ChartsSection
+            attendance={overview.data?.monthlyAttendance ?? []}
+            kpiData={overview.data?.kpiTrend ?? []}
+          />
+          <BottomSection
+            canSeePayroll={canSeePayroll}
+            payrollData={payroll.data}
+            payrollLoading={payroll.isLoading}
+            payrollError={
+              payroll.error instanceof Error ? payroll.error.message : null
+            }
+            topPerformers={overview.data?.topPerformers ?? []}
+          />
+          <OrganizationChartSection />
+        </>
+      )}
     </DashboardLayout>
   );
 };
 
 export { AdminDashboard as DashboardPage };
+

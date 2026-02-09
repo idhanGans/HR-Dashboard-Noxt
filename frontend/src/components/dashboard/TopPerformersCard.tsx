@@ -2,17 +2,17 @@ import { Card } from "../Card";
 import { AvatarDisplay } from "../AvatarDisplay";
 import { TrendingUp } from "lucide-react";
 import { useAvatarUrl } from "../../hooks/useAvatar";
-import type { Employee } from "../../types";
+import type { DashboardTopPerformerDto } from "../../types/api";
 
 interface TopPerformersCardProps {
-  performers?: Employee[];
+  performers?: DashboardTopPerformerDto[];
 }
 
 /**
  * PerformerAvatar - Avatar component that fetches URL from backend
  */
-const PerformerAvatar = ({ employeeId, name }: { employeeId: number; name: string }) => {
-  const { avatarUrl } = useAvatarUrl(employeeId);
+const PerformerAvatar = ({ userId, name }: { userId: number; name: string }) => {
+  const { avatarUrl } = useAvatarUrl(userId);
   return <AvatarDisplay src={avatarUrl} name={name} size="sm" />;
 };
 
@@ -51,7 +51,7 @@ export const TopPerformersCard = ({
       <div className="space-y-4">
         {performers.map((emp, index) => (
           <div
-            key={emp.id}
+            key={emp.userId}
             className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-colors"
           >
             {/* Rank Badge */}
@@ -68,34 +68,34 @@ export const TopPerformersCard = ({
             </div>
 
             {/* Avatar */}
-            <PerformerAvatar employeeId={emp.id} name={emp.name} />
+            <PerformerAvatar userId={emp.userId} name={emp.userName} />
 
               {/* Employee Info */}
               <div className="flex-1">
-                <p className="text-white font-semibold">{emp.name}</p>
+                <p className="text-white font-semibold">{emp.userName}</p>
                 <p className="text-xs text-gray-400">
-                  {emp.department} • {emp.role}
+                  {emp.departmentName ?? "—"} • {emp.role ?? "—"}
                 </p>
               </div>
 
               {/* KPI Score */}
               <div className="text-left sm:text-right">
                 <div className="text-2xl font-bold text-white">
-                  {emp.kpi?.currentScore?.toFixed(1)}
+                  {emp.averageScore.toFixed(1)}
                 </div>
                 <div className="text-xs text-gray-400">KPI Score</div>
               </div>
 
               {/* Trend */}
-              {emp.kpi?.trend && (
+              {emp.trend && (
                 <div
                   className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                    emp.kpi.trend.startsWith("+")
+                    emp.trend.startsWith("+")
                       ? "bg-green-500/20 text-green-400"
                       : "bg-red-500/20 text-red-400"
                   }`}
                 >
-                  {emp.kpi.trend}
+                  {emp.trend}
                 </div>
               )}
             </div>

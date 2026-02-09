@@ -16,3 +16,15 @@ export type PayrollApiResponse = {
   createdAt: string;
   updatedAt: string;
 };
+
+export type DepartmentPayrollTotalDto = {
+  organizationId: number;
+  organizationName: string;
+  totalNetPay: number;
+};
+
+export type PayrollTotalDto = {
+  month: number;
+  year: number;
+  totalNetPay: number;
+};
