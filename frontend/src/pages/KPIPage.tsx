@@ -1,61 +1,45 @@
 import { DashboardLayout } from "../components";
 import {
-  OverallKPICard,
-  KPITrendChartFull,
-  DepartmentKPIChart,
-  DepartmentPerformanceList,
-  PerformanceInsights,
-  KPIHeader,
-} from "../components/kpi";
-import { useKPIData } from "../hooks/useKPIData";
-import type { DepartmentKPIStats } from "../types/employee";
+  ActivePeriodBanner,
+  KPIStatCard,
+  KPIFilterBar,
+  KPITrackerTrendChart,
+  KPIDataTable,
+  KPIEditModal,
+  ConfirmDeleteModal,
+} from "../components/kpi-tracker";
+import { KPIHeader } from "../components/kpi";
+import {
+  useActivePeriod,
+  useKPISummary,
+  useKPITrend,
+  useKPIPeriods,
+  useKPIDepartments,
+  useEmployeeKPIList,
+} from "../hooks/useKPITracker";
 import type { LayoutProps } from "../types/auth";
+import { useAuth } from "../contexts/AuthContext";
 
 /**
- * ComparisonSection - Department KPI comparison grid
- */
-const ComparisonSection = ({
-  chartData,
-  listData,
-}: {
-  chartData: { name: string; score: number; target: number; trend?: string }[];
-  listData: DepartmentKPIStats[];
-}) => (
-  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-    <DepartmentKPIChart data={chartData} />
-    <DepartmentPerformanceList departments={listData} />
-  </div>
-);
-
-/**
- * KPIPage - KPI tracking page with backend data
+ * KPIPage - Full KPI Tracker page with filters, chart, table, and modals
  */
 export const KPIPage = ({ onLogout, userName, userRole }: LayoutProps) => {
+  const { auth } = useAuth();
+
+  // ── Data hooks ──────────────────────────────────────────────────────────────
+  const { activePeriod, isLoading: periodLoading } = useActivePeriod();
+  const { overallScore, isLoading: summaryLoading } = useKPISummary();
+  const { trendData, isLoading: trendLoading } = useKPITrend();
+  const { periods, isLoading: periodsLoading } = useKPIPeriods();
+  const { departments, isLoading: departmentsLoading } = useKPIDepartments();
   const {
-    overallScore,
-    trendData,
-    departmentStats,
-    performanceInsights,
-    loading,
-    error,
-  } = useKPIData();
-
-  // Calculate trend from last period
-  const lastTwoMonths = trendData.slice(-2);
-  const trend =
-    lastTwoMonths.length === 2
-      ? `↑ ${(lastTwoMonths[1].value - lastTwoMonths[0].value).toFixed(
-          1
-        )} points from last month`
-      : "N/A";
-
-  // Format department data for charts
-  const departmentChartData = departmentStats.map((dept) => ({
-    name: dept.department,
-    score: dept.score,
-    target: dept.target,
-    trend: dept.trend,
-  }));
+    rows,
+    total,
+    totalPages,
+    currentPage,
+    isLoading: tableLoading,
+    error: tableError,
+  } = useEmployeeKPIList();
 
   return (
     <DashboardLayout
@@ -63,33 +47,49 @@ export const KPIPage = ({ onLogout, userName, userRole }: LayoutProps) => {
       userName={userName}
       onLogout={onLogout}
     >
+      {/* Page Header */}
       <KPIHeader />
 
-      {error && (
-        <div className="mb-4 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400">
-          {error}
+      {/* Active Period Banner */}
+      <ActivePeriodBanner
+        activePeriod={activePeriod}
+        isLoading={periodLoading}
+      />
+
+      {/* Overall KPI Summary Card */}
+      <KPIStatCard score={overallScore} isLoading={summaryLoading} />
+
+      {/* Filters Section */}
+      <KPIFilterBar
+        departments={departments}
+        periods={periods}
+        isLoading={periodsLoading || departmentsLoading}
+      />
+
+      {/* KPI Trend Chart */}
+      <KPITrackerTrendChart data={trendData} isLoading={trendLoading} />
+
+      {/* Error Banner */}
+      {tableError && (
+        <div className="mb-4 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm">
+          {tableError}
         </div>
       )}
 
-      {loading ? (
-        <div className="flex items-center justify-center py-20">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-          <span className="ml-3 text-gray-400">Loading data...</span>
-        </div>
-      ) : (
-        <>
-          <OverallKPICard score={overallScore} trend={trend} />
+      {/* KPI Data Table */}
+      <KPIDataTable
+        rows={rows}
+        total={total}
+        totalPages={totalPages}
+        currentPage={currentPage}
+        isLoading={tableLoading}
+        userRole={userRole}
+        currentUserId={auth.userId ? Number(auth.userId) : undefined}
+      />
 
-          <KPITrendChartFull data={trendData} />
-
-          <ComparisonSection
-            chartData={departmentChartData}
-            listData={departmentStats}
-          />
-
-          <PerformanceInsights insights={performanceInsights} />
-        </>
-      )}
+      {/* Modals */}
+      <KPIEditModal userRole={userRole} />
+      <ConfirmDeleteModal userRole={userRole} />
     </DashboardLayout>
   );
 };
