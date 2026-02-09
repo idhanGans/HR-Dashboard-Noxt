@@ -33,6 +33,9 @@ export * from "./skeletons";
 // KPI Components
 export * from "./kpi";
 
+// KPI Tracker Components
+export * from "./kpi-tracker";
+
 // Hiring Components
 export * from "./hiring";
 

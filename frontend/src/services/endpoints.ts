@@ -34,6 +34,15 @@ export const KPI_PERIODS_CURRENT = "/kpi/periods/current";
 // KPI Metrics
 export const KPI_METRICS_LIST = "/kpi/metrics";
 
+// KPI Targets
+export const KPI_TARGETS_LIST = "/kpi/targets";
+export const KPI_TARGETS_BY_ID = "/kpi/targets/:id";
+
+// KPI Periods
+export const KPI_PERIODS_LIST = "/kpi/periods";
+
+// KPI Scores
+export const KPI_SCORES_BY_ID = "/kpi/scores/:id";
 
 // Attendance
 export const ATTENDANCE_CHECK_IN = "/attendance/records/check-in";
@@ -43,7 +52,15 @@ export const ATTENDANCE_RECORDS_SELF = "/attendance/records/me";
 
 export const ATTENDANCE_LEAVES = "/attendance/leaves";
 export const ATTENDANCE_LEAVES_BALANCE = "/attendance/leaves/balance";
-export const ATTENDANCE_LEAVES_RECENT_APPROVALS = "/attendance/leaves/recent-approvals";
+export const ATTENDANCE_LEAVES_RECENT_APPROVALS =
+  "/attendance/leaves/recent-approvals";
 export const ATTENDANCE_LEAVES_SELF = "/attendance/leaves/me";
 export const ATTENDANCE_LEAVES_APPROVE = "/attendance/leaves/:id/approve";
 export const ATTENDANCE_LEAVES_REJECT = "/attendance/leaves/:id/reject";
+
+// Organizations / Departments
+export const ORGANIZATIONS_LIST = "/organizations";
+export const ORGANIZATIONS_CREATE = "/organizations";
+export const ORGANIZATIONS_BY_ID = "/organizations/:id";
+export const ORGANIZATIONS_UPDATE = "/organizations/:id";
+export const ORGANIZATIONS_DELETE = "/organizations/:id";
