@@ -56,6 +56,7 @@ export class DashboardService {
     return this.prisma.user.count({
       where: {
         employmentType: { not: EmploymentType.FORMER },
+        role: { in: [Role.EMPLOYEE, Role.SUPERVISOR] },
       },
     });
   }
@@ -71,6 +72,7 @@ export class DashboardService {
         status: { in: [AttendanceStatus.PRESENT, AttendanceStatus.LATE] },
         user: {
           employmentType: { not: EmploymentType.FORMER },
+          role: { in: [Role.EMPLOYEE, Role.SUPERVISOR] },
         },
       },
     });
@@ -195,6 +197,7 @@ export class DashboardService {
           checkInAt: { gte: startOfMonth, lte: endOfMonth },
           user: {
             employmentType: { not: EmploymentType.FORMER },
+            role: { in: [Role.EMPLOYEE, Role.SUPERVISOR] },
           },
         },
         _count: { _all: true },
