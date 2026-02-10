@@ -26,12 +26,18 @@ export class PayrollStatsService {
       SELECT
         o.id AS "organizationId",
         o.name AS "organizationName",
-        COALESCE(SUM(p."baseSalary"), 0)
+        (
+          COALESCE(SUM(p."baseSalary"), 0)
           + COALESCE(SUM(p."allowance"), 0)
-          - COALESCE(SUM(p."tax"), 0)
-          - COALESCE(SUM(p."insurance"), 0)
-          - COALESCE(SUM(p."pensionFund"), 0)
-          - COALESCE(SUM(p."otherDeductions"), 0) AS "totalNetPay"
+          + COALESCE(SUM(p."bonuses"), 0)
+          + COALESCE(SUM(p."tax"), 0)
+        )
+        - (
+          COALESCE(SUM(p."tax"), 0)
+          + COALESCE(SUM(p."insurance"), 0)
+          + COALESCE(SUM(p."pensionFund"), 0)
+          + COALESCE(SUM(p."otherDeductions"), 0)
+        ) AS "totalNetPay"
       FROM "Organization" o
       LEFT JOIN "User" u ON u."organizationId" = o.id
       LEFT JOIN "Payroll" p
