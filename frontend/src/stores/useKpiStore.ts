@@ -175,11 +175,19 @@ export interface UseKpiStoreState {
   addKpiEvaluation: (evaluation: KpiEvaluation) => void;
   updateKpiEvaluation: (evaluation: KpiEvaluation) => void;
   deleteKpiEvaluation: (evaluationId: string) => void;
-  getEmployeeKpi: (employeeId: string, periodId: string) => KpiEvaluation | null;
+  getEmployeeKpi: (
+    employeeId: string,
+    periodId: string,
+  ) => KpiEvaluation | null;
   saveKpiEvaluation: (
     employeeId: string,
     metrics: MetricScore[],
-  ) => { success: boolean; error?: string; evaluationId?: string; action?: "created" | "updated" };
+  ) => {
+    success: boolean;
+    error?: string;
+    evaluationId?: string;
+    action?: "created" | "updated";
+  };
 
   // Filter actions
   setFilters: (filters: Partial<KpiFilters>) => void;
@@ -263,17 +271,23 @@ export const useKpiStore = create<UseKpiStoreState>()(
         if (!activePeriod) {
           return {
             success: false,
-            error: "No active evaluation period exists. Please create a period first.",
+            error:
+              "No active evaluation period exists. Please create a period first.",
           };
         }
 
         // 2. Calculate average score
         const totalScore = metrics.reduce((sum, m) => sum + m.score, 0);
         const averageScore =
-          metrics.length > 0 ? parseFloat((totalScore / metrics.length).toFixed(2)) : 0;
+          metrics.length > 0
+            ? parseFloat((totalScore / metrics.length).toFixed(2))
+            : 0;
 
         // 3. Determine status based on average
-        let status: "needs-improvement" | "meets-expectations" | "exceeds-expectations";
+        let status:
+          | "needs-improvement"
+          | "meets-expectations"
+          | "exceeds-expectations";
         if (averageScore < 5) {
           status = "needs-improvement";
         } else if (averageScore < 8) {
@@ -474,7 +488,7 @@ export const useKpiStore = create<UseKpiStoreState>()(
     }),
     {
       name: "kpi-store",
-      version: 1,
+      version: 2, // Bumped version to force reset after adding month/year to Period type
       partialize: (state) => ({
         periods: state.periods,
         evaluations: state.evaluations,

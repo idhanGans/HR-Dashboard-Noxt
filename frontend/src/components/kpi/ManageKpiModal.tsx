@@ -110,7 +110,9 @@ export const ManageKpiModal = ({
     // Get active period validation
     const activePeriod = getActivePeriod();
     if (!activePeriod) {
-      setSaveError("No active evaluation period exists. Please create a period first.");
+      setSaveError(
+        "No active evaluation period exists. Please create a period first.",
+      );
       return;
     }
 
@@ -126,7 +128,7 @@ export const ManageKpiModal = ({
     if (result.success) {
       const action = result.action === "updated" ? "updated" : "created";
       setSaveSuccess(`KPI evaluation ${action} successfully!`);
-      
+
       // Close modal after short delay to show success message
       setTimeout(() => {
         handleClose();
@@ -337,9 +339,7 @@ export const ManageKpiModal = ({
         <div className="flex gap-3">
           <button
             onClick={handleSave}
-            disabled={
-              !selectedEmployeeId || noActivePeriod || !!saveSuccess
-            }
+            disabled={!selectedEmployeeId || noActivePeriod || !!saveSuccess}
             className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg font-medium transition"
           >
             Save KPI
