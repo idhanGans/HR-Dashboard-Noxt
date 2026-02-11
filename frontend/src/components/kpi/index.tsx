@@ -4,3 +4,7 @@ export { DepartmentKPIChart } from "./DepartmentKPIChart";
 export { DepartmentPerformanceList } from "./DepartmentPerformanceList";
 export { PerformanceInsights } from "./PerformanceInsights";
 export { KPIHeader } from "./KPIHeader";
+export { ManageKpiModal } from "./ManageKpiModal";
+export { KpiFilters } from "./KpiFilters";
+export { KpiTable } from "./KpiTable";
+export { KpiTrendChart } from "./KpiTrendChart";

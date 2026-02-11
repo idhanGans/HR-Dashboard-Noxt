@@ -1,37 +1,28 @@
 /**
- * KPIPage - Enhanced KPI Tracker Page (Improved Version)
+ * KpiTrackerPage - Enhanced KPI Tracker Page
  * Full-featured KPI management with filters, trends, tables, and modals
  * Uses local state management with Zustand and localStorage persistence
- *
- * Features:
- * - Real-time KPI filtering by employee, department, period, status
- * - Interactive 6-month trend chart with Recharts
- * - SuperAdmin control for add/edit/delete KPI evaluations
- * - Persistent local storage for KPI data
- * - Responsive dark theme UI
  */
 
 import { useState, useMemo } from "react";
 import { DashboardLayout } from "../components";
-import {
-  KpiFilters,
-  KpiTable,
-  KpiTrendChart,
-  ManageKpiModal,
-} from "../components/kpi";
+import { KpiFilters } from "../components/kpi/KpiFilters";
+import { KpiTable } from "../components/kpi/KpiTable";
+import { KpiTrendChart } from "../components/kpi/KpiTrendChart";
+import { ManageKpiModal } from "../components/kpi/ManageKpiModal";
 import { useKpiStore } from "../stores/useKpiStore";
 import type { LayoutProps } from "../types/auth";
 
-interface OverallKpiCardProps {
+interface OverallKpiSectionProps {
   score: number;
   isLoading?: boolean;
 }
 
 /**
- * Overall Company KPI Card Component
- * Displays animated score and status with color-coded styling
+ * Overall Company KPI Card
+ * Displays animated score and status
  */
-const OverallKpiCard = ({ score, isLoading }: OverallKpiCardProps) => {
+const OverallKpiCard = ({ score, isLoading }: OverallKpiSectionProps) => {
   const getStatusLabel = (score: number) => {
     if (score >= 8) return "Excellent";
     if (score >= 6) return "Good";
@@ -86,12 +77,10 @@ const OverallKpiCard = ({ score, isLoading }: OverallKpiCardProps) => {
           )}
         </div>
 
-        {/* Icon Box */}
+        {/* Icon */}
         <div className="flex-shrink-0">
           <div
-            className={`w-20 h-20 rounded-xl flex items-center justify-center ${getCardBgColor(
-              score,
-            )}`}
+            className={`w-20 h-20 rounded-xl flex items-center justify-center ${getCardBgColor(score)}`}
           >
             <svg
               className={`w-10 h-10 ${getStatusColor(score)}`}
@@ -114,7 +103,7 @@ const OverallKpiCard = ({ score, isLoading }: OverallKpiCardProps) => {
 };
 
 /**
- * Page Header with Add KPI Button
+ * Page Header with Add KPI button
  */
 interface PageHeaderProps {
   userRole: string;
@@ -159,14 +148,18 @@ const PageHeader = ({ userRole, onAddKpi }: PageHeaderProps) => {
 };
 
 /**
- * Main KPI Page Component
+ * Main KPI Tracker Page
  */
-export const KPIPage = ({ onLogout, userName, userRole }: LayoutProps) => {
+export const KpiTrackerPage = ({
+  onLogout,
+  userName,
+  userRole,
+}: LayoutProps) => {
   const { getCompanyAverage, openManageModal } = useKpiStore();
 
   const [tableLoading] = useState(false);
 
-  // Compute company average for display
+  // Compute company average
   const companyAverage = useMemo(
     () => getCompanyAverage(),
     [getCompanyAverage],
@@ -186,13 +179,13 @@ export const KPIPage = ({ onLogout, userName, userRole }: LayoutProps) => {
         {/* Page Header */}
         <PageHeader userRole={userRole} onAddKpi={handleAddKpi} />
 
-        {/* Overall Company KPI Card */}
+        {/* Overall Company KPI */}
         <OverallKpiCard score={companyAverage} isLoading={false} />
 
         {/* Filters Section */}
         <KpiFilters />
 
-        {/* KPI Trend Chart (6 Months) */}
+        {/* KPI Trend Chart */}
         <KpiTrendChart isLoading={false} height={350} />
 
         {/* KPI Data Table */}
