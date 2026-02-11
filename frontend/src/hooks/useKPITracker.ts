@@ -294,8 +294,9 @@ export const useKPIScoreUpdate = () => {
     mutationFn: ({ id, score }: { id: number; score: number }) =>
       kpiTrackerService.updateScore(id, { score }),
     onSuccess: () => {
-      // Invalidate all tracker queries to refetch
+      // Invalidate all tracker + dashboard queries to refetch
       queryClient.invalidateQueries({ queryKey: kpiTrackerKeys.all });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     },
   });
 
@@ -327,6 +328,7 @@ export const useKPIScoreDelete = () => {
     mutationFn: (id: number) => kpiTrackerService.deleteScore(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: kpiTrackerKeys.all });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     },
   });
 

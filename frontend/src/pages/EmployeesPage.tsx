@@ -15,6 +15,7 @@ import {
 import { useEmployeeManagement } from "../hooks/useEmployeeManagement";
 import { useAuth } from "../contexts/AuthContext";
 import type { LayoutProps } from "../types/auth";
+import { hasRequiredRole } from "../utils/roles";
 
 /**
  * EmployeesPage - Employee management page with add/edit and employment type controls
@@ -25,6 +26,7 @@ export const EmployeesPage = ({
   userRole,
 }: LayoutProps) => {
   const { auth } = useAuth();
+  const canManagePayroll = hasRequiredRole(userRole, ["SUPERADMIN"]);
 
   const {
     filteredEmployees,
@@ -102,6 +104,7 @@ export const EmployeesPage = ({
           onMarkFormer={handleMarkFormer}
           onManageKPI={handleOpenKPI}
           onManagePayroll={handleOpenPayroll}
+          canManagePayroll={canManagePayroll}
         />
       )}
 

@@ -16,6 +16,7 @@ export const PAYROLL_EMPLOYEE_LIST = "/users";
 export const PAYROLL_BY_PERIOD = "/payroll/:userId";
 export const PAYROLL_UPDATE = "/payroll/:userId";
 export const PAYROLL_PAYSLIP = "/payroll/:userId/payslip";
+export const PAYROLL_STATS_DEPARTMENT = "/payroll/stats/department";
 
 // KPI Statistics
 export const KPI_STATISTICS_OVERALL = "/kpi/statistics/overall";
@@ -43,6 +44,9 @@ export const KPI_PERIODS_LIST = "/kpi/periods";
 
 // KPI Scores
 export const KPI_SCORES_BY_ID = "/kpi/scores/:id";
+// Organization Chart
+export const ORG_CHART_TREE = "/org-chart/tree";
+export const ORG_CHART_NODES = "/org-chart/nodes";
 
 // Attendance
 export const ATTENDANCE_CHECK_IN = "/attendance/records/check-in";
@@ -64,3 +68,6 @@ export const ORGANIZATIONS_CREATE = "/organizations";
 export const ORGANIZATIONS_BY_ID = "/organizations/:id";
 export const ORGANIZATIONS_UPDATE = "/organizations/:id";
 export const ORGANIZATIONS_DELETE = "/organizations/:id";
+
+// Dashboard
+export const DASHBOARD_OVERVIEW = "/dashboard/overview";

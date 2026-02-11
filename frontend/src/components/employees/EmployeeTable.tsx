@@ -32,6 +32,7 @@ interface EmployeeTableProps {
   onMarkFormer: (employee: Employee) => void;
   onManageKPI: (employee: Employee) => void;
   onManagePayroll: (employee: Employee) => void;
+  canManagePayroll?: boolean;
 }
 
 /**
@@ -48,6 +49,7 @@ export const EmployeeTable = ({
   onMarkFormer,
   onManageKPI,
   onManagePayroll,
+  canManagePayroll = true,
 }: EmployeeTableProps) => {
   const renderCellValue = (value: unknown) => {
     if (value === null || value === undefined) return "";
@@ -175,16 +177,18 @@ export const EmployeeTable = ({
               </button>
 
               {/* Payroll Option */}
-              <button
-                onClick={() => {
-                  onManagePayroll(row);
-                  setOpenMenuId(null);
-                }}
-                className="w-full px-5 py-3 text-left text-sm text-white font-medium hover:bg-white/35 flex items-center gap-3 transition-all duration-200"
-              >
-                <DollarSign size={18} className="text-green-400" />
-                <span>Manage Payroll</span>
-              </button>
+              {canManagePayroll && (
+                <button
+                  onClick={() => {
+                    onManagePayroll(row);
+                    setOpenMenuId(null);
+                  }}
+                  className="w-full px-5 py-3 text-left text-sm text-white font-medium hover:bg-white/35 flex items-center gap-3 transition-all duration-200"
+                >
+                  <DollarSign size={18} className="text-green-400" />
+                  <span>Manage Payroll</span>
+                </button>
+              )}
 
               {/* Divider */}
               {row.employmentType !== "FORMER" && (
