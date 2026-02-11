@@ -36,7 +36,7 @@ export const DepartmentSelect = ({
     return departments
       .filter((dept) => dept.status === "ACTIVE")
       .map((dept) => ({
-        value: dept.name,
+        value: dept.id,
         label: dept.name,
       }));
   }, [departments]);

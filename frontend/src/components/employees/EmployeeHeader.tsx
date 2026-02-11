@@ -10,7 +10,7 @@ import { DepartmentSelect } from "./department";
  * @param {Function} onAddClick - Callback when add button is clicked
  * @param {string} userRole - Current user's role
  * @param {Function} onManageDepartments - Callback to open department management
- * @param {string | null} departmentFilter - Current department filter value
+ * @param {number | null} departmentFilter - Current department filter value
  * @param {Function} onDepartmentFilterChange - Callback when department filter changes
  */
 export const EmployeeHeader = ({
@@ -27,7 +27,7 @@ export const EmployeeHeader = ({
   onAddClick: () => void;
   userRole?: string;
   onManageDepartments?: () => void;
-  departmentFilter?: string | null;
+  departmentFilter?: number | null;
   onDepartmentFilterChange?: (value: string | number | null) => void;
 }) => {
   return (

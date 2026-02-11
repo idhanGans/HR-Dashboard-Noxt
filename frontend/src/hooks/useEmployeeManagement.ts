@@ -5,6 +5,7 @@ import { getInitials } from "../utils/utils";
 import { employeeService } from "../services/employee";
 import { payrollService } from "../services/payrollService";
 import { useDepartmentStore } from "../stores/departmentStore";
+import { useDepartments } from "./useDepartments";
 import type { Employee, EmployeeForm, PayrollFormData } from "../types";
 import type {
   UserApiResponse,
@@ -42,6 +43,7 @@ const EMPTY_FORM: EmployeeForm = {
   id: null,
   name: "",
   department: "",
+  departmentId: null,
   role: "",
   email: "",
   phone: "",
@@ -78,6 +80,7 @@ const mapUserToEmployee = (user: UserApiResponse): Employee => ({
   name: user.fullName,
   email: user.email,
   department: user.organization?.name ?? "",
+  departmentId: user.organizationId ?? null,
   role: user.position ?? "",
   phone: user.phoneNumber ?? "",
   employmentType: user.employmentType,
@@ -116,6 +119,7 @@ const mapFormToCreateRequest = (form: EmployeeForm): CreateUserRequest => ({
     | "PERMANENT"
     | "TEMPORARY"
     | "FORMER",
+  organizationId: form.departmentId ?? undefined,
   taxNumber: form.npwp ?? undefined,
   identityNumber: form.ktp ?? undefined,
   startDate: form.startDate
@@ -144,6 +148,7 @@ const mapFormToUpdateRequest = (form: EmployeeForm): UpdateUserRequest => ({
     | "TEMPORARY"
     | "FORMER"
     | undefined,
+  organizationId: form.departmentId ?? null,
   taxNumber: form.npwp ?? undefined,
   identityNumber: form.ktp ?? undefined,
   startDate: form.startDate
@@ -179,7 +184,17 @@ export const useEmployeeManagement = (options?: { enabled?: boolean }) => {
   const [debouncedSearch] = useDebounce(search, 1000);
 
   // Department filter state
-  const [departmentFilter, setDepartmentFilter] = useState<string | null>(null);
+  const [departmentFilter, setDepartmentFilter] = useState<number | null>(null);
+
+  // Department list for name-to-id resolution
+  const { data: departments = [] } = useDepartments();
+  const departmentIdByName = useMemo(() => {
+    const map = new Map<string, number>();
+    departments.forEach((dept) => {
+      map.set(dept.name, dept.id);
+    });
+    return map;
+  }, [departments]);
 
   // Department management modal
   const {
@@ -345,7 +360,7 @@ export const useEmployeeManagement = (options?: { enabled?: boolean }) => {
   // Apply department filter on client side
   const filteredEmployees = useMemo(() => {
     if (!departmentFilter) return employeeList;
-    return employeeList.filter((emp) => emp.department === departmentFilter);
+    return employeeList.filter((emp) => emp.departmentId === departmentFilter);
   }, [employeeList, departmentFilter]);
   const statistics = statisticsQuery.data ?? null;
 
@@ -397,16 +412,27 @@ export const useEmployeeManagement = (options?: { enabled?: boolean }) => {
       alert("Please fill in name and email.");
       return;
     }
+    const resolvedDepartmentId =
+      form.departmentId ?? departmentIdByName.get(form.department);
+    if (!resolvedDepartmentId) {
+      alert("Please select a department.");
+      return;
+    }
+
+    const formWithDepartment = {
+      ...form,
+      departmentId: resolvedDepartmentId,
+    };
 
     try {
       if (mode === "add") {
-        const createRequest = mapFormToCreateRequest(form);
+        const createRequest = mapFormToCreateRequest(formWithDepartment);
         await createMutation.mutateAsync(createRequest);
       } else {
         if (form.id === null) {
           return;
         }
-        const updateRequest = mapFormToUpdateRequest(form);
+        const updateRequest = mapFormToUpdateRequest(formWithDepartment);
         await updateMutation.mutateAsync({ id: form.id, data: updateRequest });
       }
       setIsModalOpen(false);

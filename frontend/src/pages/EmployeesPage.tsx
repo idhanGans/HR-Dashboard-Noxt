@@ -70,7 +70,7 @@ export const EmployeesPage = ({
   } = useEmployeeManagement();
 
   const handleDepartmentFilterChange = (value: string | number | null) => {
-    setDepartmentFilter(value ? String(value) : null);
+    setDepartmentFilter(value === null ? null : Number(value));
   };
 
   return (
