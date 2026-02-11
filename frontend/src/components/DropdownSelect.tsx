@@ -159,7 +159,9 @@ export const DropdownSelect = ({
         {...getReferenceProps()}
       >
         <span
-          className={`truncate ${selectedOption ? "text-white" : "text-gray-400"}`}
+          className={`min-w-0 flex-1 truncate ${
+            selectedOption ? "text-white" : "text-gray-400"
+          }`}
           title={displayLabel}
         >
           {displayLabel}

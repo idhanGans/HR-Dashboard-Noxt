@@ -17,10 +17,16 @@ import {
   buildDateRangeFilter,
   buildMonthFilter,
 } from "@/common/utils/date-filters";
+import { LoggerService } from "@/common/logging";
 
 @Injectable()
 export class AttendanceRecordsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private logger: LoggerService,
+  ) {
+    this.logger.setContext("AttendanceRecordsService");
+  }
 
   async checkIn(
     userId: number,
@@ -185,7 +191,7 @@ export class AttendanceRecordsService {
     return this.findAll(query, userId);
   }
 
-  async autoCheckoutOpenRecords(): Promise<void> {
+  async autoCheckoutOpenRecords(): Promise<number> {
     const now = new Date();
     const openRecords = await this.prisma.attendanceRecord.findMany({
       where: {
@@ -219,6 +225,12 @@ export class AttendanceRecordsService {
       }
     }
 
+    // Count total records to be updated
+    const totalRecords = Array.from(recordsByEndTime.values()).reduce(
+      (sum, { ids }) => sum + ids.length,
+      0,
+    );
+
     // Batch update all records with the same end-of-day time
     const updates = Array.from(recordsByEndTime.values()).map(
       ({ ids, endOfDay }) =>
@@ -234,9 +246,18 @@ export class AttendanceRecordsService {
     if (updates.length > 0) {
       await Promise.all(updates);
     }
+
+    if (totalRecords > 0) {
+      this.logger.logEvent("auto_checkout", `Auto checkout completed`, {
+        records_processed: totalRecords,
+        open_records_found: openRecords.length,
+      });
+    }
+
+    return totalRecords;
   }
 
-  async markAbsentRecords(): Promise<void> {
+  async markAbsentRecords(): Promise<number> {
     const zone = this.normalizeTimezone(DateTime.local().zoneName);
     const targetDate = DateTime.local().minus({ days: 1 }).toJSDate();
     const { startOfDay, endOfDay } = this.getDayBounds(targetDate, zone);
@@ -249,7 +270,13 @@ export class AttendanceRecordsService {
       select: { id: true },
     });
 
-    if (!users.length) return;
+    if (!users.length) {
+      this.logger.logEvent("mark_absent", "No users found for absent marking", {
+        records_processed: 0,
+        target_date: targetDate.toISOString(),
+      });
+      return 0;
+    }
 
     const userIds = users.map((user) => user.id);
     const existing = await this.prisma.attendanceRecord.findMany({
@@ -266,7 +293,15 @@ export class AttendanceRecordsService {
     const existingUserIds = new Set(existing.map((record) => record.userId));
     const absentUserIds = userIds.filter((id) => !existingUserIds.has(id));
 
-    if (!absentUserIds.length) return;
+    if (!absentUserIds.length) {
+      this.logger.logEvent("mark_absent", "No absent records to create", {
+        records_processed: 0,
+        total_users: users.length,
+        users_with_attendance: existing.length,
+        target_date: targetDate.toISOString(),
+      });
+      return 0;
+    }
 
     await this.prisma.attendanceRecord.createMany({
       data: absentUserIds.map((userId) => ({
@@ -278,6 +313,15 @@ export class AttendanceRecordsService {
         timezone: zone,
       })),
     });
+
+    this.logger.logEvent("mark_absent", `Marked absent records`, {
+      records_processed: absentUserIds.length,
+      total_users: users.length,
+      users_with_attendance: existing.length,
+      target_date: targetDate.toISOString(),
+    });
+
+    return absentUserIds.length;
   }
 
   private getDayBounds(

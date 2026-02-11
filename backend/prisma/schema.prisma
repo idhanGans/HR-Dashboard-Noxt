@@ -115,9 +115,26 @@ model User {
   createdAt               DateTime       @default(now())
   updatedAt               DateTime       @updatedAt
   payrolls                Payroll[]
+  orgChartNodes           OrgChartNode[]
 
   @@index([organizationId])
   @@index([email])
+}
+
+model OrgChartNode {
+  id        Int            @id @default(autoincrement())
+  name      String
+  position  String?
+  parentId  Int?
+  parent    OrgChartNode?  @relation("OrgChartNodeHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children  OrgChartNode[] @relation("OrgChartNodeHierarchy")
+  userId    Int?
+  user      User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@index([parentId])
+  @@index([userId])
 }
 
 model Organization {

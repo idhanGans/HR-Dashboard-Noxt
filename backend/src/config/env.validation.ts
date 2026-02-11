@@ -1,5 +1,6 @@
 import {
   IsEnum,
+  IsIn,
   IsNotEmpty,
   IsNumber,
   IsOptional,
@@ -66,4 +67,18 @@ export class EnvironmentVariables {
   @IsString()
   @IsNotEmpty()
   SCHEDULER_TOKEN?: string;
+
+  // Logging Configuration
+  @IsString()
+  @IsIn(["error", "warn", "info", "http", "verbose", "debug", "silly"])
+  @IsOptional()
+  LOG_LEVEL?: string = "info";
+
+  @Transform(({ value }: { value: string }) =>
+    value ? parseInt(value, 10) : undefined,
+  )
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  SLOW_QUERY_THRESHOLD_MS?: number = 1000;
 }

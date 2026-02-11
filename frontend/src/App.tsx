@@ -9,6 +9,7 @@ import {
   PayrollPage,
   KPIPage,
   EmployeesPage,
+  OrganizationPage,
   HiringPage,
   SettingsPage,
 } from "./pages";
@@ -144,6 +145,20 @@ const AppRoutes = () => {
             allowedRoles={["SUPERVISOR"]}
           >
             <EmployeesPage {...layoutProps} />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/organization"
+        element={
+          <ProtectedRoute
+            isAuthenticated={auth.isAuthenticated}
+            isInitializing={auth.isInitializing}
+            userRole={auth.role}
+            allowedRoles={["SUPERVISOR"]}
+          >
+            <OrganizationPage {...layoutProps} />
           </ProtectedRoute>
         }
       />

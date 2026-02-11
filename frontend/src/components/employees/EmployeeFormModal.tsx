@@ -2,6 +2,7 @@ import { Modal } from "../Modal";
 import { Button } from "../Button";
 import { DropdownSelect } from "../DropdownSelect";
 import { DepartmentSelect } from "./department";
+import { useDepartments } from "../../hooks/useDepartments";
 import type { Dispatch, SetStateAction } from "react";
 import type { EmployeeForm } from "../../types";
 
@@ -76,6 +77,8 @@ export const EmployeeFormModal = ({
   saving = false,
   userRole = "EMPLOYEE",
 }: EmployeeFormModalProps) => {
+  const { data: departments = [] } = useDepartments();
+
   const handleChange = (field: string, value: string) => {
     onFormChange({ ...form, [field]: value });
   };
@@ -280,16 +283,24 @@ export const EmployeeFormModal = ({
                 Department <span className="text-red-400">*</span>
               </label>
               <DepartmentSelect
-                value={form.department || null}
-                onChange={(value) =>
-                  handleChange("department", value ? String(value) : "")
-                }
+                value={form.departmentId ?? null}
+                onChange={(value) => {
+                  const departmentId = value === null ? null : Number(value);
+                  const selected = departments.find(
+                    (dept) => dept.id === departmentId,
+                  );
+                  onFormChange({
+                    ...form,
+                    departmentId,
+                    department: selected?.name ?? "",
+                  });
+                }}
                 disabled={!canEditDepartment}
                 placeholder="Select Department"
                 showEmptyOption
                 ariaLabel="Select department"
               />
-              {!form.department && (
+              {!form.departmentId && (
                 <p className="text-amber-400/70 text-xs mt-1">
                   Department is required
                 </p>

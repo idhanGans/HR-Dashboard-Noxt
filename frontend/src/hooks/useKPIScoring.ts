@@ -94,6 +94,7 @@ export const useKPIScoring = () => {
           variables.periodId
         ),
       });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     },
   });
 

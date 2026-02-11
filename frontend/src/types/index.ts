@@ -53,6 +53,7 @@ export interface Employee {
   name: string;
   email?: string;
   department: string;
+  departmentId?: number | null;
   role?: string;
   position?: string;
   salary?: number;

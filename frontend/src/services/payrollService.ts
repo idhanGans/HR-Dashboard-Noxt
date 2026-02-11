@@ -128,10 +128,8 @@ const createPayrollService = () => {
     ...data
   }: UpdatePayrollParams): Promise<PayrollApiResponse> => {
     try {
-      const path = `${PAYROLL_UPDATE.replace(":userId", String(userId))}`;
+      const path = `${PAYROLL_UPDATE.replace(":userId", String(userId))}?month=${month}&year=${year}`;
       const response = await interceptedAxios.put<PayrollApiResponse>(path, {
-        month,
-        year,
         ...data,
       });
       return response.data;
