@@ -7,7 +7,9 @@ import {
   DollarSign,
   MoreVertical,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { CSSProperties } from "react";
+import { createPortal } from "react-dom";
 import { useAvatarUrl } from "../../hooks/useAvatar";
 import { DepartmentBadge } from "./department";
 import type { Employee } from "../../types";
@@ -62,10 +64,14 @@ export const EmployeeTable = ({
   const [closeTimeout, setCloseTimeout] = useState<ReturnType<
     typeof setTimeout
   > | null>(null);
+  const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
+  const [menuStyle, setMenuStyle] = useState<CSSProperties>({});
+  const menuRef = useRef<HTMLDivElement | null>(null);
 
   const handleMouseLeave = () => {
     const timeout = setTimeout(() => {
       setOpenMenuId(null);
+      setAnchorEl(null);
     }, 100);
     setCloseTimeout(timeout);
   };
@@ -76,6 +82,57 @@ export const EmployeeTable = ({
       setCloseTimeout(null);
     }
   };
+
+  useEffect(() => {
+    if (!openMenuId || !anchorEl) return;
+
+    let frameId = 0;
+    const updatePosition = () => {
+      if (!menuRef.current) return;
+
+      const menuBounds = menuRef.current.getBoundingClientRect();
+      const anchorBounds = anchorEl.getBoundingClientRect();
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      const scrollX = window.scrollX || window.pageXOffset;
+      const scrollY = window.scrollY || window.pageYOffset;
+      const maxHeight = Math.max(220, Math.floor(viewportHeight * 0.7));
+
+      let top = anchorBounds.bottom + scrollY + 6;
+      if (
+        top + menuBounds.height > scrollY + viewportHeight - 8 &&
+        anchorBounds.top + scrollY - menuBounds.height - 6 > scrollY + 8
+      ) {
+        top = anchorBounds.top + scrollY - menuBounds.height - 6;
+      }
+
+      let left = anchorBounds.right + scrollX - menuBounds.width;
+      const minLeft = scrollX + 8;
+      const maxLeft = scrollX + viewportWidth - menuBounds.width - 8;
+      if (left < minLeft) left = minLeft;
+      if (left > maxLeft) left = maxLeft;
+
+      setMenuStyle({
+        position: "absolute",
+        top,
+        left,
+        maxHeight,
+      });
+    };
+
+    const scheduleUpdate = () => {
+      frameId = window.requestAnimationFrame(updatePosition);
+    };
+
+    scheduleUpdate();
+    window.addEventListener("resize", scheduleUpdate);
+    window.addEventListener("scroll", scheduleUpdate, true);
+    return () => {
+      window.removeEventListener("resize", scheduleUpdate);
+      window.removeEventListener("scroll", scheduleUpdate, true);
+      if (frameId) window.cancelAnimationFrame(frameId);
+    };
+  }, [openMenuId, anchorEl]);
 
   const columns = [
     {
@@ -142,7 +199,15 @@ export const EmployeeTable = ({
           onMouseEnter={handleMouseEnter}
         >
           <button
-            onClick={() => setOpenMenuId(openMenuId === row.id ? null : row.id)}
+            onClick={(event) => {
+              if (openMenuId === row.id) {
+                setOpenMenuId(null);
+                setAnchorEl(null);
+                return;
+              }
+              setAnchorEl(event.currentTarget);
+              setOpenMenuId(row.id);
+            }}
             className="p-2 hover:bg-white/10 rounded transition-colors text-lightGrey hover:text-white"
             title="More options"
           >
@@ -150,73 +215,96 @@ export const EmployeeTable = ({
           </button>
 
           {/* Dropdown Menu */}
-          {openMenuId === row.id && (
-            <div className="absolute right-0 top-full mt-1 w-56 bg-gradient-to-b from-slate-900/90 to-slate-800/90 backdrop-blur-xl border border-white/40 rounded-lg shadow-2xl z-10 py-2">
-              {/* Edit Option */}
-              <button
-                onClick={() => {
-                  onEdit(row);
-                  setOpenMenuId(null);
-                }}
-                className="w-full px-5 py-3 text-left text-sm text-white font-medium hover:bg-white/35 flex items-center gap-3 transition-all duration-200"
+          {openMenuId === row.id &&
+            typeof document !== "undefined" &&
+            createPortal(
+              <div
+                ref={menuRef}
+                style={menuStyle}
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={handleMouseLeave}
+                className="w-56 bg-gradient-to-b from-slate-900/90 to-slate-800/90 backdrop-blur-xl border border-white/40 rounded-lg shadow-2xl z-50 py-2 overflow-y-auto"
               >
-                <Edit size={18} className="text-blue-300" />
-                <span>Edit Employee</span>
-              </button>
+                {/* Edit Option */}
+                <button
+                  onClick={() => {
+                    onEdit(row);
+                    setOpenMenuId(null);
+                    setAnchorEl(null);
+                  }}
+                  className="w-full px-5 py-3 text-left text-sm text-white font-medium hover:bg-white/35 flex items-center gap-3 transition-all duration-200"
+                >
+                  <Edit size={18} className="text-blue-300" />
+                  <span>Edit Employee</span>
+                </button>
 
-              {/* KPI Option */}
-              <button
-                onClick={() => {
-                  onManageKPI(row);
-                  setOpenMenuId(null);
-                }}
-                className="w-full px-5 py-3 text-left text-sm text-white font-medium hover:bg-white/35 flex items-center gap-3 transition-all duration-200"
-              >
-                <TrendingUp size={18} className="text-blue-400" />
-                <span>Manage KPI</span>
-              </button>
+                {/* KPI Option */}
+                <button
+                  onClick={() => {
+                    onManageKPI(row);
+                    setOpenMenuId(null);
+                    setAnchorEl(null);
+                  }}
+                  className="w-full px-5 py-3 text-left text-sm text-white font-medium hover:bg-white/35 flex items-center gap-3 transition-all duration-200"
+                >
+                  <TrendingUp size={18} className="text-blue-400" />
+                  <span>Manage KPI</span>
+                </button>
 
+<<<<<<< HEAD
               {/* Payroll Option */}
               {canManagePayroll && (
+=======
+                {/* Payroll Option */}
+>>>>>>> 5edcfe75b2cb88a6d75ef7ca06ae88131b0c44fb
                 <button
                   onClick={() => {
                     onManagePayroll(row);
                     setOpenMenuId(null);
+<<<<<<< HEAD
+=======
+                    setAnchorEl(null);
+>>>>>>> 5edcfe75b2cb88a6d75ef7ca06ae88131b0c44fb
                   }}
                   className="w-full px-5 py-3 text-left text-sm text-white font-medium hover:bg-white/35 flex items-center gap-3 transition-all duration-200"
                 >
                   <DollarSign size={18} className="text-green-400" />
                   <span>Manage Payroll</span>
                 </button>
+<<<<<<< HEAD
               )}
+=======
+>>>>>>> 5edcfe75b2cb88a6d75ef7ca06ae88131b0c44fb
 
-              {/* Divider */}
-              {row.employmentType !== "FORMER" && (
-                <>
-                  <div className="border-t border-white/25 my-2"></div>
+                {/* Divider */}
+                {row.employmentType !== "FORMER" && (
+                  <>
+                    <div className="border-t border-white/25 my-2"></div>
 
-                  {/* Mark Former Option */}
-                  <button
-                    onClick={() => {
-                      onMarkFormer(row);
-                      setOpenMenuId(null);
-                    }}
-                    className="w-full px-5 py-3 text-left text-sm text-red-300 font-medium hover:bg-red-900/40 flex items-center gap-3 transition-all duration-200"
-                  >
-                    <LogOut size={18} className="text-red-400" />
-                    <span>Mark as Former</span>
-                  </button>
-                </>
-              )}
-            </div>
-          )}
+                    {/* Mark Former Option */}
+                    <button
+                      onClick={() => {
+                        onMarkFormer(row);
+                        setOpenMenuId(null);
+                        setAnchorEl(null);
+                      }}
+                      className="w-full px-5 py-3 text-left text-sm text-red-300 font-medium hover:bg-red-900/40 flex items-center gap-3 transition-all duration-200"
+                    >
+                      <LogOut size={18} className="text-red-400" />
+                      <span>Mark as Former</span>
+                    </button>
+                  </>
+                )}
+              </div>,
+              document.body,
+            )}
         </div>
       ),
     },
   ];
 
   return (
-    <Card className="mb-8 overflow-hidden">
+    <Card className="mb-8 overflow-visible">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-6">
         <div>
           <h2 className="text-lg font-bold text-white">Employee Directory</h2>
@@ -227,7 +315,7 @@ export const EmployeeTable = ({
       </div>
 
       {/* Table Header */}
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto overflow-y-visible">
         <table className="w-full border-collapse">
           <thead>
             <tr className="border-b border-white/10 bg-white/5">
