@@ -3,7 +3,9 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useDebounce } from "use-debounce";
 import { getInitials } from "../utils/utils";
 import { employeeService } from "../services/employee";
+import { payrollService } from "../services/payrollService";
 import { useDepartmentStore } from "../stores/departmentStore";
+import { useDepartments } from "./useDepartments";
 import type { Employee, EmployeeForm, PayrollFormData } from "../types";
 import type {
   UserApiResponse,
@@ -41,6 +43,7 @@ const EMPTY_FORM: EmployeeForm = {
   id: null,
   name: "",
   department: "",
+  departmentId: null,
   role: "",
   email: "",
   phone: "",
@@ -77,6 +80,7 @@ const mapUserToEmployee = (user: UserApiResponse): Employee => ({
   name: user.fullName,
   email: user.email,
   department: user.organization?.name ?? "",
+  departmentId: user.organizationId ?? null,
   role: user.position ?? "",
   phone: user.phoneNumber ?? "",
   employmentType: user.employmentType,
@@ -115,6 +119,7 @@ const mapFormToCreateRequest = (form: EmployeeForm): CreateUserRequest => ({
     | "PERMANENT"
     | "TEMPORARY"
     | "FORMER",
+  organizationId: form.departmentId ?? undefined,
   taxNumber: form.npwp ?? undefined,
   identityNumber: form.ktp ?? undefined,
   startDate: form.startDate
@@ -143,6 +148,7 @@ const mapFormToUpdateRequest = (form: EmployeeForm): UpdateUserRequest => ({
     | "TEMPORARY"
     | "FORMER"
     | undefined,
+  organizationId: form.departmentId ?? null,
   taxNumber: form.npwp ?? undefined,
   identityNumber: form.ktp ?? undefined,
   startDate: form.startDate
@@ -178,7 +184,17 @@ export const useEmployeeManagement = (options?: { enabled?: boolean }) => {
   const [debouncedSearch] = useDebounce(search, 1000);
 
   // Department filter state
-  const [departmentFilter, setDepartmentFilter] = useState<string | null>(null);
+  const [departmentFilter, setDepartmentFilter] = useState<number | null>(null);
+
+  // Department list for name-to-id resolution
+  const { data: departments = [] } = useDepartments();
+  const departmentIdByName = useMemo(() => {
+    const map = new Map<string, number>();
+    departments.forEach((dept) => {
+      map.set(dept.name, dept.id);
+    });
+    return map;
+  }, [departments]);
 
   // Department management modal
   const {
@@ -201,11 +217,15 @@ export const useEmployeeManagement = (options?: { enabled?: boolean }) => {
   // Payroll modal states
   const [isPayrollModalOpen, setIsPayrollModalOpen] = useState(false);
   const [payrollForm, setPayrollForm] = useState<PayrollFormData>({
-    basicSalary: 10000000,
-    allowances: 2000000,
-    bonus: 1000000,
-    deductions: 1200000,
-    netSalary: 11800000,
+    basicSalary: 0,
+    allowances: 0,
+    bonus: 0,
+    tax: 0,
+    insurance: 0,
+    pension: 0,
+    otherDeductions: 0,
+    deductions: 0,
+    netSalary: 0,
     bankAccount: "",
     bankName: "",
     month: new Date().getMonth() + 1,
@@ -340,7 +360,7 @@ export const useEmployeeManagement = (options?: { enabled?: boolean }) => {
   // Apply department filter on client side
   const filteredEmployees = useMemo(() => {
     if (!departmentFilter) return employeeList;
-    return employeeList.filter((emp) => emp.department === departmentFilter);
+    return employeeList.filter((emp) => emp.departmentId === departmentFilter);
   }, [employeeList, departmentFilter]);
   const statistics = statisticsQuery.data ?? null;
 
@@ -392,16 +412,27 @@ export const useEmployeeManagement = (options?: { enabled?: boolean }) => {
       alert("Please fill in name and email.");
       return;
     }
+    const resolvedDepartmentId =
+      form.departmentId ?? departmentIdByName.get(form.department);
+    if (!resolvedDepartmentId) {
+      alert("Please select a department.");
+      return;
+    }
+
+    const formWithDepartment = {
+      ...form,
+      departmentId: resolvedDepartmentId,
+    };
 
     try {
       if (mode === "add") {
-        const createRequest = mapFormToCreateRequest(form);
+        const createRequest = mapFormToCreateRequest(formWithDepartment);
         await createMutation.mutateAsync(createRequest);
       } else {
         if (form.id === null) {
           return;
         }
-        const updateRequest = mapFormToUpdateRequest(form);
+        const updateRequest = mapFormToUpdateRequest(formWithDepartment);
         await updateMutation.mutateAsync({ id: form.id, data: updateRequest });
       }
       setIsModalOpen(false);
@@ -434,30 +465,83 @@ export const useEmployeeManagement = (options?: { enabled?: boolean }) => {
     queryClient.invalidateQueries({ queryKey: employeeKeys.lists() });
   };
 
-  // Payroll Management (local state only for now)
+  const payrollMutation = useMutation({
+    mutationFn: payrollService.updatePayroll,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["payroll"] });
+    },
+  });
+
+  // Payroll Management
   const handleOpenPayroll = (emp: Employee) => {
     setSelectedEmployee(emp);
+    const now = new Date();
+    const month = now.getMonth() + 1;
+    const year = now.getFullYear();
+
     setPayrollForm({
-      basicSalary: emp.payroll?.basicSalary || 10000000,
-      allowances: emp.payroll?.allowances || 2000000,
-      bonus: emp.payroll?.bonus || 1000000,
-      deductions: emp.payroll?.deductions || 1200000,
-      netSalary: emp.payroll?.netSalary || 11800000,
+      basicSalary: 0,
+      allowances: 0,
+      bonus: 0,
+      tax: 0,
+      insurance: 0,
+      pension: 0,
+      otherDeductions: 0,
+      deductions: 0,
+      netSalary: 0,
       bankAccount: emp.payroll?.bankAccount || "",
       bankName: emp.payroll?.bankName || "",
-      month: new Date().getMonth() + 1,
-      year: new Date().getFullYear(),
+      month,
+      year,
     });
     setIsPayrollModalOpen(true);
+
+    payrollService
+      .getPayroll({ userId: emp.id, month, year })
+      .then((response) => {
+        if (!response) return;
+        setPayrollForm((prev) => ({
+          ...prev,
+          basicSalary: response.baseSalary ?? 0,
+          allowances: response.allowance ?? 0,
+          bonus: response.bonuses ?? 0,
+          tax: response.tax ?? 0,
+          insurance: response.insurance ?? 0,
+          pension: response.pensionFund ?? 0,
+          otherDeductions: response.otherDeductions ?? 0,
+          deductions: response.totalDeductions ?? 0,
+          netSalary: response.netPay ?? 0,
+        }));
+      })
+      .catch((err) => {
+        console.error("Failed to fetch payroll data:", err);
+      });
   };
 
-  const handleSavePayroll = () => {
+  const handleSavePayroll = async () => {
     if (!selectedEmployee) return;
 
-    // For now, payroll is local state only
-    // When backend supports it, this would be a mutation
-    setIsPayrollModalOpen(false);
-    setSelectedEmployee(null);
+    if (payrollMutation.isPending) return;
+
+    try {
+      await payrollMutation.mutateAsync({
+        userId: selectedEmployee.id,
+        month: payrollForm.month,
+        year: payrollForm.year,
+        baseSalary: payrollForm.basicSalary,
+        allowance: payrollForm.allowances,
+        bonuses: payrollForm.bonus,
+        tax: payrollForm.tax ?? 0,
+        insurance: payrollForm.insurance ?? 0,
+        pensionFund: payrollForm.pension ?? 0,
+        otherDeductions: payrollForm.otherDeductions ?? 0,
+      });
+
+      setIsPayrollModalOpen(false);
+      setSelectedEmployee(null);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to update payroll");
+    }
   };
 
   // Manual refetch function (for external use if needed)

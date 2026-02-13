@@ -34,6 +34,7 @@ interface EmployeeTableProps {
   onMarkFormer: (employee: Employee) => void;
   onManageKPI: (employee: Employee) => void;
   onManagePayroll: (employee: Employee) => void;
+  canManagePayroll?: boolean;
 }
 
 /**
@@ -50,6 +51,7 @@ export const EmployeeTable = ({
   onMarkFormer,
   onManageKPI,
   onManagePayroll,
+  canManagePayroll = true,
 }: EmployeeTableProps) => {
   const renderCellValue = (value: unknown) => {
     if (value === null || value === undefined) return "";
@@ -249,18 +251,44 @@ export const EmployeeTable = ({
                   <span>Manage KPI</span>
                 </button>
 
+<<<<<<< HEAD
+<<<<<<< HEAD
+              {/* Payroll Option */}
+              {canManagePayroll && (
+=======
                 {/* Payroll Option */}
+>>>>>>> 5edcfe75b2cb88a6d75ef7ca06ae88131b0c44fb
+=======
+                {/* Payroll Option */}
+              {/* Payroll Option */}
+              {canManagePayroll && (
+>>>>>>> 4c6eb05a6dee5197dc6f7bb532c21a2f150d9401
                 <button
                   onClick={() => {
                     onManagePayroll(row);
                     setOpenMenuId(null);
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
                     setAnchorEl(null);
+>>>>>>> 5edcfe75b2cb88a6d75ef7ca06ae88131b0c44fb
+=======
+                    setAnchorEl(null);
+>>>>>>> 4c6eb05a6dee5197dc6f7bb532c21a2f150d9401
                   }}
                   className="w-full px-5 py-3 text-left text-sm text-white font-medium hover:bg-white/35 flex items-center gap-3 transition-all duration-200"
                 >
                   <DollarSign size={18} className="text-green-400" />
                   <span>Manage Payroll</span>
                 </button>
+<<<<<<< HEAD
+<<<<<<< HEAD
+              )}
+=======
+>>>>>>> 5edcfe75b2cb88a6d75ef7ca06ae88131b0c44fb
+=======
+              )}
+>>>>>>> 4c6eb05a6dee5197dc6f7bb532c21a2f150d9401
 
                 {/* Divider */}
                 {row.employmentType !== "FORMER" && (

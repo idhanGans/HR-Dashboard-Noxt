@@ -8,6 +8,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { Card } from "../Card";
+import { useMediaQuery } from "../../hooks/useMediaQuery";
 import type { KPITrendData } from "../../types";
 
 interface KPITrendChartProps {
@@ -24,6 +25,9 @@ export const KPITrendChart = ({
   data,
   title = "KPI Trend",
 }: KPITrendChartProps) => {
+  const isCompactLabel = useMediaQuery("(max-width: 639px)");
+  const tickFormatter = (value: string) => value.split(" ")[0] ?? value;
+
   return (
     <Card className="flex flex-col">
       <h2 className="text-lg font-bold text-white mb-4">{title}</h2>
@@ -31,7 +35,17 @@ export const KPITrendChart = ({
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data}>
             <CartesianGrid strokeDasharray="3 3" stroke="#ffffff20" />
-            <XAxis dataKey="month" stroke="#9ca3af" />
+            <XAxis
+              dataKey="month"
+              stroke="#9ca3af"
+              interval={0}
+              minTickGap={0}
+              tickMargin={8}
+              tickFormatter={tickFormatter}
+              angle={isCompactLabel ? -35 : 0}
+              textAnchor={isCompactLabel ? "end" : "middle"}
+              height={isCompactLabel ? 50 : 30}
+            />
             <YAxis stroke="#9ca3af" />
             <Tooltip
               contentStyle={{

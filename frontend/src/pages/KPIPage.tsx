@@ -1,45 +1,180 @@
+/**
+ * KPIPage - Enhanced KPI Tracker Page (Improved Version)
+ * Full-featured KPI management with filters, trends, tables, and modals
+ * Uses local state management with Zustand and localStorage persistence
+ *
+ * Features:
+ * - Real-time KPI filtering by employee, department, period, status
+ * - Interactive 6-month trend chart with Recharts
+ * - SuperAdmin control for add/edit/delete KPI evaluations
+ * - Persistent local storage for KPI data
+ * - Responsive dark theme UI
+ */
+
+import { useState, useMemo } from "react";
 import { DashboardLayout } from "../components";
 import {
-  ActivePeriodBanner,
-  KPIStatCard,
-  KPIFilterBar,
-  KPITrackerTrendChart,
-  KPIDataTable,
-  KPIEditModal,
-  ConfirmDeleteModal,
-} from "../components/kpi-tracker";
-import { KPIHeader } from "../components/kpi";
-import {
-  useActivePeriod,
-  useKPISummary,
-  useKPITrend,
-  useKPIPeriods,
-  useKPIDepartments,
-  useEmployeeKPIList,
-} from "../hooks/useKPITracker";
+  KpiFilters,
+  KpiTable,
+  KpiTrendChart,
+  ManageKpiModal,
+} from "../components/kpi";
+import { useKpiStore } from "../stores/useKpiStore";
 import type { LayoutProps } from "../types/auth";
-import { useAuth } from "../contexts/AuthContext";
+
+interface OverallKpiCardProps {
+  score: number;
+  isLoading?: boolean;
+}
 
 /**
- * KPIPage - Full KPI Tracker page with filters, chart, table, and modals
+ * Overall Company KPI Card Component
+ * Displays animated score and status with color-coded styling
+ */
+const OverallKpiCard = ({ score, isLoading }: OverallKpiCardProps) => {
+  const getStatusLabel = (score: number) => {
+    if (score >= 8) return "Excellent";
+    if (score >= 6) return "Good";
+    if (score >= 4) return "Warning";
+    return "Critical";
+  };
+
+  const getStatusColor = (score: number) => {
+    if (score >= 8) return "text-green-400";
+    if (score >= 6) return "text-blue-400";
+    if (score >= 4) return "text-yellow-400";
+    return "text-red-400";
+  };
+
+  const getCardBgColor = (score: number) => {
+    if (score >= 8) return "bg-green-500/10 border-green-500/20";
+    if (score >= 6) return "bg-blue-500/10 border-blue-500/20";
+    if (score >= 4) return "bg-yellow-500/10 border-yellow-500/20";
+    return "bg-red-500/10 border-red-500/20";
+  };
+
+  return (
+    <div
+      className={`bg-gray-800/50 border rounded-xl p-8 mb-6 backdrop-blur transition-all ${getCardBgColor(
+        score,
+      )}`}
+    >
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-gray-300 text-sm font-medium mb-2">
+            Overall Company KPI
+          </h3>
+          {isLoading ? (
+            <div className="space-y-2">
+              <div className="h-12 w-20 bg-gray-700 rounded animate-pulse" />
+              <div className="h-4 w-24 bg-gray-700 rounded animate-pulse" />
+            </div>
+          ) : (
+            <div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-5xl font-bold text-white">
+                  {score.toFixed(1)}
+                </span>
+                <span className="text-gray-400">/10</span>
+              </div>
+              <p
+                className={`text-sm font-semibold mt-2 ${getStatusColor(score)}`}
+              >
+                {getStatusLabel(score)}
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Icon Box */}
+        <div className="flex-shrink-0">
+          <div
+            className={`w-20 h-20 rounded-xl flex items-center justify-center ${getCardBgColor(
+              score,
+            )}`}
+          >
+            <svg
+              className={`w-10 h-10 ${getStatusColor(score)}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M13 7h8m0 0v8m0-8L5.228 15.228a1 1 0 00-.001 1.414l1.414 1.414a1 1 0 001.414 0L22 9"
+              />
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/**
+ * Page Header with Add KPI Button
+ */
+interface PageHeaderProps {
+  userRole: string;
+  onAddKpi: () => void;
+}
+
+const PageHeader = ({ userRole, onAddKpi }: PageHeaderProps) => {
+  const isSuperAdmin = userRole === "SUPERADMIN";
+
+  return (
+    <div className="flex items-center justify-between mb-8">
+      <div>
+        <h1 className="text-3xl font-bold text-white">KPI Tracker</h1>
+        <p className="text-gray-400 text-sm mt-1">
+          Monitor and manage employee performance metrics
+        </p>
+      </div>
+
+      {isSuperAdmin && (
+        <button
+          onClick={onAddKpi}
+          className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition flex items-center gap-2"
+        >
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 4v16m8-8H4"
+            />
+          </svg>
+          Add KPI
+        </button>
+      )}
+    </div>
+  );
+};
+
+/**
+ * Main KPI Page Component
  */
 export const KPIPage = ({ onLogout, userName, userRole }: LayoutProps) => {
-  const { auth } = useAuth();
+  const { getCompanyAverage, openManageModal } = useKpiStore();
 
-  // ── Data hooks ──────────────────────────────────────────────────────────────
-  const { activePeriod, isLoading: periodLoading } = useActivePeriod();
-  const { overallScore, isLoading: summaryLoading } = useKPISummary();
-  const { trendData, isLoading: trendLoading } = useKPITrend();
-  const { periods, isLoading: periodsLoading } = useKPIPeriods();
-  const { departments, isLoading: departmentsLoading } = useKPIDepartments();
-  const {
-    rows,
-    total,
-    totalPages,
-    currentPage,
-    isLoading: tableLoading,
-    error: tableError,
-  } = useEmployeeKPIList();
+  const [tableLoading] = useState(false);
+
+  // Compute company average for display
+  const companyAverage = useMemo(
+    () => getCompanyAverage(),
+    [getCompanyAverage],
+  );
+
+  const handleAddKpi = () => {
+    openManageModal();
+  };
 
   return (
     <DashboardLayout
@@ -47,49 +182,25 @@ export const KPIPage = ({ onLogout, userName, userRole }: LayoutProps) => {
       userName={userName}
       onLogout={onLogout}
     >
-      {/* Page Header */}
-      <KPIHeader />
+      <div className="space-y-6">
+        {/* Page Header */}
+        <PageHeader userRole={userRole} onAddKpi={handleAddKpi} />
 
-      {/* Active Period Banner */}
-      <ActivePeriodBanner
-        activePeriod={activePeriod}
-        isLoading={periodLoading}
-      />
+        {/* Overall Company KPI Card */}
+        <OverallKpiCard score={companyAverage} isLoading={false} />
 
-      {/* Overall KPI Summary Card */}
-      <KPIStatCard score={overallScore} isLoading={summaryLoading} />
+        {/* Filters Section */}
+        <KpiFilters />
 
-      {/* Filters Section */}
-      <KPIFilterBar
-        departments={departments}
-        periods={periods}
-        isLoading={periodsLoading || departmentsLoading}
-      />
+        {/* KPI Trend Chart (6 Months) */}
+        <KpiTrendChart isLoading={false} height={350} />
 
-      {/* KPI Trend Chart */}
-      <KPITrackerTrendChart data={trendData} isLoading={trendLoading} />
+        {/* KPI Data Table */}
+        <KpiTable userRole={userRole} isLoading={tableLoading} />
 
-      {/* Error Banner */}
-      {tableError && (
-        <div className="mb-4 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm">
-          {tableError}
-        </div>
-      )}
-
-      {/* KPI Data Table */}
-      <KPIDataTable
-        rows={rows}
-        total={total}
-        totalPages={totalPages}
-        currentPage={currentPage}
-        isLoading={tableLoading}
-        userRole={userRole}
-        currentUserId={auth.userId ? Number(auth.userId) : undefined}
-      />
-
-      {/* Modals */}
-      <KPIEditModal userRole={userRole} />
-      <ConfirmDeleteModal userRole={userRole} />
+        {/* Manage KPI Modal */}
+        <ManageKpiModal userRole={userRole} />
+      </div>
     </DashboardLayout>
   );
 };
