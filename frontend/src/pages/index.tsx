@@ -3,6 +3,8 @@ export { DashboardPage } from "./DashboardPage";
 export { AttendancePage } from "./AttendancePage";
 export { PayrollPage } from "./PayrollPage";
 export { KPIPage } from "./KPIPage";
+export { KpiTrackerPage } from "./KpiTrackerPage";
+export { NewKpiTrackerPage } from "./NewKpiTrackerPage";
 export { EmployeesPage } from "./EmployeesPage";
 export { OrganizationPage } from "./OrganizationPage";
 export { HiringPage } from "./HiringPage";

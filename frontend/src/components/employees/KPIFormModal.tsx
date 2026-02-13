@@ -98,12 +98,19 @@ export const KPIFormModal = ({
     setSaveError(null);
     setSaveSuccess(false);
 
+    // Validate scores are set
+    const scoreValues = Object.values(scores);
+    if (scoreValues.length === 0) {
+      setSaveError("No metrics available to score");
+      return;
+    }
+
     // Transform scores to API format
     const scoresList: MetricScoreDto[] = Object.entries(scores).map(
       ([metricId, score]) => ({
         metricId: parseInt(metricId, 10),
         score,
-      })
+      }),
     );
 
     const success = await submitScores(employee.id, scoresList);
@@ -116,7 +123,31 @@ export const KPIFormModal = ({
         handleClose();
       }, 1500);
     } else {
-      setSaveError(scoringError || "Error saving KPI scores");
+      // Provide better error message based on the error type
+      let errorMessage = "Error saving KPI scores";
+
+      if (scoringError) {
+        if (scoringError.includes("Scoring window")) {
+          errorMessage =
+            "❌ Scoring window is closed for this period. Please contact your administrator.";
+        } else if (scoringError.includes("organization")) {
+          errorMessage =
+            "❌ User organization not set up. Please ensure user has an organization assigned.";
+        } else if (scoringError.includes("supervise")) {
+          errorMessage =
+            "❌ You can only score employees from your supervised organization.";
+        } else if (scoringError.includes("not found")) {
+          errorMessage =
+            "❌ Period or metric configuration error. Please refresh and try again.";
+        } else if (scoringError.includes("inactive")) {
+          errorMessage =
+            "❌ One or more metrics are inactive. Please contact your administrator.";
+        } else {
+          errorMessage = `❌ ${scoringError}`;
+        }
+      }
+
+      setSaveError(errorMessage);
     }
   };
 
@@ -196,7 +227,9 @@ export const KPIFormModal = ({
           <div className="bg-white/5 border border-white/10 rounded-xl p-4">
             <div className="flex justify-between items-center">
               <span className="text-gray-300 text-sm">Average score</span>
-              <span className="text-2xl font-bold text-white">{averageScore}</span>
+              <span className="text-2xl font-bold text-white">
+                {averageScore}
+              </span>
             </div>
             <p className="text-xs text-gray-500 mt-1">
               Automatically calculated from all metrics
@@ -217,7 +250,9 @@ export const KPIFormModal = ({
                     {metric.name}
                   </label>
                   {metric.description && (
-                    <p className="text-xs text-gray-500 mb-2">{metric.description}</p>
+                    <p className="text-xs text-gray-500 mb-2">
+                      {metric.description}
+                    </p>
                   )}
                   <div className="flex items-center gap-4">
                     <input
@@ -226,7 +261,9 @@ export const KPIFormModal = ({
                       max="10"
                       step="0.1"
                       value={scores[metric.id] ?? 5}
-                      onChange={(e) => handleScoreChange(metric.id, e.target.value)}
+                      onChange={(e) =>
+                        handleScoreChange(metric.id, e.target.value)
+                      }
                       className="flex-1"
                       disabled={submitting}
                     />
@@ -242,8 +279,16 @@ export const KPIFormModal = ({
 
         {/* Error Message */}
         {error && (
-          <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3">
-            <p className="text-red-400 text-sm">{error}</p>
+          <div className="bg-red-500/15 border border-red-500/40 rounded-xl p-4 backdrop-blur">
+            <p className="text-red-300 text-sm font-medium mb-2">{error}</p>
+            <p className="text-red-400/70 text-xs">
+              {error.includes("Scoring window") &&
+                "The scoring period has ended. New scores cannot be submitted."}
+              {error.includes("organization") &&
+                "The employee's organization assignment is incomplete. This needs to be fixed in the system."}
+              {error.includes("supervise") &&
+                "You only have permission to score employees in your organization."}
+            </p>
           </div>
         )}
 

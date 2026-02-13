@@ -1,12 +1,6 @@
 import { Card } from "../Card";
 import { AvatarDisplay } from "../AvatarDisplay";
-import {
-  Edit,
-  LogOut,
-  TrendingUp,
-  DollarSign,
-  MoreVertical,
-} from "lucide-react";
+import { Edit, LogOut, DollarSign, MoreVertical } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import { createPortal } from "react-dom";
@@ -32,7 +26,6 @@ interface EmployeeTableProps {
   employees: Employee[];
   onEdit: (employee: Employee) => void;
   onMarkFormer: (employee: Employee) => void;
-  onManageKPI: (employee: Employee) => void;
   onManagePayroll: (employee: Employee) => void;
   canManagePayroll?: boolean;
 }
@@ -42,14 +35,12 @@ interface EmployeeTableProps {
  * @param {Array} employees - Array of employee objects
  * @param {Function} onEdit - Callback when edit button is clicked
  * @param {Function} onMarkFormer - Callback when mark former button is clicked
- * @param {Function} onManageKPI - Callback when manage KPI button is clicked
  * @param {Function} onManagePayroll - Callback when manage payroll button is clicked
  */
 export const EmployeeTable = ({
   employees,
   onEdit,
   onMarkFormer,
-  onManageKPI,
   onManagePayroll,
   canManagePayroll = true,
 }: EmployeeTableProps) => {
@@ -238,57 +229,20 @@ export const EmployeeTable = ({
                   <span>Edit Employee</span>
                 </button>
 
-                {/* KPI Option */}
-                <button
-                  onClick={() => {
-                    onManageKPI(row);
-                    setOpenMenuId(null);
-                    setAnchorEl(null);
-                  }}
-                  className="w-full px-5 py-3 text-left text-sm text-white font-medium hover:bg-white/35 flex items-center gap-3 transition-all duration-200"
-                >
-                  <TrendingUp size={18} className="text-blue-400" />
-                  <span>Manage KPI</span>
-                </button>
-
-<<<<<<< HEAD
-<<<<<<< HEAD
-              {/* Payroll Option */}
-              {canManagePayroll && (
-=======
                 {/* Payroll Option */}
->>>>>>> 5edcfe75b2cb88a6d75ef7ca06ae88131b0c44fb
-=======
-                {/* Payroll Option */}
-              {/* Payroll Option */}
-              {canManagePayroll && (
->>>>>>> 4c6eb05a6dee5197dc6f7bb532c21a2f150d9401
-                <button
-                  onClick={() => {
-                    onManagePayroll(row);
-                    setOpenMenuId(null);
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-                    setAnchorEl(null);
->>>>>>> 5edcfe75b2cb88a6d75ef7ca06ae88131b0c44fb
-=======
-                    setAnchorEl(null);
->>>>>>> 4c6eb05a6dee5197dc6f7bb532c21a2f150d9401
-                  }}
-                  className="w-full px-5 py-3 text-left text-sm text-white font-medium hover:bg-white/35 flex items-center gap-3 transition-all duration-200"
-                >
-                  <DollarSign size={18} className="text-green-400" />
-                  <span>Manage Payroll</span>
-                </button>
-<<<<<<< HEAD
-<<<<<<< HEAD
-              )}
-=======
->>>>>>> 5edcfe75b2cb88a6d75ef7ca06ae88131b0c44fb
-=======
-              )}
->>>>>>> 4c6eb05a6dee5197dc6f7bb532c21a2f150d9401
+                {canManagePayroll && (
+                  <button
+                    onClick={() => {
+                      onManagePayroll(row);
+                      setOpenMenuId(null);
+                      setAnchorEl(null);
+                    }}
+                    className="w-full px-5 py-3 text-left text-sm text-white font-medium hover:bg-white/35 flex items-center gap-3 transition-all duration-200"
+                  >
+                    <DollarSign size={18} className="text-green-400" />
+                    <span>Manage Payroll</span>
+                  </button>
+                )}
 
                 {/* Divider */}
                 {row.employmentType !== "FORMER" && (
