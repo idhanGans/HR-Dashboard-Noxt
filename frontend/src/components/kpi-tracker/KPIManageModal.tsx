@@ -257,16 +257,6 @@ export const KPIManageModal = ({
                           />
                         </div>
                       </div>
-
-                      {/* Target Display (Static - Fixed to 10) */}
-                      <div className="flex items-center justify-between px-3 py-2 bg-green-500/5 border border-green-500/20 rounded-lg">
-                        <p className="text-gray-300 text-sm font-medium">
-                          Target (Fixed)
-                        </p>
-                        <span className="text-2xl font-bold text-green-400">
-                          10
-                        </span>
-                      </div>
                     </motion.div>
                   ))}
                 </div>
