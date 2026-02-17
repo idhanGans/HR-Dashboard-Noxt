@@ -6,7 +6,6 @@ import {
   AttendanceChart,
   KPITrendChart,
   PayrollPieChart,
-  QuickActions,
   OrganizationChart,
 } from "../components/dashboard";
 import { hasRequiredRole } from "../utils/roles";
@@ -145,22 +144,15 @@ const BottomSection = ({
   payrollError: string | null;
 }) => {
   if (!canSeePayroll) {
-    return (
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <QuickActions />
-      </div>
-    );
+    return null;
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <PayrollPanel
-        loading={payrollLoading}
-        error={payrollError}
-        payrollData={payrollData}
-      />
-      <QuickActions />
-    </div>
+    <PayrollPanel
+      loading={payrollLoading}
+      error={payrollError}
+      payrollData={payrollData}
+    />
   );
 };
 /**
