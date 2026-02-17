@@ -1,6 +1,5 @@
 import { DashboardLayout } from "../components";
 import {
-  EmployeeStats,
   EmployeeFilters,
   EmployeeTable,
   DepartmentBreakdown,
@@ -82,8 +81,6 @@ export const EmployeesPage = ({
         departmentFilter={departmentFilter}
         onDepartmentFilterChange={handleDepartmentFilterChange}
       />
-
-      <EmployeeStats counts={counts} />
 
       <EmployeeFilters filter={filter} onFilterChange={setFilter} />
 
