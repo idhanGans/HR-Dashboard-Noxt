@@ -143,9 +143,7 @@ export const ManageDepartmentsModal = ({
           {/* Header */}
           <div className="flex items-center justify-between mb-6 flex-shrink-0">
             <div>
-              <h2 className="text-xl font-bold text-white">
-                Manage Departments
-              </h2>
+              <h2 className="text-xl font-bold text-white">Add Departments</h2>
               <p className="text-lightGrey text-sm mt-1">
                 {departments.length} department
                 {departments.length !== 1 ? "s" : ""} total

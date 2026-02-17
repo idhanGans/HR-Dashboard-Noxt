@@ -26,7 +26,7 @@ export const ManageDepartmentButton = ({
       className="flex items-center gap-2 w-full sm:w-auto"
     >
       <Building2 size={18} />
-      Manage Departments
+      Add Departments
     </Button>
   );
 };
