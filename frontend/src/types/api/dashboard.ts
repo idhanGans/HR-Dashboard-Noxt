@@ -10,15 +10,6 @@ export interface DashboardKpiTrendPointDto {
   value: number;
 }
 
-export interface DashboardTopPerformerDto {
-  userId: number;
-  userName: string;
-  departmentName?: string;
-  role?: string;
-  averageScore: number;
-  trend?: string;
-}
-
 export interface DashboardOverviewResponseDto {
   totalEmployees: number;
   todayAttendance: number;
@@ -29,6 +20,5 @@ export interface DashboardOverviewResponseDto {
   months: number;
   monthlyAttendance: DashboardMonthlyAttendanceDto[];
   kpiTrend: DashboardKpiTrendPointDto[];
-  topPerformers: DashboardTopPerformerDto[];
 }
 

@@ -7,7 +7,6 @@ import {
   KPITrendChart,
   PayrollPieChart,
   QuickActions,
-  TopPerformersCard,
   OrganizationChart,
 } from "../components/dashboard";
 import { hasRequiredRole } from "../utils/roles";
@@ -16,7 +15,6 @@ import {
   usePayrollByDepartment,
 } from "../hooks/useDashboardOverview";
 import type { AttendanceData, DashboardStats, KPITrendData } from "../types";
-import type { DashboardTopPerformerDto } from "../types/api";
 import type { LayoutProps } from "../types/auth";
 
 type StatConfig = {
@@ -140,32 +138,28 @@ const BottomSection = ({
   payrollData,
   payrollLoading,
   payrollError,
-  topPerformers,
 }: {
   canSeePayroll: boolean;
   payrollData?: { labels: string[]; data: number[] };
   payrollLoading: boolean;
   payrollError: string | null;
-  topPerformers: DashboardTopPerformerDto[];
 }) => {
   if (!canSeePayroll) {
     return (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <QuickActions />
-        <TopPerformersCard performers={topPerformers} />
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <PayrollPanel
         loading={payrollLoading}
         error={payrollError}
         payrollData={payrollData}
       />
       <QuickActions />
-      <TopPerformersCard performers={topPerformers} />
     </div>
   );
 };
@@ -241,7 +235,6 @@ const AdminDashboard = ({ onLogout, userName, userRole }: LayoutProps) => {
             payrollError={
               payroll.error instanceof Error ? payroll.error.message : null
             }
-            topPerformers={overview.data?.topPerformers ?? []}
           />
           <OrganizationChartSection />
         </>

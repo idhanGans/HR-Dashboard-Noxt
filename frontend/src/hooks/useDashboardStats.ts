@@ -6,8 +6,7 @@ import { useEmployees } from "./useEmployees";
  * Provides memoized calculations for dashboard cards
  */
 export const useDashboardStats = () => {
-  const { employees, getOverallKPI, getKPITrendData, getTopPerformers } =
-    useEmployees();
+  const { employees, getOverallKPI, getKPITrendData } = useEmployees();
 
   // Calculate total active employees (excluding former employees)
   const totalEmployees = useMemo(() => {
@@ -30,11 +29,6 @@ export const useDashboardStats = () => {
   const kpiTrend = useMemo(() => {
     return getKPITrendData();
   }, [getKPITrendData]);
-
-  // Get top performers (memoized from context)
-  const topPerformers = useMemo(() => {
-    return getTopPerformers(3);
-  }, [getTopPerformers]);
 
   // Calculate department-wise attendance
   const departmentAttendance = useMemo(() => {
@@ -68,7 +62,6 @@ export const useDashboardStats = () => {
     presentToday,
     overallKPI,
     kpiTrend,
-    topPerformers,
     departmentAttendance,
   };
 };

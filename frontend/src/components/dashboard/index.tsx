@@ -3,5 +3,4 @@ export { AttendanceChart } from "./AttendanceChart";
 export { KPITrendChart } from "./KPITrendChart";
 export { PayrollPieChart } from "./PayrollPieChart";
 export { QuickActions } from "./QuickActions";
-export { TopPerformersCard } from "./TopPerformersCard";
 export { OrganizationChart } from "./OrganizationChart";
