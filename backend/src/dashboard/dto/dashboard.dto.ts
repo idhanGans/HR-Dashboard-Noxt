@@ -57,26 +57,6 @@ export class DashboardKpiTrendPointDto {
   value: number;
 }
 
-export class DashboardTopPerformerDto {
-  @ApiProperty({ example: 123 })
-  userId: number;
-
-  @ApiProperty({ example: "Jane Employee" })
-  userName: string;
-
-  @ApiPropertyOptional({ example: "Engineering Department" })
-  departmentName?: string;
-
-  @ApiPropertyOptional({ example: "Software Developer" })
-  role?: string;
-
-  @ApiProperty({ example: 9.2 })
-  averageScore: number;
-
-  @ApiPropertyOptional({ example: "+3%" })
-  trend?: string;
-}
-
 export class DashboardOverviewResponseDto {
   @ApiProperty({ example: 312 })
   totalEmployees: number;
@@ -117,7 +97,4 @@ export class DashboardOverviewResponseDto {
 
   @ApiProperty({ type: DashboardKpiTrendPointDto, isArray: true })
   kpiTrend: DashboardKpiTrendPointDto[];
-
-  @ApiProperty({ type: DashboardTopPerformerDto, isArray: true })
-  topPerformers: DashboardTopPerformerDto[];
 }

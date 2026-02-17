@@ -5,7 +5,6 @@ import {
   DashboardKpiTrendPointDto,
   DashboardMonthlyAttendanceDto,
   DashboardOverviewResponseDto,
-  DashboardTopPerformerDto,
 } from "@/dashboard/dto/dashboard.dto";
 import { AttendanceStatus, EmploymentType, Role } from "@prisma/client";
 
@@ -30,13 +29,11 @@ export class DashboardService {
       this.findLatestKpiPeriod(),
     ]);
 
-    const [averageKpi, topPerformers, monthlyAttendance, kpiTrend] =
-      await Promise.all([
-        this.getAverageKpiForPeriod(kpiPeriod?.id),
-        this.getTopPerformersForPeriod(kpiPeriod?.id, 3),
-        this.getMonthlyAttendance(timezone, months),
-        this.getKpiMonthlyTrend(timezone, months),
-      ]);
+    const [averageKpi, monthlyAttendance, kpiTrend] = await Promise.all([
+      this.getAverageKpiForPeriod(kpiPeriod?.id),
+      this.getMonthlyAttendance(timezone, months),
+      this.getKpiMonthlyTrend(timezone, months),
+    ]);
 
     return {
       totalEmployees,
@@ -48,7 +45,6 @@ export class DashboardService {
       months,
       monthlyAttendance,
       kpiTrend,
-      topPerformers,
     };
   }
 
@@ -122,61 +118,6 @@ export class DashboardService {
 
     const value = agg._avg.score ? Number(agg._avg.score) : 0;
     return Number(value.toFixed(1));
-  }
-
-  private async getTopPerformersForPeriod(
-    periodId: number | undefined,
-    limit: number,
-  ): Promise<DashboardTopPerformerDto[]> {
-    if (!periodId) return [];
-
-    const grouped = await this.prisma.kpiScore.groupBy({
-      by: ["scoredUserId"],
-      where: {
-        periodId,
-        scoredUser: {
-          employmentType: { not: EmploymentType.FORMER },
-          role: { in: [Role.EMPLOYEE, Role.SUPERVISOR] },
-        },
-      },
-      _avg: { score: true },
-      orderBy: {
-        _avg: { score: "desc" },
-      },
-      take: limit,
-    });
-
-    const userIds = grouped.map((g) => g.scoredUserId);
-    if (!userIds.length) return [];
-
-    const users = await this.prisma.user.findMany({
-      where: { id: { in: userIds } },
-      include: { organization: true },
-    });
-
-    const byId = new Map(users.map((u) => [u.id, u]));
-
-    const mapped: Array<DashboardTopPerformerDto | null> = grouped.map(
-      (row) => {
-        const user = byId.get(row.scoredUserId);
-        if (!user) return null;
-
-        const score = row._avg.score ? Number(row._avg.score) : 0;
-        return {
-          userId: user.id,
-          userName: user.fullName,
-          ...(user.organization?.name
-            ? { departmentName: user.organization.name }
-            : {}),
-          ...(user.position ? { role: user.position } : {}),
-          averageScore: Number(score.toFixed(1)),
-        };
-      },
-    );
-
-    return mapped.filter(
-      (val): val is DashboardTopPerformerDto => val !== null,
-    );
   }
 
   private async getMonthlyAttendance(
