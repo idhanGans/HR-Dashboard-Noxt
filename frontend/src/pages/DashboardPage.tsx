@@ -236,4 +236,3 @@ const AdminDashboard = ({ onLogout, userName, userRole }: LayoutProps) => {
 };
 
 export { AdminDashboard as DashboardPage };
-
