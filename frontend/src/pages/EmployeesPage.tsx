@@ -2,7 +2,6 @@ import { DashboardLayout } from "../components";
 import {
   EmployeeFilters,
   EmployeeTable,
-  DepartmentBreakdown,
   HRContactCard,
   EmployeeFormModal,
   EmployeeHeader,
@@ -98,13 +97,7 @@ export const EmployeesPage = ({
         />
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <DepartmentBreakdown
-          organizationBreakdown={organizationBreakdown}
-          totalEmployees={counts.total}
-        />
-        <HRContactCard />
-      </div>
+      <HRContactCard />
 
       <EmployeeFormModal
         isOpen={isModalOpen}
