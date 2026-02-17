@@ -84,27 +84,51 @@ const MOCK_PERIODS: Period[] = [
 const MOCK_METRICS: Metric[] = [
   {
     id: "m1",
-    title: "Team Collaboration",
-    description: "Team collaboration and communication effectiveness",
-    weight: 25,
+    title: "Attendance",
+    description: "Regular attendance and presence at work",
+    weight: 12.5,
   },
   {
     id: "m2",
-    title: "Code Quality Score",
-    description: "Average code quality assessment score",
-    weight: 25,
+    title: "Punctuality",
+    description: "Timeliness in arrival and deadline adherence",
+    weight: 12.5,
   },
   {
     id: "m3",
-    title: "Project Completion Rate",
-    description: "Percentage of projects completed on time",
-    weight: 25,
+    title: "Response",
+    description: "Speed and quality of response to requests",
+    weight: 12.5,
   },
   {
     id: "m4",
-    title: "Customer Satisfaction",
-    description: "Overall customer satisfaction rating",
-    weight: 25,
+    title: "Communication",
+    description: "Effectiveness in conveying information",
+    weight: 12.5,
+  },
+  {
+    id: "m5",
+    title: "Work as Team",
+    description: "Collaboration and teamwork skills",
+    weight: 12.5,
+  },
+  {
+    id: "m6",
+    title: "Productivity",
+    description: "Output and efficiency of work completed",
+    weight: 12.5,
+  },
+  {
+    id: "m7",
+    title: "Quality of Work",
+    description: "Accuracy and quality of deliverables",
+    weight: 12.5,
+  },
+  {
+    id: "m8",
+    title: "Initiative & Problem Solving",
+    description: "Proactive approach and problem-solving ability",
+    weight: 12.5,
   },
 ];
 

@@ -106,49 +106,126 @@ async function main() {
 
   console.log("✅ Created employee:", employee.email);
 
-  // Create KPI Period for January 2026
-  const january2026Period = await prisma.kpiPeriod.upsert({
-    where: {
-      organizationId_name_startDate_endDate: {
-        organizationId: organization.id,
-        name: "January 2026",
-        startDate: new Date("2026-01-01"),
-        endDate: new Date("2026-01-31"),
+  // Create KPI Periods dynamically based on current date (Feb 13, 2026)
+  const today = new Date("2026-02-13");
+  const currentYear = today.getFullYear();
+  const currentMonth = today.getMonth(); // 0-indexed
+
+  // Helper function to get period name and dates
+  const getPeriodInfo = (year: number, month: number) => {
+    const monthNames = [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
+    ];
+    const startDate = new Date(year, month, 1);
+    const endDate = new Date(year, month + 1, 0); // Last day of month
+    return {
+      name: `${monthNames[month]} ${year}`,
+      startDate,
+      endDate,
+    };
+  };
+
+  // Create periods: previous month, current month (active), and next month
+  const periods = [
+    {
+      ...getPeriodInfo(
+        currentMonth === 0 ? currentYear - 1 : currentYear,
+        currentMonth === 0 ? 11 : currentMonth - 1,
+      ),
+      isActive: false,
+    },
+    {
+      ...getPeriodInfo(currentYear, currentMonth),
+      isActive: true, // Current month is active
+    },
+    {
+      ...getPeriodInfo(
+        currentMonth === 11 ? currentYear + 1 : currentYear,
+        currentMonth === 11 ? 0 : currentMonth + 1,
+      ),
+      isActive: false,
+    },
+  ];
+
+  const periodObjects: Record<string, any> = {};
+
+  for (const periodInfo of periods) {
+    const period = await prisma.kpiPeriod.upsert({
+      where: {
+        organizationId_name_startDate_endDate: {
+          organizationId: organization.id,
+          name: periodInfo.name,
+          startDate: periodInfo.startDate,
+          endDate: periodInfo.endDate,
+        },
       },
-    },
-    update: {},
-    create: {
-      name: "January 2026",
-      startDate: new Date("2026-01-01"),
-      endDate: new Date("2026-01-31"),
-      organizationId: organization.id,
-      isActive: true,
-    },
-  });
+      update: { isActive: periodInfo.isActive },
+      create: {
+        name: periodInfo.name,
+        startDate: periodInfo.startDate,
+        endDate: periodInfo.endDate,
+        organizationId: organization.id,
+        isActive: periodInfo.isActive,
+      },
+    });
+    periodObjects[periodInfo.name] = period;
+    console.log(
+      `✅ Created KPI period: ${period.name} (Active: ${period.isActive})`,
+    );
+  }
 
-  console.log("✅ Created KPI period:", january2026Period.name);
-
-  // Create KPI Metrics
+  // Create KPI Metrics with all targets set to 10
   const metrics = [
     {
-      name: "Customer Satisfaction",
-      description: "Overall customer satisfaction rating",
-      target: 9.0,
+      name: "Attendance",
+      description: "Regular attendance and presence at work",
+      target: 10,
     },
     {
-      name: "Project Completion Rate",
-      description: "Percentage of projects completed on time",
-      target: 8.5,
+      name: "Punctuality",
+      description: "Timeliness in arrival and deadline adherence",
+      target: 10,
     },
     {
-      name: "Code Quality Score",
-      description: "Average code quality assessment score",
-      target: 9.5,
+      name: "Response",
+      description: "Speed and quality of response to requests",
+      target: 10,
     },
     {
-      name: "Team Collaboration",
-      description: "Team collaboration and communication effectiveness",
-      target: 8.8,
+      name: "Communication",
+      description: "Effectiveness in conveying information",
+      target: 10,
+    },
+    {
+      name: "Work as Team",
+      description: "Collaboration and teamwork skills",
+      target: 10,
+    },
+    {
+      name: "Productivity",
+      description: "Output and efficiency of work completed",
+      target: 10,
+    },
+    {
+      name: "Quality of Work",
+      description: "Accuracy and quality of deliverables",
+      target: 10,
+    },
+    {
+      name: "Initiative & Problem Solving",
+      description: "Proactive approach and problem-solving ability",
+      target: 10,
     },
   ];
 
@@ -169,24 +246,27 @@ async function main() {
       },
     });
 
-    // Create target for January 2026 period
-    await prisma.kpiTarget.upsert({
-      where: {
-        metricId_periodId: {
-          metricId: metric.id,
-          periodId: january2026Period.id,
+    // Create targets for all dynamic periods
+    for (const periodName in periodObjects) {
+      const periodId = periodObjects[periodName].id;
+      await prisma.kpiTarget.upsert({
+        where: {
+          metricId_periodId: {
+            metricId: metric.id,
+            periodId,
+          },
         },
-      },
-      update: {
-        target: metricData.target,
-      },
-      create: {
-        metricId: metric.id,
-        periodId: january2026Period.id,
-        organizationId: organization.id,
-        target: metricData.target,
-      },
-    });
+        update: {
+          target: metricData.target,
+        },
+        create: {
+          metricId: metric.id,
+          periodId,
+          organizationId: organization.id,
+          target: metricData.target,
+        },
+      });
+    }
 
     console.log(
       `✅ Created metric "${metric.name}" with target ${metricData.target}`,

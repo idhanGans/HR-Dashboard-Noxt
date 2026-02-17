@@ -8,6 +8,7 @@ import {
   AttendancePage,
   PayrollPage,
   KPIPage,
+  NewKpiTrackerPage,
   EmployeesPage,
   OrganizationPage,
   HiringPage,
@@ -49,7 +50,11 @@ const ProtectedRoute = ({
   return <>{children}</>;
 };
 
-const PublicRoute = ({ isAuthenticated, isInitializing, children }: PublicRouteProps) => {
+const PublicRoute = ({
+  isAuthenticated,
+  isInitializing,
+  children,
+}: PublicRouteProps) => {
   if (isInitializing) return <LoadingScreen />;
   if (isAuthenticated) return <Navigate to="/dashboard" replace />;
   return <>{children}</>;
@@ -73,7 +78,7 @@ const AppRoutes = () => {
       <Route
         path="/login"
         element={
-          <PublicRoute 
+          <PublicRoute
             isAuthenticated={auth.isAuthenticated}
             isInitializing={auth.isInitializing}
           >
@@ -131,6 +136,20 @@ const AppRoutes = () => {
             allowedRoles={["SUPERVISOR"]}
           >
             <KPIPage {...layoutProps} />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/kpi-tracker"
+        element={
+          <ProtectedRoute
+            isAuthenticated={auth.isAuthenticated}
+            isInitializing={auth.isInitializing}
+            userRole={auth.role}
+            allowedRoles={["SUPERVISOR"]}
+          >
+            <NewKpiTrackerPage {...layoutProps} />
           </ProtectedRoute>
         }
       />

@@ -146,7 +146,7 @@ export class PeriodsService {
 
   /**
    * Calculates the scoring window for a period.
-   * Scoring window runs from the 20th of the period's month to the 1st of the next month.
+   * Scoring window runs from the 1st of the period's month to the 15th of the next month.
    * @param period The period to calculate the scoring window for
    * @returns Object with scoringWindowStart and scoringWindowEnd dates
    */
@@ -158,13 +158,13 @@ export class PeriodsService {
     const year = periodDate.getFullYear();
     const month = periodDate.getMonth(); // 0-indexed (0 = January, 11 = December)
 
-    // Scoring window starts on the 20th of the period's month
-    const scoringWindowStart = new Date(year, month, 20, 0, 0, 0, 0);
+    // Scoring window starts on the 1st of the period's month
+    const scoringWindowStart = new Date(year, month, 1, 0, 0, 0, 0);
 
-    // Scoring window ends on the 1st of the next month at 23:59:59.999
+    // Scoring window ends on the 15th of the next month at 23:59:59.999
     const nextMonth = month === 11 ? 0 : month + 1;
     const nextYear = month === 11 ? year + 1 : year;
-    const scoringWindowEnd = new Date(nextYear, nextMonth, 1, 23, 59, 59, 999);
+    const scoringWindowEnd = new Date(nextYear, nextMonth, 15, 23, 59, 59, 999);
 
     return { scoringWindowStart, scoringWindowEnd };
   }

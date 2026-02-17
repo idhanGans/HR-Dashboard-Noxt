@@ -8,7 +8,6 @@ import {
   HRContactCard,
   EmployeeFormModal,
   EmployeeHeader,
-  KPIFormModal,
   PayrollFormModal,
   ManageDepartmentsModal,
 } from "../components/employees";
@@ -54,12 +53,8 @@ export const EmployeesPage = ({
     isDepartmentManageOpen,
     openDepartmentManageModal,
     closeDepartmentManageModal,
-    // KPI management
-    isKPIModalOpen,
+    // Selected employee (used for payroll)
     selectedEmployee,
-    handleOpenKPI,
-    handleCloseKPI,
-    handleKPISaveSuccess,
     // Payroll management
     isPayrollModalOpen,
     setIsPayrollModalOpen,
@@ -102,7 +97,6 @@ export const EmployeesPage = ({
           employees={filteredEmployees}
           onEdit={handleOpenEdit}
           onMarkFormer={handleMarkFormer}
-          onManageKPI={handleOpenKPI}
           onManagePayroll={handleOpenPayroll}
           canManagePayroll={canManagePayroll}
         />
@@ -129,13 +123,6 @@ export const EmployeesPage = ({
         onSave={handleSave}
         saving={saving}
         userRole={userRole}
-      />
-
-      <KPIFormModal
-        isOpen={isKPIModalOpen}
-        onClose={handleCloseKPI}
-        employee={selectedEmployee}
-        onSaveSuccess={handleKPISaveSuccess}
       />
 
       <PayrollFormModal

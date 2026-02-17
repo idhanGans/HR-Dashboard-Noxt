@@ -54,7 +54,6 @@ export const ManageKpiModal = ({
     activePeriodId || "",
   );
   const [scores, setScores] = useState<MetricScore[]>([]);
-  const [targets, setTargets] = useState<Record<string, number>>({});
   const [saveError, setSaveError] = useState<string>("");
   const [saveSuccess, setSaveSuccess] = useState<string>("");
 
@@ -66,8 +65,7 @@ export const ManageKpiModal = ({
     const resetForm = () => {
       setSelectedEmployeeId("");
       setSelectedPeriodId(activePeriodId || "");
-      setScores(metrics.map((m) => ({ metricId: m.id, score: 5, target: 5 })));
-      setTargets(metrics.reduce((acc, m) => ({ ...acc, [m.id]: 5 }), {}));
+      setScores(metrics.map((m) => ({ metricId: m.id, score: 5, target: 10 })));
       setSaveError("");
       setSaveSuccess("");
     };
@@ -88,11 +86,6 @@ export const ManageKpiModal = ({
     setScores((prev) =>
       prev.map((s) => (s.metricId === metricId ? { ...s, score: value } : s)),
     );
-  };
-
-  // Handle target slider change
-  const handleTargetChange = (metricId: string, value: number) => {
-    setTargets((prev) => ({ ...prev, [metricId]: value }));
   };
 
   // Handle save
@@ -116,10 +109,10 @@ export const ManageKpiModal = ({
       return;
     }
 
-    // Prepare metrics with targets
+    // Prepare metrics with targets (fixed to 10)
     const metricsWithTargets = scores.map((s) => ({
       ...s,
-      target: targets[s.metricId] || 5,
+      target: 10,
     }));
 
     // Call the new saveKpiEvaluation method
@@ -275,33 +268,6 @@ export const ManageKpiModal = ({
                       }
                       disabled={!activePeriod}
                       className="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed accent-blue-500"
-                    />
-                  </div>
-
-                  {/* Target Slider */}
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <label className="text-xs font-medium text-gray-400">
-                        Target (1-10)
-                      </label>
-                      <span className="text-sm font-semibold text-green-400">
-                        {targets[score.metricId]?.toFixed(1) || "5.0"}
-                      </span>
-                    </div>
-                    <input
-                      type="range"
-                      min="1"
-                      max="10"
-                      step="0.5"
-                      value={targets[score.metricId] || 5}
-                      onChange={(e) =>
-                        handleTargetChange(
-                          score.metricId,
-                          parseFloat(e.target.value),
-                        )
-                      }
-                      disabled={!activePeriod}
-                      className="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed accent-green-500"
                     />
                   </div>
                 </div>
