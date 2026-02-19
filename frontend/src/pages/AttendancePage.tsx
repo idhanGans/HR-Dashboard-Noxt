@@ -375,9 +375,7 @@ export const AttendancePage = ({
   userRole,
 }: LayoutProps) => {
   const { auth } = useAuth();
-  const [activeTab, setActiveTab] = useState<"attendance" | "leave">(
-    "leave",
-  );
+  const [activeTab, setActiveTab] = useState<"attendance" | "leave">("leave");
   const [isCheckInModalOpen, setIsCheckInModalOpen] = useState(false);
   const [isCheckOutModalOpen, setIsCheckOutModalOpen] = useState(false);
 
