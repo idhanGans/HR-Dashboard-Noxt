@@ -133,12 +133,12 @@ const EarningsSection = ({
             {formatIDR(taxAllowance)}
           </span>
         </div>
-        {bonus > 0 &&         
+        {bonus > 0 && (
           <div className="flex justify-between">
-          <span className="text-lightGrey">Bonus</span>
-          <span className="text-white font-semibold">{formatIDR(bonus)}</span>
+            <span className="text-lightGrey">Bonus</span>
+            <span className="text-white font-semibold">{formatIDR(bonus)}</span>
           </div>
-        }
+        )}
       </div>
       <div className="border-t border-white/10 mt-4 pt-4 flex justify-between">
         <span className="text-white font-semibold">Total Earnings</span>

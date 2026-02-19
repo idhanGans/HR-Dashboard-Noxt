@@ -73,7 +73,6 @@ const ActionCardsGrid = ({
   </div>
 );
 
-
 /**
  * LeaveBalanceGrid - Grid of leave balance cards
  */
@@ -475,7 +474,15 @@ export const AttendancePage = ({
     }
 
     return filters;
-  }, [filterType, statusFilter, parsedMonth, dateFrom, dateTo, employeeFilter, canFilterEmployees]);
+  }, [
+    filterType,
+    statusFilter,
+    parsedMonth,
+    dateFrom,
+    dateTo,
+    employeeFilter,
+    canFilterEmployees,
+  ]);
 
   const {
     records,
@@ -494,16 +501,11 @@ export const AttendancePage = ({
     filters: attendanceFilters,
   });
 
-  const {
-    checkInTime,
-    elapsed,
-    isCheckedIn,
-    handleCheckIn,
-    handleCheckOut,
-  } = useAttendanceSession({
-    currentUserId: attendanceUserId,
-    initialCheckInAt: activeCheckInAt,
-  });
+  const { checkInTime, elapsed, isCheckedIn, handleCheckIn, handleCheckOut } =
+    useAttendanceSession({
+      currentUserId: attendanceUserId,
+      initialCheckInAt: activeCheckInAt,
+    });
 
   // Leave management
   const {
@@ -765,7 +767,7 @@ export const AttendancePage = ({
               </h3>
               <p className="text-sm text-lightGrey mb-4">
                 {isSuperadminRole
-                  ? "Showing overall attendance with monthly breakdowns. Click \"Show Monthly Breakdown\" to expand details. Apply filters above to see individual records."
+                  ? 'Showing overall attendance with monthly breakdowns. Click "Show Monthly Breakdown" to expand details. Apply filters above to see individual records.'
                   : "Your attendance overview with monthly breakdown. Apply filters above to see detailed records."}
               </p>
               {attendanceBusy ? (
