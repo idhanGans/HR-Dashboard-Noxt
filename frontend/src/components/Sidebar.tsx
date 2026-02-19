@@ -7,6 +7,7 @@ import {
   Users,
   UserPlus,
   Network,
+  Mail,
   LogOut,
   Settings,
 } from "lucide-react";
@@ -52,6 +53,12 @@ export const Sidebar = ({
       label: "Hiring",
       path: "/hiring",
       icon: UserPlus,
+      requiredRoles: ["SUPERVISOR"],
+    },
+    {
+      label: "Contact",
+      path: "/contact",
+      icon: Mail,
       requiredRoles: ["SUPERVISOR"],
     },
     { label: "Settings", path: "/settings", icon: Settings },

@@ -8,4 +8,5 @@ export { NewKpiTrackerPage } from "./NewKpiTrackerPage";
 export { EmployeesPage } from "./EmployeesPage";
 export { OrganizationPage } from "./OrganizationPage";
 export { HiringPage } from "./HiringPage";
+export { ContactPage } from "./ContactPage";
 export { SettingsPage } from "./SettingsPage";

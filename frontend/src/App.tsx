@@ -12,6 +12,7 @@ import {
   EmployeesPage,
   OrganizationPage,
   HiringPage,
+  ContactPage,
   SettingsPage,
 } from "./pages";
 import { EmployeeProvider } from "./contexts/EmployeeContext";
@@ -192,6 +193,20 @@ const AppRoutes = () => {
             allowedRoles={["SUPERVISOR"]}
           >
             <HiringPage {...layoutProps} />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/contact"
+        element={
+          <ProtectedRoute
+            isAuthenticated={auth.isAuthenticated}
+            isInitializing={auth.isInitializing}
+            userRole={auth.role}
+            allowedRoles={["SUPERVISOR"]}
+          >
+            <ContactPage {...layoutProps} />
           </ProtectedRoute>
         }
       />
