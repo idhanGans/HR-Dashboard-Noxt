@@ -187,8 +187,10 @@ export const useEmployeeManagement = (options?: { enabled?: boolean }) => {
   const [selectedDepartmentIds, setSelectedDepartmentIds] = useState<number[]>(
     [],
   );
-  const [isDepartmentSelectionInitialized, setIsDepartmentSelectionInitialized] =
-    useState(false);
+  const [
+    isDepartmentSelectionInitialized,
+    setIsDepartmentSelectionInitialized,
+  ] = useState(false);
 
   // Department list for name-to-id resolution
   const { data: departments = [] } = useDepartments();

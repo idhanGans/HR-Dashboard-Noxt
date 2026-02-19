@@ -1,6 +1,12 @@
 import { Card } from "../Card";
 import { AvatarDisplay } from "../AvatarDisplay";
-import { Edit, LogOut, DollarSign, MoreVertical, ArrowUpDown } from "lucide-react";
+import {
+  Edit,
+  LogOut,
+  DollarSign,
+  MoreVertical,
+  ArrowUpDown,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import { createPortal } from "react-dom";
@@ -64,7 +70,9 @@ export const EmployeeTable = ({
     const aDept = (a.department ?? "").toString();
     const bDept = (b.department ?? "").toString();
     const direction = departmentSort === "asc" ? 1 : -1;
-    return aDept.localeCompare(bDept, undefined, { sensitivity: "base" }) * direction;
+    return (
+      aDept.localeCompare(bDept, undefined, { sensitivity: "base" }) * direction
+    );
   });
 
   const handleMouseLeave = () => {

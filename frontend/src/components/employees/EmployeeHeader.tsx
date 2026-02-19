@@ -41,9 +41,7 @@ export const EmployeeHeader = ({
   const filteredDepartments = useMemo(() => {
     const term = departmentSearch.trim().toLowerCase();
     if (!term) return departments;
-    return departments.filter((dept) =>
-      dept.name.toLowerCase().includes(term),
-    );
+    return departments.filter((dept) => dept.name.toLowerCase().includes(term));
   }, [departments, departmentSearch]);
 
   const handleToggleDepartment = (id: number) => {
@@ -116,18 +114,18 @@ export const EmployeeHeader = ({
                 <div className="px-4 py-3 border-b border-white/10 text-xs text-lightGrey flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <button
-                    type="button"
-                    onClick={handleSelectAll}
-                    className="text-blue-400 hover:text-blue-300"
-                  >
-                    Select all {departments.length}
+                      type="button"
+                      onClick={handleSelectAll}
+                      className="text-blue-400 hover:text-blue-300"
+                    >
+                      Select all {departments.length}
                     </button>
                     <button
-                    type="button"
-                    onClick={handleClearAll}
-                    className="text-lightGrey hover:text-white"
-                  >
-                    Clear
+                      type="button"
+                      onClick={handleClearAll}
+                      className="text-lightGrey hover:text-white"
+                    >
+                      Clear
                     </button>
                   </div>
                   <span>Displaying {filteredDepartments.length}</span>
