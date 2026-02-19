@@ -634,9 +634,9 @@ export const AttendancePage = ({
   }, [records, employees, employeeLookup]);
 
   const today = new Date();
-  const todayKey = `${today.getFullYear()}-${String(
+  const todayKey = `${String(today.getDate()).padStart(2, "0")}-${String(
     today.getMonth() + 1,
-  ).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  ).padStart(2, "0")}-${today.getFullYear()}`;
 
   // Separate today's record from past records
   const todayRecord = recordsWithEmployee.find((r) => r.date === todayKey);

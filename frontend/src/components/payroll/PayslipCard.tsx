@@ -61,7 +61,12 @@ const PayslipHeader = ({ employee }: { employee?: Employee }) => {
     month: "long",
     year: "numeric",
   });
-  const issueDate = currentDate.toISOString().split("T")[0];
+  const issueDate = (() => {
+    const day = String(currentDate.getDate()).padStart(2, "0");
+    const month = String(currentDate.getMonth() + 1).padStart(2, "0");
+    const year = currentDate.getFullYear();
+    return `${day}-${month}-${year}`;
+  })();
 
   return (
     <div className="mb-8 pb-6 border-b border-white/10">

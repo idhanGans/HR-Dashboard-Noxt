@@ -15,8 +15,13 @@ type ApprovalItem = {
 
 const buildDefaultApprovals = () => {
   const now = Date.now();
-  const toDate = (timestamp: number) =>
-    new Date(timestamp).toISOString().split("T")[0];
+  const toDate = (timestamp: number) => {
+    const d = new Date(timestamp);
+    const day = String(d.getDate()).padStart(2, "0");
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const year = d.getFullYear();
+    return `${day}-${month}-${year}`;
+  };
 
   return [
     {
@@ -61,9 +66,13 @@ export const RecentApprovalsCard = ({
 }) => {
   const formatDateRange = (startDate: string, endDate: string) => {
     if (!startDate || !endDate) return "N/A";
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    return `${start.toLocaleDateString("en-US", { month: "short", day: "numeric" })}-${end.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
+    const formatDate = (dateStr: string) => {
+      const d = new Date(dateStr);
+      const day = String(d.getDate()).padStart(2, "0");
+      const month = String(d.getMonth() + 1).padStart(2, "0");
+      return `${day}-${month}`;
+    };
+    return `${formatDate(startDate)}-${formatDate(endDate)}`;
   };
 
   const approvalData = approvals || DEFAULT_APPROVALS;
@@ -93,7 +102,13 @@ export const RecentApprovalsCard = ({
               ? item.approvalDate
               : item.approvalDate ||
                 item.requestedDate ||
-                new Date().toISOString().split("T")[0];
+                (() => {
+                  const d = new Date();
+                  const day = String(d.getDate()).padStart(2, "0");
+                  const month = String(d.getMonth() + 1).padStart(2, "0");
+                  const year = d.getFullYear();
+                  return `${day}-${month}-${year}`;
+                })();
 
             return (
               <div
@@ -115,10 +130,12 @@ export const RecentApprovalsCard = ({
                   </p>
                   <p className="text-xs text-gray-500">
                     Approved on{" "}
-                    {new Date(approvalDate).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                    })}
+                    {(() => {
+                      const d = new Date(approvalDate);
+                      const day = String(d.getDate()).padStart(2, "0");
+                      const month = String(d.getMonth() + 1).padStart(2, "0");
+                      return `${day}-${month}`;
+                    })()}
                   </p>
                 </div>
               </div>

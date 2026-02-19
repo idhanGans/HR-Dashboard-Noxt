@@ -191,17 +191,20 @@ export const EmployeeTable = ({
     {
       key: "startDate",
       label: "Join Date",
-      render: (row: Employee) => (
-        <span className="text-lightGrey text-sm">
-          {row.startDate
-            ? new Date(row.startDate).toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-                year: "numeric",
-              })
-            : "-"}
-        </span>
-      ),
+      render: (row: Employee) => {
+        const formatDate = (date: string | Date): string => {
+          const d = new Date(date);
+          const day = String(d.getDate()).padStart(2, "0");
+          const month = String(d.getMonth() + 1).padStart(2, "0");
+          const year = d.getFullYear();
+          return `${day}-${month}-${year}`;
+        };
+        return (
+          <span className="text-lightGrey text-sm">
+            {row.startDate ? formatDate(row.startDate) : "-"}
+          </span>
+        );
+      },
     },
     {
       key: "department",
@@ -337,7 +340,7 @@ export const EmployeeTable = ({
               {columns.map((col) => (
                 <th
                   key={col.key}
-                  className="px-6 py-4 text-left text-xs font-semibold text-lightGrey uppercase tracking-wider"
+                  className="px-4 py-4 text-left text-xs font-semibold text-lightGrey uppercase tracking-wider whitespace-nowrap"
                 >
                   {col.label}
                 </th>
@@ -353,7 +356,7 @@ export const EmployeeTable = ({
                 {columns.map((col) => (
                   <td
                     key={`${row.id}-${col.key}`}
-                    className="px-6 py-4 text-sm"
+                    className="px-4 py-3 text-sm whitespace-nowrap"
                   >
                     {col.key === "no"
                       ? index + 1

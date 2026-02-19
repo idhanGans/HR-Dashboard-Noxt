@@ -220,15 +220,18 @@ export class PayslipsService {
   }
 
   private formatDate(value: Date): string {
-    return value.toISOString().split("T")[0];
+    const day = String(value.getDate()).padStart(2, "0");
+    const month = String(value.getMonth() + 1).padStart(2, "0");
+    const year = value.getFullYear();
+    return `${day}-${month}-${year}`;
   }
 
   private formatJoinedDate(value: Date | null): string {
     if (!value) return "";
-    const day = value.getDate();
-    const month = value.toLocaleString("en-US", { month: "long" });
+    const day = String(value.getDate()).padStart(2, "0");
+    const month = String(value.getMonth() + 1).padStart(2, "0");
     const year = value.getFullYear();
-    return `${day} ${month} ${year}`;
+    return `${day}-${month}-${year}`;
   }
 
   private formatCurrency(value: number): string {
