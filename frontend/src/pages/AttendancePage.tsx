@@ -376,7 +376,7 @@ export const AttendancePage = ({
 }: LayoutProps) => {
   const { auth } = useAuth();
   const [activeTab, setActiveTab] = useState<"attendance" | "leave">(
-    "attendance",
+    "leave",
   );
   const [isCheckInModalOpen, setIsCheckInModalOpen] = useState(false);
   const [isCheckOutModalOpen, setIsCheckOutModalOpen] = useState(false);
@@ -698,6 +698,7 @@ export const AttendancePage = ({
     >
       {/* Tab Navigation */}
       <div className="flex gap-4 mb-8 border-b border-white/10">
+        {/* 
         <button
           onClick={() => setActiveTab("attendance")}
           className={`px-6 py-3 font-medium transition-all ${
@@ -708,6 +709,7 @@ export const AttendancePage = ({
         >
           Attendance
         </button>
+        */}
         <button
           onClick={() => setActiveTab("leave")}
           className={`px-6 py-3 font-medium transition-all ${
@@ -720,11 +722,10 @@ export const AttendancePage = ({
         </button>
       </div>
 
-      {/* Attendance Tab */}
-      {activeTab === "attendance" && (
+      {/* Attendance Tab - COMMENTED OUT */}
+      {/* {activeTab === "attendance" && (
         <>
           <AttendanceHeader />
-
           <ActionCardsGrid
             isCheckedIn={isCheckedIn}
             checkInTime={checkInTime}
@@ -732,14 +733,10 @@ export const AttendancePage = ({
             onCheckInClick={() => setIsCheckInModalOpen(true)}
             onCheckOutClick={() => setIsCheckOutModalOpen(true)}
           />
-
-          {/* Today's Attendance */}
           <TodayAttendanceSection
             todayRecord={todayRecord}
             isLoading={attendanceBusy}
           />
-
-          {/* Filter Section */}
           <AttendanceFilterSection
             filterType={filterType}
             setFilterType={setFilterType}
@@ -754,8 +751,6 @@ export const AttendancePage = ({
             employees={employeeOptions}
             showEmployeeFilter={canFilterEmployees}
           />
-
-          {/* Grouped Summary View - Show when no filters applied */}
           {shouldShowGroupedSummary && (
             <div className="mb-8">
               <h3 className="text-lg font-semibold text-white mb-2">
@@ -781,8 +776,6 @@ export const AttendancePage = ({
               )}
             </div>
           )}
-
-          {/* Attendance Records Table - Show when filters are applied */}
           {!shouldShowGroupedSummary && (
             <div>
               <AttendanceTable
@@ -810,20 +803,18 @@ export const AttendancePage = ({
               />
             </div>
           )}
-
           <CheckInModal
             isOpen={isCheckInModalOpen}
             onClose={() => setIsCheckInModalOpen(false)}
             onConfirm={onConfirmCheckIn}
           />
-
           <CheckOutModal
             isOpen={isCheckOutModalOpen}
             onClose={() => setIsCheckOutModalOpen(false)}
             onConfirm={onConfirmCheckOut}
           />
         </>
-      )}
+      )} */}
 
       {/* Leave Tab */}
       {activeTab === "leave" && (
