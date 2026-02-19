@@ -154,6 +154,24 @@ export const EmployeeTable = ({
       ),
     },
     {
+      key: "startDate",
+      label: "Join Date",
+      render: (row: Employee) => {
+        const formatDate = (date: string | Date): string => {
+          const d = new Date(date);
+          const day = String(d.getDate()).padStart(2, "0");
+          const month = String(d.getMonth() + 1).padStart(2, "0");
+          const year = d.getFullYear();
+          return `${day}-${month}-${year}`;
+        };
+        return (
+          <span className="text-lightGrey text-sm">
+            {row.startDate ? formatDate(row.startDate) : "-"}
+          </span>
+        );
+      },
+    },
+    {
       key: "employeeId",
       label: "Employee ID",
       render: (row: Employee) => (
@@ -187,24 +205,6 @@ export const EmployeeTable = ({
       render: (row: Employee) => (
         <span className="text-lightGrey text-sm">{row.phone}</span>
       ),
-    },
-    {
-      key: "startDate",
-      label: "Join Date",
-      render: (row: Employee) => {
-        const formatDate = (date: string | Date): string => {
-          const d = new Date(date);
-          const day = String(d.getDate()).padStart(2, "0");
-          const month = String(d.getMonth() + 1).padStart(2, "0");
-          const year = d.getFullYear();
-          return `${day}-${month}-${year}`;
-        };
-        return (
-          <span className="text-lightGrey text-sm">
-            {row.startDate ? formatDate(row.startDate) : "-"}
-          </span>
-        );
-      },
     },
     {
       key: "department",
