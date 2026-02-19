@@ -53,12 +53,6 @@ const employmentTypeOptions = [
   { value: "FORMER", label: "Former" },
 ];
 
-const currentStatusOptions = [
-  { value: "present", label: "Present" },
-  { value: "late", label: "Late" },
-  { value: "absent", label: "Absent" },
-];
-
 /**
  * EmployeeFormModal - Modal form for adding/editing employees
  * @param {boolean} isOpen - Whether modal is open
@@ -473,19 +467,6 @@ export const EmployeeFormModal = ({
                 className="glass-input w-full"
                 value={form.startDate || ""}
                 onChange={(e) => handleChange("startDate", e.target.value)}
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-lightGrey mb-2 uppercase">
-                Current Status
-              </label>
-              <DropdownSelect
-                value={toSelectValue(form.status)}
-                onChange={handleSelectChange("status")}
-                options={currentStatusOptions}
-                placeholder="Select Status"
-                showEmptyOption
-                ariaLabel="Select current status"
               />
             </div>
           </div>

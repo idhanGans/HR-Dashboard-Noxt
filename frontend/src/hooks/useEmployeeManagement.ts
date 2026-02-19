@@ -48,7 +48,6 @@ const EMPTY_FORM: EmployeeForm = {
   role: "",
   email: "",
   phone: "",
-  status: "present",
   employmentType: "PERMANENT",
   startDate: "",
   kpi: {
