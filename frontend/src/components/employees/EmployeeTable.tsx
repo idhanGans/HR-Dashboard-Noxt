@@ -189,6 +189,21 @@ export const EmployeeTable = ({
       ),
     },
     {
+      key: "startDate",
+      label: "Join Date",
+      render: (row: Employee) => (
+        <span className="text-lightGrey text-sm">
+          {row.startDate
+            ? new Date(row.startDate).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              })
+            : "-"}
+        </span>
+      ),
+    },
+    {
       key: "department",
       label: (
         <button
