@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useDebounce } from "use-debounce";
 import { getInitials } from "../utils/utils";
@@ -183,8 +183,12 @@ export const useEmployeeManagement = (options?: { enabled?: boolean }) => {
   const [search, setSearch] = useState("");
   const [debouncedSearch] = useDebounce(search, 1000);
 
-  // Department filter state
-  const [departmentFilter, setDepartmentFilter] = useState<number | null>(null);
+  // Department filter state (multi-select)
+  const [selectedDepartmentIds, setSelectedDepartmentIds] = useState<number[]>(
+    [],
+  );
+  const [isDepartmentSelectionInitialized, setIsDepartmentSelectionInitialized] =
+    useState(false);
 
   // Department list for name-to-id resolution
   const { data: departments = [] } = useDepartments();
@@ -195,6 +199,12 @@ export const useEmployeeManagement = (options?: { enabled?: boolean }) => {
     });
     return map;
   }, [departments]);
+
+  useEffect(() => {
+    if (isDepartmentSelectionInitialized || departments.length === 0) return;
+    setSelectedDepartmentIds(departments.map((dept) => dept.id));
+    setIsDepartmentSelectionInitialized(true);
+  }, [departments, isDepartmentSelectionInitialized]);
 
   // Department management modal
   const {
@@ -357,11 +367,20 @@ export const useEmployeeManagement = (options?: { enabled?: boolean }) => {
     [employeesQuery.data],
   );
 
-  // Apply department filter on client side
+  // Apply department filter on client side and sort by department name
   const filteredEmployees = useMemo(() => {
-    if (!departmentFilter) return employeeList;
-    return employeeList.filter((emp) => emp.departmentId === departmentFilter);
-  }, [employeeList, departmentFilter]);
+    if (selectedDepartmentIds.length === 0) return [];
+    const list = employeeList.filter((emp) =>
+      emp.departmentId
+        ? selectedDepartmentIds.includes(emp.departmentId)
+        : false,
+    );
+    return [...list].sort((a, b) => {
+      const aDept = (a.department ?? "").toString();
+      const bDept = (b.department ?? "").toString();
+      return aDept.localeCompare(bDept, undefined, { sensitivity: "base" });
+    });
+  }, [employeeList, selectedDepartmentIds]);
   const statistics = statisticsQuery.data ?? null;
 
   // Counts from statistics (always shows totals, not affected by filters)
@@ -555,6 +574,7 @@ export const useEmployeeManagement = (options?: { enabled?: boolean }) => {
     filteredEmployees,
     counts,
     organizationBreakdown,
+    departments,
 
     // Loading states
     loading: employeesQuery.isLoading,
@@ -569,8 +589,8 @@ export const useEmployeeManagement = (options?: { enabled?: boolean }) => {
     setSearch,
 
     // Department filter
-    departmentFilter,
-    setDepartmentFilter,
+    selectedDepartmentIds,
+    setSelectedDepartmentIds,
 
     // Department management modal
     isDepartmentManageOpen: departmentModals.manageModal.isOpen,

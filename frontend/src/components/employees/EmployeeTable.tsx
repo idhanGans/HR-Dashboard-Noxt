@@ -1,8 +1,8 @@
 import { Card } from "../Card";
 import { AvatarDisplay } from "../AvatarDisplay";
-import { Edit, LogOut, DollarSign, MoreVertical } from "lucide-react";
+import { Edit, LogOut, DollarSign, MoreVertical, ArrowUpDown } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useAvatarUrl } from "../../hooks/useAvatar";
 import { DepartmentBadge } from "./department";
@@ -58,6 +58,14 @@ export const EmployeeTable = ({
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
   const [menuStyle, setMenuStyle] = useState<CSSProperties>({});
   const menuRef = useRef<HTMLDivElement | null>(null);
+  const [departmentSort, setDepartmentSort] = useState<"asc" | "desc">("asc");
+
+  const sortedEmployees = [...employees].sort((a, b) => {
+    const aDept = (a.department ?? "").toString();
+    const bDept = (b.department ?? "").toString();
+    const direction = departmentSort === "asc" ? 1 : -1;
+    return aDept.localeCompare(bDept, undefined, { sensitivity: "base" }) * direction;
+  });
 
   const handleMouseLeave = () => {
     const timeout = setTimeout(() => {
@@ -125,7 +133,11 @@ export const EmployeeTable = ({
     };
   }, [openMenuId, anchorEl]);
 
-  const columns = [
+  const columns: Array<{
+    key: string;
+    label: ReactNode;
+    render?: (row: Employee) => ReactNode;
+  }> = [
     {
       key: "no",
       label: "No",
@@ -170,7 +182,19 @@ export const EmployeeTable = ({
     },
     {
       key: "department",
-      label: "Department",
+      label: (
+        <button
+          type="button"
+          onClick={() =>
+            setDepartmentSort((prev) => (prev === "asc" ? "desc" : "asc"))
+          }
+          className="inline-flex items-center gap-2 text-left text-xs font-semibold text-lightGrey uppercase tracking-wider hover:text-white"
+          title={`Sort by department ${departmentSort === "asc" ? "(A-Z)" : "(Z-A)"}`}
+        >
+          Department
+          <ArrowUpDown size={14} className="opacity-70" />
+        </button>
+      ),
       render: (row: Employee) => <DepartmentBadge name={row.department} />,
     },
     {
@@ -298,7 +322,7 @@ export const EmployeeTable = ({
             </tr>
           </thead>
           <tbody>
-            {employees.map((row, index) => (
+            {sortedEmployees.map((row, index) => (
               <tr
                 key={`row-${row.id}`}
                 className="border-b border-white/10 hover:bg-white/5 transition-colors"
@@ -321,7 +345,7 @@ export const EmployeeTable = ({
         </table>
       </div>
 
-      {employees.length === 0 && (
+      {sortedEmployees.length === 0 && (
         <div className="text-center py-8">
           <p className="text-lightGrey">No employees found</p>
         </div>

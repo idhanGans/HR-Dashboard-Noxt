@@ -28,6 +28,7 @@ export const EmployeesPage = ({
     filteredEmployees,
     counts,
     organizationBreakdown,
+    departments,
     loading,
     error,
     saving,
@@ -45,8 +46,8 @@ export const EmployeesPage = ({
     handleSave,
     handleMarkFormer,
     // Department management
-    departmentFilter,
-    setDepartmentFilter,
+    selectedDepartmentIds,
+    setSelectedDepartmentIds,
     isDepartmentManageOpen,
     openDepartmentManageModal,
     closeDepartmentManageModal,
@@ -61,10 +62,6 @@ export const EmployeesPage = ({
     handleSavePayroll,
   } = useEmployeeManagement();
 
-  const handleDepartmentFilterChange = (value: string | number | null) => {
-    setDepartmentFilter(value === null ? null : Number(value));
-  };
-
   return (
     <DashboardLayout
       userRole={userRole}
@@ -77,8 +74,9 @@ export const EmployeesPage = ({
         onAddClick={handleOpenAdd}
         userRole={userRole}
         onManageDepartments={openDepartmentManageModal}
-        departmentFilter={departmentFilter}
-        onDepartmentFilterChange={handleDepartmentFilterChange}
+        departments={departments}
+        selectedDepartmentIds={selectedDepartmentIds}
+        onDepartmentSelectionChange={setSelectedDepartmentIds}
       />
 
       <EmployeeFilters filter={filter} onFilterChange={setFilter} />
