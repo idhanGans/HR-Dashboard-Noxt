@@ -3,6 +3,8 @@ import { Button } from "../Button";
 import { DropdownSelect } from "../DropdownSelect";
 import { DepartmentSelect } from "./department";
 import { useDepartments } from "../../hooks/useDepartments";
+import { Upload } from "lucide-react";
+import { useState, useEffect } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import type { EmployeeForm } from "../../types";
 
@@ -78,9 +80,44 @@ export const EmployeeFormModal = ({
   userRole = "EMPLOYEE",
 }: EmployeeFormModalProps) => {
   const { data: departments = [] } = useDepartments();
+  // Initialize avatar from form, will sync when form.avatar changes
+  const [avatarPreview, setAvatarPreview] = useState<string>(form.avatar || "");
+
+  // Update avatar preview when form avatar changes
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (form.avatar) {
+      setAvatarPreview(form.avatar);
+    }
+  }, [form.avatar]);
 
   const handleChange = (field: string, value: string) => {
     onFormChange({ ...form, [field]: value });
+  };
+
+  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Check file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert("File size must be less than 5MB");
+        return;
+      }
+
+      // Check file type
+      if (!file.type.startsWith("image/")) {
+        alert("Please select an image file");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        setAvatarPreview(base64String);
+        handleChange("avatar", base64String);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const canEditDepartment =
@@ -100,6 +137,70 @@ export const EmployeeFormModal = ({
       title={mode === "add" ? "Add Employee" : "Edit Employee"}
     >
       <div className="space-y-6 max-h-[70vh] overflow-y-auto">
+        {/* Avatar Upload Section */}
+        <div className="border-b border-white/10 pb-4">
+          <h3 className="text-lg font-semibold text-white mb-4">Avatar</h3>
+
+          <div className="flex flex-col items-center gap-4">
+            {/* Avatar Preview */}
+            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-2xl overflow-hidden">
+              {avatarPreview ? (
+                <img
+                  src={avatarPreview}
+                  alt="Avatar preview"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span>{form.name?.charAt(0)?.toUpperCase() || "?"}</span>
+              )}
+            </div>
+
+            {/* File Upload Input */}
+            <div className="w-full">
+              <label className="block text-xs font-semibold text-lightGrey mb-2 uppercase">
+                Upload Picture
+              </label>
+              <div className="relative">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleAvatarUpload}
+                  className="hidden"
+                  id="avatar-upload"
+                  disabled={saving}
+                />
+                <label
+                  htmlFor="avatar-upload"
+                  className="flex items-center justify-center gap-2 w-full px-4 py-3 border-2 border-dashed border-white/20 rounded-lg bg-white/5 hover:bg-white/10 cursor-pointer transition-all"
+                >
+                  <Upload size={18} className="text-blue-400" />
+                  <span className="text-sm text-lightGrey">
+                    {avatarPreview ? "Change image" : "Click to upload image"}
+                  </span>
+                </label>
+              </div>
+              <p className="text-xs text-lightGrey mt-2">
+                Supported formats: JPG, PNG, GIF (Max 5MB)
+              </p>
+            </div>
+
+            {/* Clear Avatar Button */}
+            {avatarPreview && (
+              <button
+                type="button"
+                onClick={() => {
+                  setAvatarPreview("");
+                  handleChange("avatar", "");
+                }}
+                className="text-sm text-red-400 hover:text-red-300 transition-colors"
+                disabled={saving}
+              >
+                Remove Avatar
+              </button>
+            )}
+          </div>
+        </div>
+
         {/* Personal Information Section */}
         <div className="border-b border-white/10 pb-4">
           <h3 className="text-lg font-semibold text-white mb-4">

@@ -4,6 +4,7 @@ import { useDebounce } from "use-debounce";
 import { getInitials } from "../utils/utils";
 import { employeeService } from "../services/employee";
 import { payrollService } from "../services/payrollService";
+import { avatarService } from "../services/avatar";
 import { useDepartmentStore } from "../stores/departmentStore";
 import { useDepartments } from "./useDepartments";
 import type { Employee, EmployeeForm, PayrollFormData } from "../types";
@@ -452,16 +453,41 @@ export const useEmployeeManagement = (options?: { enabled?: boolean }) => {
     };
 
     try {
+      let employeeId: number | null = null;
+
       if (mode === "add") {
         const createRequest = mapFormToCreateRequest(formWithDepartment);
-        await createMutation.mutateAsync(createRequest);
+        const result = await createMutation.mutateAsync(createRequest);
+        employeeId = result.id;
       } else {
         if (form.id === null) {
           return;
         }
+        employeeId = form.id;
         const updateRequest = mapFormToUpdateRequest(formWithDepartment);
         await updateMutation.mutateAsync({ id: form.id, data: updateRequest });
       }
+
+      // Handle avatar upload if avatar is provided as base64
+      if (employeeId && form.avatar && form.avatar.startsWith("data:image")) {
+        try {
+          // Convert base64 to blob
+          const response = await fetch(form.avatar);
+          const blob = await response.blob();
+          const file = new File([blob], "avatar.jpg", { type: "image/jpeg" });
+
+          // Upload avatar
+          await avatarService.uploadAvatar(employeeId, file);
+
+          // Invalidate cache to refresh avatar
+          queryClient.invalidateQueries({ queryKey: ["avatars"] });
+          queryClient.invalidateQueries({ queryKey: employeeKeys.lists() });
+        } catch (avatarError) {
+          console.error("Failed to upload avatar:", avatarError);
+          // Don't fail the entire save operation if avatar fails
+        }
+      }
+
       setIsModalOpen(false);
     } catch (err) {
       alert(err instanceof Error ? err.message : "An error occurred");
